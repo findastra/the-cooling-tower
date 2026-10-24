@@ -632,7 +632,10 @@ renderer.domElement.addEventListener('pointerup', e => {
   const r = renderer.domElement.getBoundingClientRect();
   pickPtr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   pickRay.setFromCamera(pickPtr, camera);
-  const named = pickRay.intersectObjects(hoverables, false).find(h => h.object.visible);
+  const solid = (o) => !(o.material && o.material.transparent && o.material.opacity < 0.6); // clicks pass through glass, netting and see-through walls
+  const frame = /Roof arch|Crane girders|X-legs|Fill supports|Outage barrier|Basin wall|Steam generator compartment|Operating floor|Dance floor|Turbine pedestal|Perimeter fence/; // the building's frame
+  const hits = pickRay.intersectObjects(hoverables, false).filter(h => h.object.visible && solid(h.object));
+  const named = hits.find(h => !frame.test(h.object.userData.name)) || hits[0]; // prefer the equipment behind the frame
   if (named) { orbitAround(named.point, named.object.userData.name); return; }
   const any = pickRay.intersectObjects(scene.children, true).find(h => h.object.visible && h.object.isMesh && !(h.object.material && h.object.material.transparent && h.object.material.opacity < 0.5));
   if (any) orbitAround(any.point, 'this spot');
