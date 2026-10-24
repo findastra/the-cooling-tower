@@ -49,6 +49,7 @@ button[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
 button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .hint { color: var(--soft); font-size: 12px; margin: 10px 0 0; }
 @media (max-width: 520px) { .panel { max-height: 46%; } }
+.tip { position: fixed; pointer-events: none; max-width: 260px; background: rgba(20,22,26,.94); border: 1px solid var(--blue); color: var(--ink); font-size: 13px; padding: 6px 9px; border-radius: 5px; }
 .spin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 10px 16px; background: rgba(29,30,34,.92); border-color: var(--amber); color: var(--amber); }
 </style>
 
@@ -60,21 +61,14 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <h2>The night, in order</h2>
   <ol class="route">
     <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, slip through the cut fence and duck between the X-legs.</span></li>
-    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> The big floor on the drained basin, crowd all round the booth on the water riser, a balcony ring above. Lasers and smoke up to the sky.</span></li>
+    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the booth on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then.</span></li>
     <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. Floor beside three turbines, booth on the turbine deck.</span></li>
     <li><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
     <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
   </ol>
   <p class="hint">All three are joined: the pipe runs straight from the stack into the turbine hall, and the hatch opens from the hall into the dome.</p>
   <h2>Inside the reactor hall</h2>
-  <p class="text">A pressurized water reactor’s containment during a refuelling outage, every part labelled (switch “Part labels”). The <b style="color:var(--blue)">reactor</b> is the steel vessel under the pool, beneath the bridge: its lid is off, the core glows blue at the bottom, and 8 m of water above it make it safe to stand over.</p>
-  <ul class="legend">
-    <li>Reactor vessel and core, in a concrete cavity below the floor</li>
-    <li>Refuelling pool, flooded, and the refuelling machine on its bridge (booth 3 rides it)</li>
-    <li>Vessel head on its stand, with the control rod drives sticking up</li>
-    <li>4 steam generators and 4 reactor coolant pumps, joined to the vessel by the hot and cold legs</li>
-    <li>Pressurizer, polar crane, equipment hatch, fuel transfer tube to the fuel building</li>
-  </ul>
+  <p class="text">The <b style="color:var(--blue)">reactor</b> is the steel vessel under the pool, beneath the bridge: lid off, core glowing blue at the bottom, 8 m of water above it. Hover over or tap any part to see its name.</p>
   <h2>Who runs the lights</h2>
   <p class="text">Every venue has a DJ booth with a <b style="color:var(--amber)">lighting panel</b> in its decks. One DJ is live at a time. The live booth runs the lights in <b>its own venue and every venue the night has already passed</b>: booth 1 runs 1, booth 2 runs 1 and 2, booth 3 runs all three. Venues still ahead stay dark until the set reaches them. Under the panel, the Light Show Generator keeps the show running from the music.</p>
   <p class="live" id="liveLine" aria-live="polite">Live: booth 1 · lights on venue 1</p>
@@ -90,12 +84,12 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     <button id="tCycle" aria-pressed="true">Move the set</button>
     <button id="tRoute" aria-pressed="true">Route</button>
     <button id="tShell" aria-pressed="false">Solid walls</button>
-    <button id="tLabels" aria-pressed="true">Part labels</button>
   </div>
   <p class="hint">Drag to orbit, scroll or pinch to zoom. Tap the title to fold this key away.</p>
 </details>
 </aside>
 <button id="tSpin" class="spin" aria-pressed="true">Stop spinning</button>
+<div id="tip" class="tip" role="tooltip" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -129,13 +123,15 @@ const walls = [];
 const venueLights = [new THREE.Group(), new THREE.Group(), new THREE.Group()];
 venueLights.forEach(g => scene.add(g));
 
-function add(m, x, y, z, g = scene) { m.position.set(x, y, z); g.add(m); return m; }
+let HOVER = null; const hoverables = []; // while HOVER is set, new parts get that name and show it on hover
+function tagIt(m) { if (HOVER) { m.userData.name = HOVER; hoverables.push(m); } return m; }
+function add(m, x, y, z, g = scene) { m.position.set(x, y, z); g.add(m); return tagIt(m); }
 function rod(a, b, r, m, g = scene) {
   const d = new THREE.Vector3().subVectors(b, a);
   const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), m);
   c.position.copy(a).addScaledVector(d, 0.5);
   c.quaternion.setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
-  g.add(c); return c;
+  g.add(c); return tagIt(c);
 }
 function label(text, x, y, z, color = '#eceef2', big = false, g = scene) {
   const c = document.createElement('canvas'); c.width = 720; c.height = 120;
@@ -145,7 +141,8 @@ function label(text, x, y, z, color = '#eceef2', big = false, g = scene) {
   x2.fillStyle = color; x2.font = (big ? '700 58px' : '600 46px') + ' "IBM Plex Sans", Arial, sans-serif';
   x2.textAlign = 'center'; x2.textBaseline = 'middle'; x2.fillText(text, 360, 62);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
-  const w = big ? 46 : 34; s.scale.set(w, w / 6, 1); s.position.set(x, y, z); s.renderOrder = 10; g.add(s); return s;
+  s.material.sizeAttenuation = false; const w = big ? 0.16 : 0.12; s.scale.set(w, w / 6, 1); // same small size on screen at any zoom
+  s.position.set(x, y, z); s.renderOrder = 10; g.add(s); return s;
 }
 
 // Stick figures in hard hats
@@ -203,13 +200,14 @@ for (let i = 0; i < 9; i++) add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 10
 const guard = add(new THREE.Mesh(new THREE.BoxGeometry(4, 3, 3), mat(0x3e4a57)), -96, 1.5, -14);
 
 // VENUE 1: THE STACK (bigger: base 38 m radius, 110 m tall)
-const LEG = 7.5, TOP = 112;
+const LEG = 7.5, TOP = 112, D = 11; // D: the dance deck, just above the air inlet like a real fill deck
 const rAt = (y) => y < 82 ? 22.5 + 15 * Math.pow((82 - y) / (82 - LEG), 1.6) : 22.5 + 3 * ((y - 82) / (TOP - 82));
 const prof = []; for (let i = 0; i <= 30; i++) { const y = LEG + i / 30 * (TOP - LEG); prof.push(new THREE.Vector2(rAt(y), y)); }
 const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 96), ghost(0x9a9a96, 0.24)); scene.add(shell); walls.push(shell);
 for (let y = 17; y < TOP; y += 10) { const ring = add(new THREE.Mesh(new THREE.TorusGeometry(rAt(y), 0.08, 4, 96), mat(0x6f6f6b)), 0, y, 0); ring.rotation.x = Math.PI / 2; }
 add(new THREE.Mesh(new THREE.TorusGeometry(rAt(TOP), 0.5, 8, 96), mat(0xbdbdb8)), 0, TOP, 0).rotation.x = Math.PI / 2;
 add(new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 4), steel), 0, TOP + 0.4, -rAt(TOP) - 1.6);
+HOVER = 'X-legs: the air inlet all round the base';
 for (let i = 0; i < 36; i++) {
   const a = i / 36 * Math.PI * 2, a0 = (i - 0.5) / 36 * Math.PI * 2, a2 = (i + 0.5) / 36 * Math.PI * 2;
   const R = 38, top = V(Math.cos(a) * R, LEG, Math.sin(a) * R);
@@ -217,13 +215,18 @@ for (let i = 0; i < 36; i++) {
   rod(V(Math.cos(a2) * R, 0, Math.sin(a2) * R), top, 0.5, mat(0xa8a8a3));
   if (i % 3 === 0) add(new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), glow(0xffa43d)), Math.cos(a) * 38.9, LEG + 1, Math.sin(a) * 38.9, venueLights[0]);
 }
+HOVER = null;
+HOVER = 'Cold water basin: the rain lands here';
 add(new THREE.Mesh(new THREE.CylinderGeometry(38, 38, 0.5, 72), mat(0x55585a)), 0, 0.25, 0);
-add(new THREE.Mesh(new THREE.RingGeometry(6, 19, 72), mat(0x3a3f44, { emissive: 0x10241a })), 0, 0.52, 0).rotation.x = -Math.PI / 2;
-add(new THREE.Mesh(new THREE.RingGeometry(20, 36.5, 72), ghost(0x4b5a62, 0.85)), 0, LEG, 0).rotation.x = -Math.PI / 2;
-for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; rod(V(Math.cos(a) * 20, LEG + 0.2, Math.sin(a) * 20), V(Math.cos(a) * 36.5, LEG + 0.2, Math.sin(a) * 36.5), 0.35, mat(0x6f7c82)); }
-add(new THREE.Mesh(new THREE.TorusGeometry(20, 0.1, 4, 96), rail), 0, LEG + 1.1, 0).rotation.x = Math.PI / 2;
-for (let i = 0; i < 60; i++) { const a = i / 60 * Math.PI * 2; rod(V(Math.cos(a) * 20, LEG, Math.sin(a) * 20), V(Math.cos(a) * 20, LEG + 1.1, Math.sin(a) * 20), 0.06, rail); }
-for (const side of [-1, 1]) for (let s = 0; s < 15; s++) add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 0.8), steel), side * 19.5, 0.5 + s * 0.5, -6 + s * 0.6);
+add(new THREE.Mesh(new THREE.CircleGeometry(37, 72), glow(0x2f6f8f, 0.45)), 0, 0.55, 0).rotation.x = -Math.PI / 2;
+HOVER = 'Dance floor: grating deck over the fill, above the X-legs';
+add(new THREE.Mesh(new THREE.RingGeometry(5, rAt(D) - 0.6, 72), ghost(0x4b5a62, 0.7)), 0, D, 0).rotation.x = -Math.PI / 2;
+for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2; rod(V(Math.cos(a) * 5, D + 0.15, Math.sin(a) * 5), V(Math.cos(a) * (rAt(D) - 0.6), D + 0.15, Math.sin(a) * (rAt(D) - 0.6)), 0.25, mat(0x6f7c82)); }
+HOVER = 'Fill supports: the rain zone is underneath';
+for (const rr of [10, 17, 24, 31]) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2 + rr; rod(V(Math.cos(a) * rr, 0.5, Math.sin(a) * rr), V(Math.cos(a) * rr, D, Math.sin(a) * rr), 0.22, mat(0x7a7a75)); }
+HOVER = 'Stairs up to the dance floor';
+for (const side of [-1, 1]) for (let s = 0; s < 22; s++) add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 0.8), steel), side * 19.5, 0.5 + s * 0.5, -6 + s * 0.6);
+HOVER = null;
 for (let c = 0; c < 8; c++) for (let r = 0; r < 5; r++) { // scaffold on the inner wall
   const a = Math.PI * 0.62 + c * 0.04, y0 = LEG + r * 5, rad = rAt(y0) - 1.5;
   rod(V(Math.cos(a) * rad, y0, Math.sin(a) * rad), V(Math.cos(a) * rad, y0 + 5, Math.sin(a) * rad), 0.08, steel);
@@ -234,35 +237,40 @@ for (let k = 0; k <= 52; k++) { // caged ladder up the outside
   add(new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.05, 4, 12, Math.PI), steel), 0, y, -r);
   const y2 = y + 2; if (y2 <= TOP) { const r2 = rAt(y2) + 1.1; rod(V(-0.45, y, -r), V(-0.45, y2, -r2), 0.06, steel); rod(V(0.45, y, -r), V(0.45, y2, -r2), 0.06, steel); }
 }
-rod(V(0, 0, 0), V(0, LEG + 0.5, 0), 2.2, steel);
-add(new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 1.4, 28), mat(0x26272b)), 0, LEG + 1.1, 0);
-const ring1 = add(new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.2, 6, 36), glow(0xffa43d)), 0, LEG + 1.85, 0); ring1.rotation.x = Math.PI / 2;
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.35, 1), glow(0x4fc3ff)), 0, LEG + 2.1, -1);
-const panel1 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 0.9), glow(0xffa43d)), 0, LEG + 2.15, 1.2); panel1.rotation.x = -0.4;
-label('Booth 1 · lighting panel', 0, LEG + 9, 12, '#ffa43d');
+HOVER = 'Hot water riser';
+rod(V(0, 0, 0), V(0, D + 0.5, 0), 2.2, steel);
+HOVER = 'Booth 1 · lighting panel (runs venue 1)';
+add(new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 1.4, 28), mat(0x26272b)), 0, D + 1.1, 0);
+const ring1 = add(new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.2, 6, 36), glow(0xffa43d)), 0, D + 1.85, 0); ring1.rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.35, 1), glow(0x4fc3ff)), 0, D + 2.1, -1);
+const panel1 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 0.9), glow(0xffa43d)), 0, D + 2.15, 1.2); panel1.rotation.x = -0.4;
+HOVER = null;
+// rain falls in the rain zone under the deck, on and off
+const RAIN = 2600, rainPos = new Float32Array(RAIN * 3);
+for (let i = 0; i < RAIN; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.sqrt(Math.random()) * 31; rainPos[i * 3] = Math.cos(a) * r; rainPos[i * 3 + 1] = 0.6 + Math.random() * (D - 1); rainPos[i * 3 + 2] = Math.sin(a) * r; }
+const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xbfe6ff, size: 0.35, transparent: true, opacity: 0, depthWrite: false })); scene.add(rain);
 const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(14, 9, 100, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, 58, 0, venueLights[0]);
 const puffs = [];
-for (let i = 0; i < 50; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2 + Math.random() * 2, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.07, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 100 }; puffs.push(p); }
+for (let i = 0; i < 50; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2 + Math.random() * 2, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.07, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 95 }; puffs.push(p); }
 add(new THREE.Mesh(new THREE.TorusGeometry(22.8, 0.55, 8, 96), glow(0x4fc3ff)), 0, 82, 0, venueLights[0]).rotation.x = Math.PI / 2;
 const lasers = [];
-for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(Math.cos(a) * 4.5, LEG + 2, Math.sin(a) * 4.5), V(Math.cos(a) * 20, TOP + 1, Math.sin(a) * 20)]), new THREE.LineBasicMaterial({ color: 0x8dff5a, transparent: true, opacity: 0.9 })); venueLights[0].add(l); lasers.push(l); }
+for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(Math.cos(a) * 4.5, D + 2, Math.sin(a) * 4.5), V(Math.cos(a) * 20, TOP + 1, Math.sin(a) * 20)]), new THREE.LineBasicMaterial({ color: 0x8dff5a, transparent: true, opacity: 0.9 })); venueLights[0].add(l); lasers.push(l); }
 const heads = [];
 function movingHead(x, y, z, color, g, len = 22, aim = 0) {
   add(new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glow(color)), x, y, z, g);
   const beam = new THREE.Mesh(new THREE.ConeGeometry(3, len, 16, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.11, side: THREE.DoubleSide, depthWrite: false }));
   beam.geometry.translate(0, -len / 2, 0); beam.position.set(x, y, z); g.add(beam); heads.push({ beam, a: aim });
 }
-for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; movingHead(Math.cos(a) * 21, LEG + 0.8, Math.sin(a) * 21, 0xff5ad8, venueLights[0], 22, a); }
-crowd(0, 0, 6.8, 18.5, 150, 0.5);
-crowd(0, 0, 21.5, 34, 40, LEG + 0.2);
+for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, r = rAt(D + 16) - 1.5; movingHead(Math.cos(a) * r, D + 16, Math.sin(a) * r, 0xff5ad8, venueLights[0], 22, a); }
+crowd(0, 0, 6.5, 33, 210, D + 0.2);
 label('1 · The Stack', 0, 34, 0, '#8dff5a', true, route);
 
 // The giant water pipe: a curved walk-through pipe from the stack into the turbine hall
-const partLabels = new THREE.Group(); scene.add(partLabels);
-function part(text, x, y, z) { const s = label(text, x, y, z, '#d7dde3', false, partLabels); s.material.sizeAttenuation = false; s.scale.set(0.15, 0.025, 1); return s; } // same size on screen at any zoom
 const PY = 3.8;
 const pipeCurve = new THREE.CatmullRomCurve3([V(34, PY, 0), V(40, PY, 4), V(48, PY, 13), V(58, PY, 16), V(67, PY, 11), V(72, PY, 3), V(76, PY, 0)]);
 const pipe = new THREE.Mesh(new THREE.TubeGeometry(pipeCurve, 120, 3.8, 32, false), ghost(0x4fc3ff, 0.26)); scene.add(pipe); walls.push(pipe);
+pipe.userData.name = 'Circulating water pipe: walk through it from the stack to the turbine hall'; hoverables.push(pipe);
 for (let i = 0; i <= 34; i++) { // flange ribs, saddles, walkway and lights along the curve
   const t = i / 34, p = pipeCurve.getPointAt(t), tan = pipeCurve.getTangentAt(t);
   const rib = new THREE.Mesh(new THREE.TorusGeometry(3.9, i % 4 === 0 ? 0.32 : 0.14, 6, 28), i % 4 === 0 ? mat(0x2e7d5b) : steel);
@@ -277,12 +285,12 @@ for (let i = 0; i <= 34; i++) { // flange ribs, saddles, walkway and lights alon
 const railPts = (off) => pipeCurve.getSpacedPoints(80).map((p, k) => { const tan = pipeCurve.getTangentAt(k / 80); const n = V(-tan.z, 0, tan.x).normalize(); return p.clone().add(n.multiplyScalar(off)).setY(PY - 1.6); });
 for (const off of [-1.4, 1.4]) scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(railPts(off)), new THREE.LineBasicMaterial({ color: 0xffc93c })));
 const mid = pipeCurve.getPointAt(0.5);
+HOVER = 'Manway and valve';
 add(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 1.4, 20), mat(0x2e7d5b)), mid.x, PY + 4.2, mid.z);
 add(new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.12, 6, 20), mat(0xd04040)), mid.x, PY + 5.1, mid.z).rotation.x = Math.PI / 2;
+HOVER = 'Service water pipes';
 rod(V(36, 10, 9), V(74, 10, 9), 0.9, mat(0x2e7d5b)); rod(V(36, 10, -7), V(74, 10, -7), 0.9, mat(0x2e7d5b));
-label('Walk the water pipe', 58, 14, 18, '#4fc3ff');
-part('Manway + valve', mid.x, PY + 9, mid.z);
-part('Circulating water pipe', 46, 1.5, 24);
+HOVER = null;
 
 // VENUE 2: TURBINE HALL (74 to 140 on x), attached to the pipe and to the dome
 const HX0 = 74, HX1 = 140, HZ = 20, HH = 26;
@@ -292,15 +300,21 @@ for (let x = HX0 + 4; x < HX1; x += 8) rod(V(x, 0, -5.2), V(x, 7, -5.2), 0.25, s
 add(new THREE.Mesh(new THREE.BoxGeometry(HX1 - HX0, 0.12, 0.12), rail), (HX0 + HX1) / 2, 8.1, -5.1);
 for (let i = 0; i < 3; i++) {
   const x = 86 + i * 18;
+  HOVER = 'Steam turbine';
   const t = add(new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 12, 24), mat(0xe8e8e4)), x, 10.6, -12); t.rotation.z = Math.PI / 2;
-  const gen = add(new THREE.Mesh(new THREE.BoxGeometry(5, 5.5, 5.5), mat(0xd04040)), x + 8, 9.8, -12);
+  HOVER = 'Generator';
+  add(new THREE.Mesh(new THREE.BoxGeometry(5, 5.5, 5.5), mat(0xd04040)), x + 8, 9.8, -12);
+  HOVER = null;
 }
 for (const z of [-HZ + 1, HZ - 1]) rod(V(HX0, HH - 2, z), V(HX1, HH - 2, z), 0.4, steel);
+HOVER = 'Overhead crane';
 const crane2 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.4, HZ * 2 - 2), mat(0xffa43d)), 110, HH - 1.5, 0);
+HOVER = null;
 add(new THREE.Mesh(new THREE.PlaneGeometry(56, 18), mat(0x3a3f44, { emissive: 0x220f22 })), (HX0 + HX1) / 2, 0.08, 9).rotation.x = -Math.PI / 2;
+HOVER = 'Booth 2 · lighting panel (runs venues 1 and 2)';
 add(new THREE.Mesh(new THREE.BoxGeometry(6, 1.4, 3), mat(0x26272b)), 107, 7.9, -5.6);
 const panel2 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 0.9), glow(0xffa43d)), 107, 8.9, -4.8); panel2.rotation.x = -0.4;
-label('Booth 2 · lighting panel', 107, 16, -2, '#ffa43d');
+HOVER = null;
 for (const z of [-HZ + 0.5, HZ - 0.5]) add(new THREE.Mesh(new THREE.BoxGeometry(HX1 - HX0 - 4, 0.6, 0.4), glow(0xff5ad8)), (HX0 + HX1) / 2, 20, z, venueLights[1]);
 for (let i = 0; i < 6; i++) movingHead(84 + i * 9, HH - 3, 2 + (i % 2) * 6, 0xff5ad8, venueLights[1], 22);
 const strobes = [];
@@ -313,80 +327,85 @@ label('2 · Turbine Hall', (HX0 + HX1) / 2, HH + 8, 0, '#ff5ad8', true, route);
 const RC = 166, RR = 26, RH = 36, FL = 8;
 const cont = add(new THREE.Mesh(new THREE.CylinderGeometry(RR, RR, RH, 64, 1, true), ghost(0xb7b7b2, 0.18)), RC, RH / 2, 0); walls.push(cont);
 const dome = add(new THREE.Mesh(new THREE.SphereGeometry(RR, 64, 18, 0, Math.PI * 2, 0, Math.PI / 2), cont.material), RC, RH, 0); walls.push(dome);
+HOVER = 'Equipment hatch: the way into the dome';
 add(new THREE.Mesh(new THREE.TorusGeometry(4, 0.7, 8, 32), steel), HX1 + 0.4, 4.4, 0).rotation.y = Math.PI / 2;
 for (let s = 0; s < 16; s++) add(new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 4), steel), HX1 + 1.5 + s * 0.55, 0.25 + s * 0.5, 0);
-// operating floor around the pool
+HOVER = 'Operating floor';
 add(new THREE.Mesh(new THREE.RingGeometry(10.5, RR - 0.6, 64), mat(0x4a5258, { side: THREE.DoubleSide })), RC, FL, 0).rotation.x = -Math.PI / 2;
 add(new THREE.Mesh(new THREE.TorusGeometry(10.5, 0.1, 4, 64), rail), RC, FL + 1.1, 0).rotation.x = Math.PI / 2;
 // refuelling pool: concrete cavity, water, the reactor vessel and its core
+HOVER = 'Refuelling pool, flooded: the water shields the open reactor';
 const cavity = add(new THREE.Mesh(new THREE.BoxGeometry(16, FL + 6, 16), ghost(0x8f8f8a, 0.22)), RC, (FL - 6) / 2, 0); walls.push(cavity);
 const water = add(new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.15, 14.6), glow(0x4fc3ff, 0.55)), RC, FL - 0.4, 0, venueLights[2]);
+HOVER = 'Reactor vessel and core: the reactor itself, lid off';
 const vesselMat = mat(0x9aa3a8, { metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
 add(new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 10, 32, 1, true), vesselMat), RC, 0, 0);
 add(new THREE.Mesh(new THREE.SphereGeometry(3.2, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), vesselMat), RC, -5, 0);
 add(new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.45, 8, 32), steel), RC, 5, 0).rotation.x = Math.PI / 2;
 add(new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 4, 24), glow(0x6fd6ff, 0.6)), RC, -1.8, 0); // the core's own Cherenkov glow is always on
 for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { if (i * i + j * j > 6) continue; add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 4.2, 0.7), glow(0xbfefff, 0.85)), RC + i * 0.85, -1.8, j * 0.85); }
+HOVER = null;
 const coreGlow = add(new THREE.PointLight(0x4fc3ff, 3, 70), RC, FL + 2, 0, venueLights[2]);
 const LOOPS = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
 const pipeMat = mat(0xb0b6ba, { metalness: 0.4 });
 for (const a of LOOPS) {
   const x = RC + Math.cos(a) * 18, z = Math.sin(a) * 18;
+  HOVER = 'Hot leg: hot water from the reactor to a steam generator';
   rod(V(RC + Math.cos(a) * 3.2, 3, Math.sin(a) * 3.2), V(x, 3, z), 0.75, pipeMat); // hot leg to the steam generator
   const px = RC + Math.cos(a + 0.2) * 13, pz = Math.sin(a + 0.2) * 13;
+  HOVER = 'Cold leg: cooled water back into the reactor';
   rod(V(RC + Math.cos(a + 0.2) * 3.2, 1.8, Math.sin(a + 0.2) * 3.2), V(px, 1.8, pz), 0.6, mat(0x8f99a0, { metalness: 0.4 })); // cold leg back from the pump
+  HOVER = 'Steam generator: boils the second water loop into steam';
   rod(V(x, 3, z), V(x, FL + 13, z), 2.3, mat(0xe2e2dc)); // steam generator
   add(new THREE.Mesh(new THREE.SphereGeometry(3, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xe2e2dc)), x, FL + 13, z);
   rod(V(x, 1.2, z), V(px, 1.2, pz), 0.6, pipeMat);
+  HOVER = 'Reactor coolant pump';
   rod(V(px, 0, pz), V(px, 5.5, pz), 1.3, mat(0x3f6fa0)); // reactor coolant pump
   add(new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 2.2, 16), mat(0x2a2a2a)), px, 6.6, pz);
+  HOVER = 'Steam generator compartment';
   const dr = add(new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, FL + 2, 24, 1, true), ghost(0x8f8f8a, 0.16)), x, (FL + 2) / 2, z); walls.push(dr);
 }
+HOVER = 'Pressurizer: keeps the reactor water under pressure so it never boils';
 rod(V(RC + 4, FL, 19.5), V(RC + 4, FL + 15, 19.5), 1.7, mat(0xe2e2dc)); // pressurizer
 add(new THREE.Mesh(new THREE.SphereGeometry(1.7, 16, 8), mat(0xe2e2dc)), RC + 4, FL + 15, 19.5);
 const hx = RC - 13, hz = 10; // vessel head on its stand with the control rod drives
+HOVER = 'Vessel head on its stand, with the control rod drives';
 add(new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 1.2, 24), steel), hx, FL + 0.6, hz);
 add(new THREE.Mesh(new THREE.SphereGeometry(3.4, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x9aa3a8, { metalness: 0.5 })), hx, FL + 1.2, hz);
 for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { if (i * i + j * j > 5) continue; rod(V(hx + i * 0.9, FL + 3, hz + j * 0.9), V(hx + i * 0.9, FL + 7.5, hz + j * 0.9), 0.18, mat(0x6a7278)); }
+HOVER = 'Upper internals, parked in the pool';
 add(new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 4, 20), mat(0x7d868c)), RC + 5, FL - 3, 5); // upper internals parked in the pool
 // refuelling machine: bridge over the pool, trolley and mast; booth 3 rides the bridge
+HOVER = 'Refuelling machine: bridge, trolley and mast';
 add(new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.8, 24), mat(0xffd27a)), RC, FL + 1.6, 0);
 for (const z of [-12, 12]) add(new THREE.Mesh(new THREE.BoxGeometry(26, 0.3, 0.6), steel), RC, FL + 0.9, z);
 add(new THREE.Mesh(new THREE.BoxGeometry(3, 2.4, 3), mat(0xffa43d)), RC, FL + 3.2, -3);
 rod(V(RC, FL + 4.4, -3), V(RC, 0.5, -3), 0.35, steel);
+HOVER = 'Booth 3 · lighting panel (runs all three venues)';
 add(new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.3, 3), mat(0x26272b)), RC, FL + 2.65, 3);
 const panel3 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 0.9), glow(0xffa43d)), RC, FL + 3.5, 4.3); panel3.rotation.x = -0.4;
-label('Booth 3 · lighting panel', RC, FL + 10, 12, '#ffa43d');
+HOVER = 'Fuel transfer tube to the fuel building';
 rod(V(RC + 8, 1, 0), V(RC + 31, 1, 0), 0.8, steel); // fuel transfer tube
 add(new THREE.Mesh(new THREE.BoxGeometry(14, 16, 18), ghost(0x7f8b90, 0.22)), RC + 38, 8, 0);
 add(new THREE.Mesh(new THREE.BoxGeometry(8, 0.2, 10), glow(0x4fc3ff, 0.6)), RC + 38, 4, 0, venueLights[2]);
+HOVER = 'Polar crane: lifts the vessel head';
 add(new THREE.Mesh(new THREE.TorusGeometry(RR - 1, 0.45, 6, 72), steel), RC, RH - 4, 0).rotation.x = Math.PI / 2; // polar crane rail
 add(new THREE.Mesh(new THREE.BoxGeometry(RR * 2 - 2, 1.8, 2.8), mat(0xffa43d)), RC, RH - 3, 0);
 add(new THREE.Mesh(new THREE.BoxGeometry(3, 2, 4), mat(0xd04040)), RC + 6, RH - 4.4, 0);
+HOVER = null;
 for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; movingHead(RC + Math.cos(a) * (RR - 3), RH - 5, Math.sin(a) * (RR - 3), 0x4fc3ff, venueLights[2], 30, a); }
 crowd(RC, 0, 11.5, 15.5, 60, FL + 0.1);
 label('3 · Reactor Hall', RC, RH + RR + 6, 0, '#4fc3ff', true, route);
-part('Reactor vessel + core', RC - 9, -2, -9);
-part('Refuelling pool (flooded)', RC + 2, FL + 5, -13);
-part('Refuelling machine', RC + 6, FL + 8, -4);
-part('Vessel head + control rod drives', hx - 4, FL + 11, hz + 3);
-part('Steam generator (×4)', RC + 13, FL + 17, -13);
-part('Reactor coolant pump (×4)', RC + 15, 9, 15);
-part('Pressurizer', RC + 4, FL + 19, 19.5);
-part('Polar crane', RC - 10, RH + 1, 0);
-part('Equipment hatch', HX1 + 2, 10, -6);
-part('Fuel transfer tube → fuel building', RC + 30, 18, 8);
-part('Upper internals (parked)', RC + 9, FL + 2, 10);
 
 // Pads
 add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), RC - 4, FL + 0.2, -19);
-add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), 14, 0.6, -14);
+add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), 14, D + 0.4, -14);
 
 // The route: break in -> 1 -> pipe -> 2 -> hatch -> 3, pad back
 const pipeIn = pipeCurve.getSpacedPoints(20).map(p => p.clone().setY(PY - 2));
-const path = new THREE.CatmullRomCurve3([V(-96, 1, 0), V(-74, 1, 2), V(-58, 1, 0.5), V(-38, 1, 0), V(-24, 1.2, -4), V(-10, 1.2, -12), V(8, 1.2, -12), V(22, 1.2, -4), V(30, 1.6, -1), ...pipeIn, V(86, 1, 6), V(108, 1, 10), V(130, 1, 5), V(140, 1.2, 0), V(148, FL + 0.8, 0), V(152, FL + 0.8, -9), V(RC - 4, FL + 0.8, -18)]);
+const path = new THREE.CatmullRomCurve3([V(-96, 1, 0), V(-74, 1, 2), V(-58, 1, 0.5), V(-38, 1, 0), V(-26, 1.2, -6), V(-19.5, 1.2, -7), V(-19.5, D + 1, 7.5), V(-8, D + 1, 12), V(8, D + 1, 12), V(19.5, D + 1, 7.5), V(19.5, 1.2, -7), V(28, 1.4, -3), V(32, 1.8, -1), ...pipeIn, V(86, 1, 6), V(108, 1, 10), V(130, 1, 5), V(140, 1.2, 0), V(148, FL + 0.8, 0), V(152, FL + 0.8, -9), V(RC - 4, FL + 0.8, -18)]);
 route.add(new THREE.Mesh(new THREE.TubeGeometry(path, 400, 0.45, 8, false), glow(0xffa43d, 0.75)));
-const back = new THREE.CatmullRomCurve3([V(RC - 4, FL + 2, -19), V(120, 48, -50), V(50, 48, -44), V(14, 2, -14)]);
+const back = new THREE.CatmullRomCurve3([V(RC - 4, FL + 2, -19), V(120, 48, -50), V(50, 52, -44), V(14, D + 2, -14)]);
 const backLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(back.getPoints(100)), new THREE.LineDashedMaterial({ color: 0xc8d0d8, dashSize: 3, gapSize: 2 })); backLine.computeLineDistances(); route.add(backLine);
 const walkers = [];
 for (let i = 0; i < 20; i++) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glow(0xffd23f)); route.add(w); walkers.push({ w, t: i / 20 }); }
@@ -418,7 +437,20 @@ function setSpin(on) { controls.autoRotate = on; spinBtn.setAttribute('aria-pres
 if (reduce) setSpin(false);
 spinBtn.addEventListener('click', () => setSpin(!controls.autoRotate));
 renderer.domElement.addEventListener('pointerdown', () => setSpin(false));
-toggle(document.getElementById('tLabels'), on => { partLabels.visible = on; });
+// hover (or tap) a part to see its name
+const tip = document.getElementById('tip'), ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+function showTip(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(hoverables, false).find(h => h.object.visible);
+  if (!hit) { tip.hidden = true; renderer.domElement.style.cursor = ''; return; }
+  tip.textContent = hit.object.userData.name; tip.hidden = false; renderer.domElement.style.cursor = 'help';
+  tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+}
+renderer.domElement.addEventListener('pointermove', showTip);
+renderer.domElement.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') showTip(e); });
+renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; });
 if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('key').open = false;
 
 function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -434,7 +466,12 @@ function frame() {
     heads.forEach(({ beam, a }, i) => { beam.rotation.set(0.55 * Math.sin(t * 0.9 + i), a, 0.45 * Math.cos(t * 0.7 + i)); });
     strobes.forEach((s, i) => { s.visible = Math.sin(t * 18 + i * 1.7) > 0.6; });
     coreGlow.intensity = 2 + beat * 2.2; water.material.opacity = 0.45 + 0.3 * beat;
-    puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.07) % 100; p.position.set(Math.cos(u.a + t * 0.1) * u.r, u.y + 4, Math.sin(u.a + t * 0.1) * u.r); });
+    puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.07) % 95; p.position.set(Math.cos(u.a + t * 0.1) * u.r, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r); });
+    const raining = (t % 11) < 6; // 6 s of rain, 5 s dry
+    rain.material.opacity += ((raining ? 0.8 : 0) - rain.material.opacity) * 0.06;
+    const rp = rainGeo.attributes.position.array;
+    for (let i = 1; i < rp.length; i += 3) { rp[i] -= 0.28; if (rp[i] < 0.6) rp[i] = D - 0.4; }
+    rainGeo.attributes.position.needsUpdate = true;
     dancers.forEach(d => { d.g.position.y = d.y + 0.35 * Math.max(0, Math.sin(t * 8.6 + d.p)); });
     walkers.forEach(o => { o.t = (o.t + 0.001) % 1; o.w.position.copy(path.getPointAt(o.t)).add(V(0, 0.8, 0)); });
   }
