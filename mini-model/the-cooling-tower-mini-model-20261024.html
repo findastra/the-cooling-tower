@@ -104,7 +104,7 @@ scene.fog = new THREE.Fog(0x14161a, 320, 700);
 const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
 camera.position.set(-170, 140, 190);
 // Same navigation as Astra's PetOS System Map: trackball turning, scroll zoom, scroll-click drag, right-hold to fly.
-const HOME_T = V(55, 20, 0), HOME_C = V(-170, 140, 190);
+const HOME_T = new THREE.Vector3(55, 20, 0), HOME_C = new THREE.Vector3(-170, 140, 190);
 const controls = new THREE.TrackballControls(camera, renderer.domElement);
 controls.target.copy(HOME_T);
 controls.rotateSpeed = 1.2; controls.zoomSpeed = 1.4; controls.panSpeed = .6; controls.dynamicDampingFactor = .2;
@@ -136,6 +136,24 @@ function rod(a, b, r, m, g = scene) {
   c.position.copy(a).addScaledVector(d, 0.5);
   c.quaternion.setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
   g.add(c); return tagIt(c);
+}
+// a stair flight inside a tube-and-clamp scaffold tower: x0,z0 is the foot, (dx,dz) the way up
+function scaffoldStair(x0, y0, z0, dx, dz, steps, rise = 0.5, run = 0.6, width = 2.4) {
+  const tube = mat(0x9aa0a6, { metalness: 0.4, roughness: 0.5 }), clamp = mat(0xc9a227);
+  const dir = V(dx, 0, dz).normalize(), side = V(-dir.z, 0, dir.x), yaw = -Math.atan2(dir.z, dir.x);
+  const len = steps * run, top = y0 + steps * rise, w = width / 2 + 0.4;
+  for (let s = 0; s < steps; s++) { const t = add(new THREE.Mesh(new THREE.BoxGeometry(run, 0.12, width), mat(0x6f7c82)), x0 + dir.x * (s + 0.5) * run, y0 + (s + 1) * rise, z0 + dir.z * (s + 0.5) * run); t.rotation.y = yaw; }
+  for (let d = 0; d <= len + 0.01; d += 2) for (const k of [-w, w]) { // standards (uprights)
+    const base = V(x0, y0, z0).addScaledVector(dir, d).addScaledVector(side, k);
+    rod(base, base.clone().setY(top + 1.2), 0.08, tube);
+  }
+  for (let y = y0 + 2; y <= top + 1.2; y += 2) for (const k of [-w, w]) { // ledgers at every lift, with clamps
+    const a = V(x0, y, z0).addScaledVector(side, k), b = a.clone().addScaledVector(dir, len);
+    rod(a, b, 0.07, tube);
+    for (let d = 0; d <= len + 0.01; d += 2) add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 6, 4), clamp), a.x + dir.x * d, y, a.z + dir.z * d);
+  }
+  for (const k of [-w, w]) { const a = V(x0, y0 + 1.1, z0).addScaledVector(side, k), b = V(x0, top + 1.1, z0).addScaledVector(dir, len).addScaledVector(side, k); rod(a, b, 0.06, mat(0xffc93c)); } // handrails
+  for (let d = 0; d + 4 <= len + 0.01; d += 4) { const a = V(x0, y0, z0).addScaledVector(dir, d).addScaledVector(side, w), b = V(x0, Math.min(top, y0 + 4), z0).addScaledVector(dir, d + 4).addScaledVector(side, w); rod(a, b, 0.06, tube); } // braces
 }
 function label(text, x, y, z, color = '#eceef2', big = false, g = scene) {
   const c = document.createElement('canvas'); c.width = 720; c.height = 120;
@@ -236,7 +254,7 @@ for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2; rod(V(Math.cos(a)
 HOVER = 'Fill supports: the rain zone is underneath';
 for (const rr of [10, 17, 24, 31]) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2 + rr; rod(V(Math.cos(a) * rr, 0.5, Math.sin(a) * rr), V(Math.cos(a) * rr, D, Math.sin(a) * rr), 0.22, mat(0x7a7a75)); }
 HOVER = 'Stairs up to the dance floor';
-for (const side of [-1, 1]) for (let s = 0; s < 22; s++) add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 0.8), steel), side * 19.5, 0.5 + s * 0.5, -6 + s * 0.6);
+for (const side of [-1, 1]) scaffoldStair(side * 19.5, 0.5, -6, 0, 1, 21);
 HOVER = null;
 for (let c = 0; c < 8; c++) for (let r = 0; r < 5; r++) { // scaffold on the inner wall
   const a = Math.PI * 0.62 + c * 0.04, y0 = LEG + r * 5, rad = rAt(y0) - 1.5;
@@ -279,25 +297,41 @@ for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, r = rAt(D + 16) -
 crowd(0, 0, 6.5, 33, 210, D + 0.2);
 label('1 · The Stack', 0, 34, 0, '#8dff5a', true, route);
 
-// The giant water pipe: a curved walk-through pipe from the stack into the turbine hall
-const PY = 3.8;
-const pipeCurve = new THREE.CatmullRomCurve3([V(34, PY, 0), V(40, PY, 4), V(48, PY, 13), V(58, PY, 16), V(67, PY, 11), V(72, PY, 3), V(76, PY, 0)]);
-const pipe = new THREE.Mesh(new THREE.TubeGeometry(pipeCurve, 120, 3.8, 32, false), ghost(0x4fc3ff, 0.26)); scene.add(pipe); walls.push(pipe);
-pipe.userData.name = 'Circulating water pipe: walk through it from the stack to the turbine hall'; hoverables.push(pipe);
-for (let i = 0; i <= 34; i++) { // flange ribs, saddles, walkway and lights along the curve
-  const t = i / 34, p = pipeCurve.getPointAt(t), tan = pipeCurve.getTangentAt(t);
-  const rib = new THREE.Mesh(new THREE.TorusGeometry(3.9, i % 4 === 0 ? 0.32 : 0.14, 6, 28), i % 4 === 0 ? mat(0x2e7d5b) : steel);
-  rib.position.copy(p); rib.lookAt(p.clone().add(tan)); scene.add(rib);
-  const yaw = -Math.atan2(tan.z, tan.x);
-  if (i % 4 === 2) { const sd = add(new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 9), mat(0x8f8f8a)), p.x, 0.4, p.z); sd.rotation.y = yaw; }
-  if (i % 2 === 1) {
-    const plank = add(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.15, 3), mat(0x5b6670)), p.x, PY - 2.6, p.z); plank.rotation.y = yaw;
-    add(new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), glow(0xbfe9ff)), p.x, PY + 3.3, p.z);
+// The giant water pipe: long straight runs with elbow turns, from the stack into the turbine hall
+const PY = 3.8, PR = 3.8, BEND = 6;
+const pipeCorners = [V(34, PY, 0), V(46, PY, 0), V(46, PY, 16), V(64, PY, 16), V(64, PY, 0), V(77, PY, 0)];
+const waterPipeMat = ghost(0x4fc3ff, 0.26);
+HOVER = 'Circulating water pipe: walk through it from the stack to the turbine hall';
+const pathPts = [];
+for (let i = 0; i < pipeCorners.length - 1; i++) {
+  const a = pipeCorners[i], b = pipeCorners[i + 1], dir = b.clone().sub(a).normalize();
+  const s0 = i === 0 ? a.clone() : a.clone().addScaledVector(dir, BEND);
+  const s1 = i === pipeCorners.length - 2 ? b.clone() : b.clone().addScaledVector(dir, -BEND);
+  const len = s0.distanceTo(s1);
+  const seg = tagIt(new THREE.Mesh(new THREE.CylinderGeometry(PR, PR, len, 32, 1, true), waterPipeMat));
+  seg.position.copy(s0).add(s1).multiplyScalar(0.5); seg.quaternion.setFromUnitVectors(V(0, 1, 0), dir); scene.add(seg); walls.push(seg);
+  pathPts.push(s0, s1);
+  const yaw = -Math.atan2(dir.z, dir.x);
+  for (let d = 0; d <= len; d += 3) { // ribs, a bolted flange every 12 m, saddles, walkway, lights
+    const p = s0.clone().addScaledVector(dir, d), big = d % 12 < 0.01;
+    const rib = new THREE.Mesh(new THREE.TorusGeometry(PR + 0.1, big ? 0.32 : 0.12, 6, 28), big ? mat(0x2e7d5b) : steel);
+    rib.position.copy(p); rib.lookAt(p.clone().add(dir)); scene.add(rib);
+    if (d % 6 < 0.01) { const sd = add(new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 9), mat(0x8f8f8a)), p.x, 0.4, p.z); sd.rotation.y = yaw; }
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(3, 0.15, 3), mat(0x5b6670)); plank.position.set(p.x, PY - 2.6, p.z); plank.rotation.y = yaw; scene.add(plank);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), glow(0xbfe9ff)); lamp.position.set(p.x, PY + 3.3, p.z); scene.add(lamp);
+  }
+  const n = V(-dir.z, 0, dir.x);
+  for (const off of [-1.4, 1.4]) scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([s0.clone().addScaledVector(n, off).setY(PY - 1.6), s1.clone().addScaledVector(n, off).setY(PY - 1.6)]), new THREE.LineBasicMaterial({ color: 0xffc93c })));
+  if (i < pipeCorners.length - 2) { // elbow into the next run
+    const nb = pipeCorners[i + 2], dir2 = nb.clone().sub(b).normalize();
+    const elbow = new THREE.QuadraticBezierCurve3(s1, b, b.clone().addScaledVector(dir2, BEND));
+    const el = tagIt(new THREE.Mesh(new THREE.TubeGeometry(elbow, 16, PR, 32, false), waterPipeMat)); scene.add(el); walls.push(el);
+    for (const t of [0, 1]) { const q = elbow.getPoint(t), tg = elbow.getTangent(t); const f = new THREE.Mesh(new THREE.TorusGeometry(PR + 0.1, 0.32, 6, 28), mat(0x2e7d5b)); f.position.copy(q); f.lookAt(q.clone().add(tg)); scene.add(f); }
+    for (let k = 1; k < 8; k++) pathPts.push(elbow.getPoint(k / 8));
   }
 }
-const railPts = (off) => pipeCurve.getSpacedPoints(80).map((p, k) => { const tan = pipeCurve.getTangentAt(k / 80); const n = V(-tan.z, 0, tan.x).normalize(); return p.clone().add(n.multiplyScalar(off)).setY(PY - 1.6); });
-for (const off of [-1.4, 1.4]) scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(railPts(off)), new THREE.LineBasicMaterial({ color: 0xffc93c })));
-const mid = pipeCurve.getPointAt(0.5);
+const pipeCurve = new THREE.CatmullRomCurve3(pathPts, false, 'catmullrom', 0.05);
+const mid = V(55, PY, 16);
 HOVER = 'Manway and valve';
 add(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 1.4, 20), mat(0x2e7d5b)), mid.x, PY + 4.2, mid.z);
 add(new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.12, 6, 20), mat(0xd04040)), mid.x, PY + 5.1, mid.z).rotation.x = Math.PI / 2;
@@ -371,7 +405,9 @@ const cont = add(new THREE.Mesh(new THREE.CylinderGeometry(RR, RR, RH, 64, 1, tr
 const dome = add(new THREE.Mesh(new THREE.SphereGeometry(RR, 64, 18, 0, Math.PI * 2, 0, Math.PI / 2), cont.material), RC, RH, 0); walls.push(dome);
 HOVER = 'Equipment hatch: the way into the dome';
 add(new THREE.Mesh(new THREE.TorusGeometry(4, 0.7, 8, 32), steel), HX1 + 0.4, 4.4, 0).rotation.y = Math.PI / 2;
-for (let s = 0; s < 16; s++) add(new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 4), steel), HX1 + 1.5 + s * 0.55, 0.25 + s * 0.5, 0);
+HOVER = 'Scaffold stairs up to the operating floor';
+scaffoldStair(HX1 + 1.2, 0.2, 0, 1, 0, 16, 0.5, 0.55, 3.2);
+HOVER = 'Equipment hatch: the way into the dome';
 HOVER = 'Operating floor';
 add(new THREE.Mesh(new THREE.RingGeometry(10.5, RR - 0.6, 64), mat(0x4a5258, { side: THREE.DoubleSide })), RC, FL, 0).rotation.x = -Math.PI / 2;
 add(new THREE.Mesh(new THREE.TorusGeometry(10.5, 0.1, 4, 64), rail), RC, FL + 1.1, 0).rotation.x = Math.PI / 2;
@@ -453,8 +489,6 @@ const back = new THREE.CatmullRomCurve3([V(RC - 4, FL + 2, -19), V(120, 48, -50)
 const backLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(back.getPoints(100)), new THREE.LineDashedMaterial({ color: 0xc8d0d8, dashSize: 3, gapSize: 2 })); backLine.computeLineDistances(); route.add(backLine);
 const walkers = [];
 for (let i = 0; i < 20; i++) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glow(0xffd23f)); route.add(w); walkers.push({ w, t: i / 20 }); }
-label('IN · Break in', -90, 11, 0, '#ffa43d', true, route);
-label('Pad back to 1', 96, 54, -48, '#c8d0d8', false, route);
 
 // Lighting control: the live booth lights its venue and every venue already passed
 let live = 0;
