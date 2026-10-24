@@ -38,12 +38,12 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 <aside class="panel">
   <h1>The Cooling Tower · 3D draft</h1>
   <p class="sub">Half size · tower 75 m tall · blocks only</p>
-  <h2>DJ venues</h2>
+  <h2>DJ venues (your first-deck answers)</h2>
   <ol>
-    <li><b>The Stack</b>: main dance floor on the drained basin. DJ in the site office on scaffolding at the wall.</li>
-    <li><b>Turbine Hall</b>: halfway down the water tunnel. Smaller floor, booth on the turbine deck.</li>
-    <li><b>Reactor Hall</b>: the secret room. Booth on the refuelling bridge over the glowing pool.</li>
+    <li><b>The Stack</b>: main floor on the drained basin. DJ booth on the water riser in the middle, crowd all round.</li>
+    <li><b>Reactor Hall</b>: second booth on the refuelling bridge over the glowing pool. One DJ live at a time, same music on both floors.</li>
   </ol>
+  <p class="hint">Turbine Hall, halfway down the tunnel, is drawn as an optional third floor.</p>
   <h2>Lighting</h2>
   <ul>
     <li><span class="dot" style="background:var(--green)"></span>8 lasers from the floor to the open top</li>
@@ -138,21 +138,17 @@ for (let i = 0; i < 24; i++) {
 
 // Basin floor, cleared centre and the fill-deck ring (balcony)
 const basin = new THREE.Mesh(new THREE.CylinderGeometry(25, 25, 0.4, 64), mat(0x55585a)); basin.position.y = 0.2; scene.add(basin);
-const danceFloor = new THREE.Mesh(new THREE.CircleGeometry(11, 48), mat(0x3a3f44, { emissive: 0x112218 }));
+const danceFloor = new THREE.Mesh(new THREE.RingGeometry(4, 12, 48), mat(0x3a3f44, { emissive: 0x112218 }));
 danceFloor.rotation.x = -Math.PI / 2; danceFloor.position.y = 0.45; scene.add(danceFloor);
 const deck = new THREE.Mesh(new THREE.RingGeometry(13, 24, 64), mat(0x4b5a62, { side: THREE.DoubleSide }));
 deck.rotation.x = -Math.PI / 2; deck.position.y = 5; scene.add(deck);
-label('1 · The Stack · dance floor', 0, 9, 0, '#8dff5a');
+label('1 · The Stack · main floor', 0, 20, 0, '#8dff5a');
 
-// DJ site office on scaffold, facing the centre
-const office = new THREE.Group();
-const box = new THREE.Mesh(new THREE.BoxGeometry(7, 3.2, 3.6), mat(0x26272b)); box.position.y = 1.6; office.add(box);
-const win = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.8), glow(0x4fc3ff, 0.85)); win.position.set(0, 1.9, 1.81); office.add(win);
-for (const x of [-3, 3]) for (const z of [-1.5, 1.5]) {
-  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 6, 6), mat(0xffa43d)); p.position.set(x, -3, z); office.add(p);
-}
-office.position.set(-17, 6, 0); office.lookAt(0, 6, 0); scene.add(office);
-label('DJ site office', -17, 13, 0, '#ffa43d');
+// DJ booth on the hot water riser in the middle, crowd all round (first deck, Q3)
+const riser = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 5, 16), mat(0x8a8d93)); riser.position.y = 2.5; scene.add(riser);
+const booth = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 1.2, 24), mat(0x26272b)); booth.position.y = 5.6; scene.add(booth);
+const boothRing = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.15, 6, 32), glow(0xffa43d)); boothRing.rotation.x = Math.PI / 2; boothRing.position.y = 6.2; scene.add(boothRing);
+label('DJ booth on the riser', 0, 14, 0, '#ffa43d');
 
 // Smoke column and shell wash
 const smoke = new THREE.Mesh(new THREE.CylinderGeometry(9, 6, 70, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false }));
@@ -195,7 +191,7 @@ for (let i = 0; i < 3; i++) {
 const tFloor = new THREE.Mesh(new THREE.PlaneGeometry(20, 9), mat(0x3a3f44, { emissive: 0x18101a })); tFloor.rotation.x = -Math.PI / 2; tFloor.position.set(80, 0.1, 5); scene.add(tFloor);
 const tBooth = new THREE.Mesh(new THREE.BoxGeometry(5, 1.2, 2.5), glow(0xffa43d)); tBooth.position.set(80, 6.2, -4); scene.add(tBooth);
 const hallWash = new THREE.Mesh(new THREE.BoxGeometry(40, 0.4, 0.4), glow(0xff5ad8)); hallWash.position.set(80, 15.5, 8); lights.add(hallWash);
-label('2 · Turbine Hall', 80, 21, 0, '#ff5ad8');
+label('Turbine Hall · optional 3rd', 80, 21, 0, '#ff5ad8');
 
 // Reactor hall: containment with dome, pool and refuelling bridge
 const cont = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 26, 48, 1, true), mat(0xb7b7b2, { transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false }));
@@ -206,7 +202,7 @@ const poolGlow = new THREE.PointLight(0x4fc3ff, 2.2, 40); poolGlow.position.set(
 const bridge = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 16), mat(0xffd27a)); bridge.position.set(145, 3, 0); scene.add(bridge);
 const rBooth = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 2.4), glow(0xffa43d)); rBooth.position.set(145, 3.9, 0); scene.add(rBooth);
 const ringFloor = new THREE.Mesh(new THREE.RingGeometry(7.5, 15, 48), mat(0x3a3f44, { side: THREE.DoubleSide })); ringFloor.rotation.x = -Math.PI / 2; ringFloor.position.set(145, 0.1, 0); scene.add(ringFloor);
-label('3 · Reactor Hall · secret', 145, 50, 0, '#4fc3ff');
+label('2 · Reactor Hall · bridge booth', 145, 50, 0, '#4fc3ff');
 
 // Switches
 function toggle(btn, fn) { btn.addEventListener('click', () => { const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', String(on)); fn(on); }); }
