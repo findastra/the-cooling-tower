@@ -60,7 +60,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <p class="sub">A pocket-sized look at the world, no VR needed · 3 connected venues · tower 110 m tall</p>
   <h2>The night, in order</h2>
   <ol class="route">
-    <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, slip through the cut in the barbed-wire fence, then climb the scaffold stair over the raised basin wall where one panel of the inlet netting has been cut. The concrete X-legs can’t be broken; you go between them.</span></li>
+    <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops through the cut in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
     <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
     <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
     <li><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
@@ -236,9 +236,9 @@ rod(V(-62, 0, -8), V(-62, 7, -8), 0.15, mat(0x6c6f75)); add(new THREE.Mesh(new T
 HOVER = 'DANGER · Authorized personnel only';
 add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 2.6), glow(0xd03030)), -FR - 0.2, 2.2, 6);
 HOVER = 'Crate of hard hats and clipboards';
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 1.6, 3), mat(0x7a5a32)), -74, 0.8, 4);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 1.6, 3), mat(0x7a5a32)), -78, 0.8, 9);
 HOVER = null;
-for (let i = 0; i < 9; i++) add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), hatMat), -75 + (i % 3) * 0.9, 1.6, 3.1 + Math.floor(i / 3) * 0.9);
+for (let i = 0; i < 9; i++) add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), hatMat), -79 + (i % 3) * 0.9, 1.6, 8.1 + Math.floor(i / 3) * 0.9);
 const guard = add(new THREE.Mesh(new THREE.BoxGeometry(4, 3, 3), mat(0x3e4a57)), -96, 1.5, -14);
 
 // VENUE 1: THE STACK (bigger: base 38 m radius, 110 m tall)
@@ -274,9 +274,17 @@ for (let i = 0; i < 36; i++) {
   const net = add(new THREE.Mesh(new THREE.CylinderGeometry(39.1, 39.1, LEG - CURB, 4, 1, true, Math.PI / 2 - a1, a1 - a0), mat(0x2f8f4f, { transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false })), 0, (LEG + CURB) / 2, 0);
 }
 HOVER = 'The way in: a netting panel cut open, a scaffold stair over the basin wall';
-scaffoldStair(-47.5, 0.1, 0, 1, 0, 4, 0.5, 0.75, 2.4);
-add(new THREE.Mesh(new THREE.BoxGeometry(9, 0.15, 2.4), mat(0x6f7c82)), -40, 2.1, 0);
-scaffoldStair(-31.5, 0.5, 0, -1, 0, 3, 0.5, 0.75, 2.4);
+scaffoldStair(-31.5, 0.5, 0, -1, 0, 9, 0.5, 0.75, 2.4); // down from the pipe tops into the dry basin
+add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.15, 2.4), mat(0x6f7c82)), -39.4, 5.05, 0);
+HOVER = 'The pipes you run along to break in';
+{ const X0 = -104, X1 = -40, ry = (x) => 1.7 + (x - X0) / (X1 - X0) * 1.5; // three side by side, rising gently to the tower
+  const rust = mat(0x7a5236, { roughness: 0.95 }), band = mat(0x4a3424);
+  for (const z of [-3.8, 0, 3.8]) {
+    const a = V(X0, ry(X0), z), b = V(X1, ry(X1), z); rod(a, b, 1.7, rust);
+    for (let x = X0 + 2; x < X1; x += 6) { const ring = add(new THREE.Mesh(new THREE.TorusGeometry(1.78, 0.14, 6, 24), band), x, ry(x), z); ring.rotation.y = Math.PI / 2; }
+    for (let x = X0 + 5; x < X1; x += 12) add(new THREE.Mesh(new THREE.BoxGeometry(1.2, ry(x), 2.6), mat(0x8f8f8a)), x, ry(x) / 2, z);
+  }
+}
 HOVER = 'Cold water basin: the rain lands here';
 add(new THREE.Mesh(new THREE.CylinderGeometry(38, 38, 0.5, 72), mat(0x55585a)), 0, 0.25, 0);
 add(new THREE.Mesh(new THREE.CircleGeometry(37, 72), glow(0x2f6f8f, 0.45)), 0, 0.55, 0).rotation.x = -Math.PI / 2;
@@ -555,7 +563,7 @@ add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), 1
 
 // The route: break in -> 1 -> pipe -> 2 -> hatch -> 3, pad back
 const pipeIn = pipeCurve.getSpacedPoints(20).map(p => p.clone().setY(PY - 2));
-const path = new THREE.CatmullRomCurve3([V(-96, 1, 0), V(-74, 1, 2), V(-58, 1, 0.5), V(-48, 1, 0), V(-44, 2.6, 0), V(-36, 2.6, 0), V(-32, 1.3, 0), V(-26, 1.2, -6), V(-19.5, 1.2, -7), V(-19.5, D + 1, 7.5), V(-8, D + 1, 12), V(8, D + 1, 12), V(19.5, D + 1, 7.5), V(19.5, 1.2, -7), V(28, 1.4, -3), V(32, 1.8, -1), ...pipeIn, V(86, 1, 6), V(108, 1, 10), V(130, 1, 5), V(140, 1.2, 0), V(148, FL + 0.8, 0), V(152, FL + 0.8, -9), V(RC - 4, FL + 0.8, -18)]);
+const path = new THREE.CatmullRomCurve3([V(-96, 1, 7), V(-82, 1, 7), V(-86, 1.2, 3), V(-84, 4.6, 0), V(-70, 4.9, 0), V(-58, 5.2, 0), V(-46, 5.5, 0), V(-39, 5.6, 0), V(-36, 4.4, 0), V(-32, 1.3, 0), V(-26, 1.2, -6), V(-19.5, 1.2, -7), V(-19.5, D + 1, 7.5), V(-8, D + 1, 12), V(8, D + 1, 12), V(19.5, D + 1, 7.5), V(19.5, 1.2, -7), V(28, 1.4, -3), V(32, 1.8, -1), ...pipeIn, V(86, 1, 6), V(108, 1, 10), V(130, 1, 5), V(140, 1.2, 0), V(148, FL + 0.8, 0), V(152, FL + 0.8, -9), V(RC - 4, FL + 0.8, -18)]);
 route.add(new THREE.Mesh(new THREE.TubeGeometry(path, 400, 0.45, 8, false), glow(0xffa43d, 0.75)));
 const back = new THREE.CatmullRomCurve3([V(RC - 4, FL + 2, -19), V(120, 48, -50), V(50, 52, -44), V(14, D + 2, -14)]);
 const backLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(back.getPoints(100)), new THREE.LineDashedMaterial({ color: 0xc8d0d8, dashSize: 3, gapSize: 2 })); backLine.computeLineDistances(); route.add(backLine);
