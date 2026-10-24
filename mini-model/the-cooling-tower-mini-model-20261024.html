@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>The Cooling Tower Mini Model</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one full-screen 3D view of the plant; the night's three venues are numbered in the scene and in the foldable key. */
+:root {
+  color-scheme: dark;
+  --ground: #1d1e22;
+  --panel: rgba(29,30,34,.9);
+  --line: #3a3c42;
+  --ink: #eceef2;
+  --soft: #b4b8c2;
+  --blue: #4fc3ff;
+  --green: #8dff5a;
+  --amber: #ffa43d;
+  --magenta: #ff5ad8;
+  --hat: #ffd23f;
+  --mm: #ff4fa3; /* the System Map's name colour, used for "Mini Model" */
+  --body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, monospace;
+}
+html, body { height: 100%; margin: 0; }
+body { background: var(--ground); color: var(--ink); font-family: var(--body); overflow: hidden; }
+#view { position: fixed; inset: 0; }
+.panel { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); width: min(360px, calc(100% - 24px)); max-height: calc(100% - 84px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; font-size: 14px; line-height: 1.45; box-sizing: border-box; }
+.badge { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #1d1e22; background: var(--amber); padding: 2px 7px; border-radius: 3px; }
+summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+summary::-webkit-details-marker { display: none; }
+summary .title { font-size: 17px; }
+.mm { color: var(--mm); }
+summary .toggle-hint { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--soft); border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; }
+details[open] summary .toggle-hint::after { content: " ▲"; }
+details:not([open]) summary .toggle-hint::after { content: " ▼"; }
+summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sub { font-family: var(--mono); font-size: 12px; color: var(--soft); margin: 8px 0; }
+h2 { font-size: 12px; font-family: var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); margin: 12px 0 6px; font-weight: 500; }
+.route { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.route li { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: start; }
+.n { font-family: var(--mono); font-weight: 500; font-size: 13px; text-align: center; border-radius: 4px; padding: 2px 0; color: #1d1e22; }
+.text { margin: 0 0 6px; }
+.tgl, .kind { cursor: pointer; border-radius: 6px; padding: 3px 4px; }
+.kind:hover { background: rgba(255,255,255,.05); }
+.kind:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.kind[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+.tgl:hover { background: rgba(255,255,255,.05); }
+.tgl:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tgl[aria-pressed="false"] .n { opacity: .45; }
+.tgl[aria-pressed="false"] .n::after { content: ' ·'; }
+.live { margin: 8px 0 0; padding: 8px 10px; border: 1px solid var(--amber); border-radius: 6px; font-family: var(--mono); font-size: 12px; color: var(--amber); }
+ul.legend { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.switches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+button { font: 600 13px var(--body); color: var(--ink); background: #2c2e34; border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
+button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.hint { color: var(--soft); font-size: 12px; margin: 10px 0 0; }
+@media (max-width: 520px) { .panel { max-height: 46%; } }
+.tip { position: fixed; pointer-events: none; max-width: 260px; background: rgba(20,22,26,.94); border: 1px solid var(--blue); color: var(--ink); font-size: 13px; padding: 6px 9px; border-radius: 5px; }
+.spin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 10px 16px; background: rgba(29,30,34,.92); border-color: var(--amber); color: var(--amber); }
+</style>
+
+<div id="view" aria-label="Mini Model of The Cooling Tower: three connected venues and the night's route"></div>
+<aside class="panel">
+<details id="key" open>
+  <summary><b class="title">The Cooling Tower <span class="mm">Mini Model</span></b> <span class="toggle-hint">key</span></summary>
+  <p class="sub">A pocket-sized look at the world, no VR needed · 3 connected venues · tower 110 m tall</p>
+  <h2>The night, in order <span style="text-transform:none;letter-spacing:0">(click a line to show or hide its title)</span></h2>
+  <ol class="route">
+    <li class="tgl" data-t="in" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops through the cut in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
+    <li class="tgl" data-t="1" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
+    <li class="tgl" data-t="2" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
+    <li class="tgl" data-t="3" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
+    <li class="tgl" data-t="back" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
+  </ol>
+  <p class="hint">All three are joined: the pipe runs straight from the stack into the turbine hall, and the hatch opens from the hall into the dome.</p>
+  <h2>Inside the reactor hall</h2>
+  <p class="text">The <b style="color:var(--blue)">reactor</b> is the steel vessel under the pool, beneath the bridge: lid off, core glowing blue at the bottom, 8 m of water above it. Hover over or tap any part to see its name.</p>
+  <h2>Who runs the lights</h2>
+  <p class="text">Every venue has a DJ booth with a <b style="color:var(--amber)">lighting panel</b> in its decks. One DJ is live at a time. The live booth runs the lights in <b>its own venue and every venue the night has already passed</b>: booth 1 runs 1, booth 2 runs 1 and 2, booth 3 runs all three. Venues still ahead stay dark until the set reaches them. Under the panel, the Light Show Generator keeps the show running from the music.</p>
+  <p class="live" id="liveLine" aria-live="polite">Live: booth 1 · lights on venue 1</p>
+  <h2>Lighting rig <span style="text-transform:none;letter-spacing:0">(click a line to switch it off or on)</span></h2>
+  <ul class="legend">
+    <li class="kind" data-k="lasers" role="button" tabindex="0" aria-pressed="true"><span class="dot" style="background:var(--green)"></span>Lasers: 12 out of the top of the stack</li>
+    <li class="kind" data-k="heads" role="button" tabindex="0" aria-pressed="true"><span class="dot" style="background:var(--magenta)"></span>Moving heads: the stack wall, the turbine hall crane girders, the dome</li>
+    <li class="kind" data-k="wash" role="button" tabindex="0" aria-pressed="true"><span class="dot" style="background:var(--blue)"></span>Washes and glows: the throat ring, turbine hall wall washes and strobes, LED smoke and lightning</li>
+    <li class="kind" data-k="beacons" role="button" tabindex="0" aria-pressed="true"><span class="dot" style="background:var(--amber)"></span>Beacons on the X-legs (breakdown look)</li>
+    <li class="kind" data-k="crowd" role="button" tabindex="0" aria-pressed="true"><span class="dot" style="background:var(--hat)"></span>Stick-figure crowd in hard hats</li>
+  </ul>
+  <div class="switches">
+    <button id="tCycle" aria-pressed="true">Move the set</button>
+    <button id="tRoute" aria-pressed="true">Route</button>
+    <button id="tShell" aria-pressed="false">Solid walls</button>
+  </div>
+  <p class="hint">Mouse like the System Map: drag to turn, scroll to zoom, scroll-click drag to turn (with Shift to pan), hold right mouse to look and fly with W A S D, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag and pinch. Tap the title to fold this key away.</p>
+</details>
+</aside>
+<button id="tSpin" class="spin" aria-pressed="true">Stop spinning</button>
+<div id="tip" class="tip" role="tooltip" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
+<script>
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x14161a);
+scene.fog = new THREE.Fog(0x14161a, 360, 900);
+const clock = new THREE.Clock(); // made early: setLive() reads it when the page starts
+const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
+camera.position.set(-170, 140, 190);
+// Same navigation as Astra's PetOS System Map: trackball turning, scroll zoom, scroll-click drag, right-hold to fly.
+const HOME_T = new THREE.Vector3(55, 20, 0), HOME_C = new THREE.Vector3(-170, 140, 190);
+const controls = new THREE.TrackballControls(camera, renderer.domElement);
+controls.target.copy(HOME_T);
+controls.rotateSpeed = 1.2; controls.zoomSpeed = 1.4; controls.panSpeed = .6; controls.dynamicDampingFactor = .2;
+controls.minDistance = 4; controls.maxDistance = 900;
+controls.mouseButtons = { LEFT: 0, MIDDLE: -9, RIGHT: -8 }; controls.noZoom = true; // scroll and scroll-click drag are handled below
+controls.keys = ['NoKeyA', 'NoKeyS', 'NoKeyD'];
+let spinning = true;
+
+scene.add(new THREE.HemisphereLight(0x9fb4c8, 0x202020, 0.8));
+const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(-100, 220, 80); scene.add(sun);
+
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const mat = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, o));
+const glow = (c, op = 1) => new THREE.MeshBasicMaterial({ color: c, transparent: op < 1, opacity: op, depthWrite: op >= 1 });
+const ghost = (c, op) => mat(c, { transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false });
+const steel = mat(0x8a8d93, { metalness: 0.3, roughness: 0.6 });
+const rail = mat(0xffc93c);
+const route = new THREE.Group(); scene.add(route);
+const walls = [];
+const venueLights = [new THREE.Group(), new THREE.Group(), new THREE.Group()];
+venueLights.forEach(g => scene.add(g));
+
+const kinds = { lasers: [], heads: [], wash: [], beacons: [], crowd: [] }; // what each coloured line in the key switches
+let HOVER = null; const hoverables = []; // while HOVER is set, new parts get that name and show it on hover
+function tagIt(m) { if (HOVER) { m.userData.name = HOVER; hoverables.push(m); } return m; }
+function add(m, x, y, z, g = scene) { m.position.set(x, y, z); g.add(m); return tagIt(m); }
+function rod(a, b, r, m, g = scene) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), m);
+  c.position.copy(a).addScaledVector(d, 0.5);
+  c.quaternion.setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
+  g.add(c); return tagIt(c);
+}
+// a stair flight inside a tube-and-clamp scaffold tower: x0,z0 is the foot, (dx,dz) the way up
+function scaffoldStair(x0, y0, z0, dx, dz, steps, rise = 0.5, run = 0.6, width = 2.4) {
+  const tube = mat(0x9aa0a6, { metalness: 0.4, roughness: 0.5 }), clamp = mat(0xc9a227);
+  const dir = V(dx, 0, dz).normalize(), side = V(-dir.z, 0, dir.x), yaw = -Math.atan2(dir.z, dir.x);
+  const len = steps * run, top = y0 + steps * rise, w = width / 2 + 0.4;
+  for (let s = 0; s < steps; s++) { const t = add(new THREE.Mesh(new THREE.BoxGeometry(run, 0.12, width), mat(0x6f7c82)), x0 + dir.x * (s + 0.5) * run, y0 + (s + 1) * rise, z0 + dir.z * (s + 0.5) * run); t.rotation.y = yaw; }
+  for (let d = 0; d <= len + 0.01; d += 2) for (const k of [-w, w]) { // standards (uprights)
+    const base = V(x0, y0, z0).addScaledVector(dir, d).addScaledVector(side, k);
+    rod(base, base.clone().setY(top + 1.2), 0.08, tube);
+  }
+  for (let y = y0 + 2; y <= top + 1.2; y += 2) for (const k of [-w, w]) { // ledgers at every lift, with clamps
+    const a = V(x0, y, z0).addScaledVector(side, k), b = a.clone().addScaledVector(dir, len);
+    rod(a, b, 0.07, tube);
+    for (let d = 0; d <= len + 0.01; d += 2) add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 6, 4), clamp), a.x + dir.x * d, y, a.z + dir.z * d);
+  }
+  for (const k of [-w, w]) { const a = V(x0, y0 + 1.1, z0).addScaledVector(side, k), b = V(x0, top + 1.1, z0).addScaledVector(dir, len).addScaledVector(side, k); rod(a, b, 0.06, mat(0xffc93c)); } // handrails
+  for (let d = 0; d + 4 <= len + 0.01; d += 4) { const a = V(x0, y0, z0).addScaledVector(dir, d).addScaledVector(side, w), b = V(x0, Math.min(top, y0 + 4), z0).addScaledVector(dir, d + 4).addScaledVector(side, w); rod(a, b, 0.06, tube); } // braces
+}
+function label(text, x, y, z, color = '#eceef2', big = false, g = scene) {
+  const c = document.createElement('canvas'); c.width = 720; c.height = 120;
+  const x2 = c.getContext('2d');
+  x2.fillStyle = 'rgba(20,22,26,.88)'; x2.fillRect(0, 0, 720, 120);
+  x2.strokeStyle = color; x2.lineWidth = 6; x2.strokeRect(3, 3, 714, 114);
+  x2.fillStyle = color; x2.font = (big ? '700 58px' : '600 46px') + ' "IBM Plex Sans", Arial, sans-serif';
+  x2.textAlign = 'center'; x2.textBaseline = 'middle'; x2.fillText(text, 360, 62);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  s.material.sizeAttenuation = false; const w = big ? 0.16 : 0.12; s.scale.set(w, w / 6, 1); // same small size on screen at any zoom
+  s.position.set(x, y, z); s.renderOrder = 10; g.add(s); return s;
+}
+
+// Stick figures in hard hats
+const dancers = [];
+const figLines = (() => {
+  const p = [];
+  const seg = (a, b) => p.push(...a, ...b);
+  seg([0, 0.95, 0], [0, 1.45, 0]);            // body
+  seg([0, 0.95, 0], [-0.22, 0, 0]); seg([0, 0.95, 0], [0.22, 0, 0]);      // legs
+  seg([0, 1.35, 0], [-0.38, 1.7, 0]); seg([0, 1.35, 0], [0.38, 1.7, 0]);  // arms up
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = (i + 1) / 10 * Math.PI * 2; seg([Math.cos(a) * 0.17, 1.62 + Math.sin(a) * 0.17, 0], [Math.cos(b) * 0.17, 1.62 + Math.sin(b) * 0.17, 0]); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g;
+})();
+const figMat = new THREE.LineBasicMaterial({ color: 0xf2f4f8 });
+const hatGeo = new THREE.SphereGeometry(0.22, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+const hatMat = mat(0xffd23f, { emissive: 0x3a2e00 });
+function crowd(cx, cz, rIn, rOut, n, y, scale = 1.5) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, r = rIn + Math.random() * (rOut - rIn);
+    const g = new THREE.Group();
+    g.add(new THREE.LineSegments(figLines, figMat));
+    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat);
+    g.scale.setScalar(scale); g.position.set(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r);
+    g.lookAt(cx, y, cz); scene.add(g); dancers.push({ g, p: Math.random() * 6, y }); kinds.crowd.push(g);
+  }
+}
+function djFigure(x, y, z, yaw) {
+  const g = new THREE.Group();
+  g.add(new THREE.LineSegments(figLines, new THREE.LineBasicMaterial({ color: 0xffa43d })));
+  const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat);
+  g.scale.setScalar(1.9); g.position.set(x, y, z); g.rotation.y = yaw; scene.add(g);
+  g.traverse(o => { o.userData.name = 'The DJ'; }); hoverables.push(g.children[0], hat); dancers.push({ g, p: 0, y });
+}
+function crowdBox(x0, x1, z0, z1, n, y, scale = 1.5) {
+  for (let i = 0; i < n; i++) {
+    const g = new THREE.Group();
+    g.add(new THREE.LineSegments(figLines, figMat));
+    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat);
+    g.scale.setScalar(scale); g.position.set(x0 + Math.random() * (x1 - x0), y, z0 + Math.random() * (z1 - z0));
+    g.rotation.y = Math.PI; scene.add(g); dancers.push({ g, p: Math.random() * 6, y }); kinds.crowd.push(g);
+  }
+}
+
+// Ground, yard, fence with a cut, the crate
+const groundShape = new THREE.Shape(); groundShape.moveTo(-400, -200); groundShape.lineTo(400, -200); groundShape.lineTo(400, 200); groundShape.lineTo(-400, 200); groundShape.lineTo(-400, -200);
+const pit = new THREE.Path(); pit.absarc(106, 0, 25.6, 0, Math.PI * 2, true); groundShape.holes.push(pit); // a cut-away pit under the reactor dome
+add(new THREE.Mesh(new THREE.ShapeGeometry(groundShape, 48), mat(0x2b2d2a)), 60, -0.05, 0).rotation.x = -Math.PI / 2;
+add(new THREE.Mesh(new THREE.CircleGeometry(25.6, 48), mat(0x1f2124)), 166, -9, 0).rotation.x = -Math.PI / 2;
+add(new THREE.Mesh(new THREE.CylinderGeometry(25.6, 25.6, 9, 48, 1, true), mat(0x3a3c40, { side: THREE.BackSide })), 166, -4.5, 0);
+add(new THREE.Mesh(new THREE.PlaneGeometry(50, 40), mat(0x3a3a36)), -88, 0.01, 0).rotation.x = -Math.PI / 2;
+const FR = 58;
+for (let i = 0; i < 96; i++) {
+  const a = i / 96 * Math.PI * 2, b = (i + 1) / 96 * Math.PI * 2;
+  const cut = (t) => t > 3.04 && t < 3.24;
+  const open = (t) => Math.cos(t) * FR > 34 && Math.abs(Math.sin(t) * FR) < 6; // where the pipe leaves
+  if (cut(a) || open(a)) continue;
+  rod(V(Math.cos(a) * FR, 0, Math.sin(a) * FR), V(Math.cos(a) * FR, 3.4, Math.sin(a) * FR), 0.14, mat(0x6c6f75));
+  if (!cut(b) && !open(b)) rod(V(Math.cos(a) * FR, 3.2, Math.sin(a) * FR), V(Math.cos(b) * FR, 3.2, Math.sin(b) * FR), 0.06, mat(0x6c6f75));
+}
+HOVER = 'Perimeter fence with barbed wire';
+{ const pts = []; for (let i = 0; i <= 2400; i++) { const t = i / 2400 * Math.PI * 2; if (t > 3.04 && t < 3.24) { if (pts.length) { scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xb8bcc2 }))); pts.length = 0; } continue; }
+  const loop = t * 260, r = FR + 0.35 * Math.cos(loop); pts.push(V(Math.cos(t) * r, 3.9 + 0.35 * Math.sin(loop), Math.sin(t) * r)); }
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xb8bcc2 }))); }
+HOVER = 'Floodlight';
+for (const a of [2.4, 3.9, 0.8, 5.5]) { const x = Math.cos(a) * (FR + 4), z = Math.sin(a) * (FR + 4); rod(V(x, 0, z), V(x, 14, z), 0.25, mat(0x6c6f75)); add(new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), glow(0xfff2c0)), x, 14.3, z); }
+HOVER = 'Security camera (looking the other way)';
+rod(V(-62, 0, -8), V(-62, 7, -8), 0.15, mat(0x6c6f75)); add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.6), mat(0xe8e8e4)), -61.6, 7.2, -7.4);
+HOVER = 'DANGER · Authorized personnel only';
+add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 2.6), glow(0xd03030)), -FR - 0.2, 2.2, 6);
+HOVER = 'Crate of hard hats and clipboards';
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 1.6, 3), mat(0x7a5a32)), -78, 0.8, 9);
+HOVER = null;
+for (let i = 0; i < 9; i++) add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), hatMat), -79 + (i % 3) * 0.9, 1.6, 8.1 + Math.floor(i / 3) * 0.9);
+const guard = add(new THREE.Mesh(new THREE.BoxGeometry(4, 3, 3), mat(0x3e4a57)), -96, 1.5, -14);
+
+// VENUE 1: THE STACK (bigger: base 38 m radius, 110 m tall)
+const LEG = 7.5, TOP = 112, D = 11, CURB = 1.8; // CURB: the raised concrete basin wall the X-legs stand on // D: the dance deck, just above the air inlet like a real fill deck
+const rAt = (y) => y < 82 ? 22.5 + 15 * Math.pow((82 - y) / (82 - LEG), 1.6) : 22.5 + 3 * ((y - 82) / (TOP - 82));
+const prof = []; for (let i = 0; i <= 30; i++) { const y = LEG + i / 30 * (TOP - LEG); prof.push(new THREE.Vector2(rAt(y), y)); }
+const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 96), ghost(0x9a9a96, 0.24)); scene.add(shell); walls.push(shell);
+for (let y = 17; y < TOP; y += 10) { const ring = add(new THREE.Mesh(new THREE.TorusGeometry(rAt(y), 0.08, 4, 96), mat(0x6f6f6b)), 0, y, 0); ring.rotation.x = Math.PI / 2; }
+HOVER = 'The rim: a wide concrete lip people sit on (no railing, no platform)';
+add(new THREE.Mesh(new THREE.RingGeometry(rAt(TOP) - 0.9, rAt(TOP) + 0.9, 96), mat(0xb3b3ad, { side: THREE.DoubleSide })), 0, TOP + 0.3, 0).rotation.x = -Math.PI / 2;
+add(new THREE.Mesh(new THREE.CylinderGeometry(rAt(TOP) + 0.9, rAt(TOP) + 0.9, 0.6, 96, 1, true), mat(0xa3a39d, { side: THREE.DoubleSide })), 0, TOP, 0);
+add(new THREE.Mesh(new THREE.CylinderGeometry(rAt(TOP) - 0.9, rAt(TOP) - 0.9, 0.6, 96, 1, true), mat(0xa3a39d, { side: THREE.DoubleSide })), 0, TOP, 0);
+HOVER = null;
+HOVER = 'X-legs: the air inlet all round the base';
+for (let i = 0; i < 36; i++) {
+  const a = i / 36 * Math.PI * 2, a0 = (i - 0.5) / 36 * Math.PI * 2, a2 = (i + 0.5) / 36 * Math.PI * 2;
+  const R = 38, top = V(Math.cos(a) * R, LEG, Math.sin(a) * R);
+  rod(V(Math.cos(a0) * R, CURB, Math.sin(a0) * R), top, 0.5, mat(0xa8a8a3));
+  rod(V(Math.cos(a2) * R, CURB, Math.sin(a2) * R), top, 0.5, mat(0xa8a8a3));
+  if (i % 3 === 0) kinds.beacons.push(add(new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), glow(0xffa43d)), Math.cos(a) * 38.9, LEG + 1, Math.sin(a) * 38.9, venueLights[0]));
+}
+HOVER = null;
+HOVER = 'Basin wall: the raised concrete ring the X-legs stand on (they are solid concrete; you climb between them)';
+add(new THREE.Mesh(new THREE.CylinderGeometry(39.2, 39.2, CURB, 96, 1, true), mat(0x9a9a94, { side: THREE.DoubleSide })), 0, CURB / 2, 0);
+add(new THREE.Mesh(new THREE.RingGeometry(37.6, 39.2, 96), mat(0xa3a39d)), 0, CURB, 0).rotation.x = -Math.PI / 2;
+HOVER = 'Outage barrier: scaffold tubes and debris netting across the air inlet';
+const CUT = Math.PI; // the one bay that has been cut open
+for (let i = 0; i < 36; i++) {
+  const a0 = (i - 0.5) / 36 * Math.PI * 2, a1 = (i + 0.5) / 36 * Math.PI * 2, am = i / 36 * Math.PI * 2;
+  const open = Math.abs(Math.atan2(Math.sin(am - CUT), Math.cos(am - CUT))) < 0.09;
+  if (open) continue;
+  for (const y of [CURB + 1, CURB + 2.2, CURB + 3.4, CURB + 4.6]) rod(V(Math.cos(a0) * 39, y, Math.sin(a0) * 39), V(Math.cos(a1) * 39, y, Math.sin(a1) * 39), 0.06, mat(0x9aa0a6, { metalness: 0.4 }));
+  const net = add(new THREE.Mesh(new THREE.CylinderGeometry(39.1, 39.1, LEG - CURB, 4, 1, true, Math.PI / 2 - a1, a1 - a0), mat(0x2f8f4f, { transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false })), 0, (LEG + CURB) / 2, 0);
+}
+HOVER = 'The way in: a netting panel cut open, a scaffold stair over the basin wall';
+scaffoldStair(-31.5, 0.5, 0, -1, 0, 9, 0.5, 0.75, 2.4); // down from the pipe tops into the dry basin
+add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.15, 2.4), mat(0x6f7c82)), -39.4, 5.05, 0);
+HOVER = 'The pipes you run along to break in';
+{ const X0 = -104, X1 = -40, ry = (x) => 1.7 + (x - X0) / (X1 - X0) * 1.5; // three side by side, rising gently to the tower
+  const rust = mat(0x7a5236, { roughness: 0.95 }), band = mat(0x4a3424);
+  for (const z of [-3.8, 0, 3.8]) {
+    const a = V(X0, ry(X0), z), b = V(X1, ry(X1), z); rod(a, b, 1.7, rust);
+    for (let x = X0 + 2; x < X1; x += 6) { const ring = add(new THREE.Mesh(new THREE.TorusGeometry(1.78, 0.14, 6, 24), band), x, ry(x), z); ring.rotation.y = Math.PI / 2; }
+    for (let x = X0 + 5; x < X1; x += 12) add(new THREE.Mesh(new THREE.BoxGeometry(1.2, ry(x), 2.6), mat(0x8f8f8a)), x, ry(x) / 2, z);
+  }
+}
+HOVER = 'Cold water basin: the rain lands here';
+add(new THREE.Mesh(new THREE.CylinderGeometry(38, 38, 0.5, 72), mat(0x55585a)), 0, 0.25, 0);
+add(new THREE.Mesh(new THREE.CircleGeometry(37, 72), glow(0x2f6f8f, 0.45)), 0, 0.55, 0).rotation.x = -Math.PI / 2;
+HOVER = 'Dance floor: grating deck over the fill, above the X-legs';
+add(new THREE.Mesh(new THREE.RingGeometry(5, rAt(D) - 0.6, 72), ghost(0x4b5a62, 0.7)), 0, D, 0).rotation.x = -Math.PI / 2;
+for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2; rod(V(Math.cos(a) * 5, D + 0.15, Math.sin(a) * 5), V(Math.cos(a) * (rAt(D) - 0.6), D + 0.15, Math.sin(a) * (rAt(D) - 0.6)), 0.25, mat(0x6f7c82)); }
+HOVER = 'Fill supports: the rain zone is underneath';
+for (const rr of [10, 17, 24, 31]) for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2 + rr; rod(V(Math.cos(a) * rr, 0.5, Math.sin(a) * rr), V(Math.cos(a) * rr, D, Math.sin(a) * rr), 0.22, mat(0x7a7a75)); }
+HOVER = 'Stairs up to the dance floor';
+for (const side of [-1, 1]) scaffoldStair(side * 19.5, 0.5, -6, 0, 1, 21);
+HOVER = null;
+for (let c = 0; c < 8; c++) for (let r = 0; r < 5; r++) { // scaffold on the inner wall
+  const a = Math.PI * 0.62 + c * 0.04, y0 = LEG + r * 5, rad = rAt(y0) - 1.5;
+  rod(V(Math.cos(a) * rad, y0, Math.sin(a) * rad), V(Math.cos(a) * rad, y0 + 5, Math.sin(a) * rad), 0.08, steel);
+  if (c < 7) { const b = a + 0.04; rod(V(Math.cos(a) * rad, y0 + 5, Math.sin(a) * rad), V(Math.cos(b) * rad, y0 + 5, Math.sin(b) * rad), 0.07, steel); }
+}
+// caged ladder up the outside, on the break-in side, to the rim walk at the top
+HOVER = 'Caged ladder to the rim: climb up and watch the show from the top';
+{ const LA = Math.PI - 0.32, c = Math.cos(LA), sn = Math.sin(LA), tx = -sn, tz = c; // ladder angle and its sideways direction
+  const at = (y, off, out = 1.2) => { const r = rAt(Math.max(y, LEG)) + out; return V(c * r + tx * off, y, sn * r + tz * off); };
+  rod(at(CURB, -0.5), at(TOP + 1, -0.5), 0.09, steel); rod(at(CURB, 0.5), at(TOP + 1, 0.5), 0.09, steel); // the two stiles
+  for (let y = CURB + 0.4; y < TOP; y += 0.6) rod(at(y, -0.5), at(y, 0.5), 0.04, steel); // rungs
+  for (let y = CURB + 2.5; y < TOP; y += 2) { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.05, 4, 14, Math.PI), steel); hoop.position.copy(at(y, 0, 1.2)); hoop.lookAt(at(y, 0, 3)); hoop.rotateX(Math.PI / 2); scene.add(hoop); tagIt(hoop); }
+  for (const y of [40, 80]) { const q = at(y, 0, 2.2); const pl = add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 2.6), mat(0x6f7c82)), q.x, y, q.z); pl.rotation.y = -LA; } // rest platforms
+}
+// a couple at the top of the ladder, sitting on the rim, feet over the inside edge, holding hands
+// people sitting on the rim, legs over the inside edge
+const sitLines = (() => { const p = [], seg = (a, b) => p.push(...a, ...b);
+  seg([0, 0.45, 0], [0, 1.0, 0]); seg([0, 0.45, 0], [0, 0.45, 0.45]); seg([0, 0.45, 0.45], [0, 0, 0.55]); seg([0.12, 0.45, 0], [0.12, 0.45, 0.45]); seg([0.12, 0.45, 0.45], [0.12, 0, 0.55]);
+  seg([0, 0.85, 0], [-0.3, 0.5, 0.1]); seg([0, 0.85, 0], [0.3, 0.5, 0.1]);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = (i + 1) / 10 * Math.PI * 2; seg([Math.cos(a) * 0.17, 1.17 + Math.sin(a) * 0.17, 0], [Math.cos(b) * 0.17, 1.17 + Math.sin(b) * 0.17, 0]); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g; })();
+{ const LA = Math.PI - 0.32, r = rAt(TOP) - 0.4, pair = [];
+  for (const da of [-0.016, 0.016]) { const g = new THREE.Group(); g.add(new THREE.LineSegments(sitLines, new THREE.LineBasicMaterial({ color: 0xff9ad8 })));
+    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat); g.scale.setScalar(1.7);
+    g.position.set(Math.cos(LA + da) * r, TOP + 0.35, Math.sin(LA + da) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); pair.push(g);
+    g.traverse(o => { o.userData.name = 'A couple at the top of the ladder, feet over the edge, watching the stack show'; }); hoverables.push(g.children[0], hat); }
+  const hand = (g, side) => V(side * 0.3 * 1.7, 0.5 * 1.7, 0.1 * 1.7).applyQuaternion(g.quaternion).add(g.position);
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([hand(pair[0], 1), hand(pair[1], -1)]), new THREE.LineBasicMaterial({ color: 0xff9ad8 }))); }
+for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, r = rAt(TOP) - 0.3, g = new THREE.Group();
+  g.add(new THREE.LineSegments(sitLines, figMat)); const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat);
+  g.scale.setScalar(1.5); g.position.set(Math.cos(a) * r, TOP + 0.35, Math.sin(a) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); kinds.crowd.push(g); }
+HOVER = 'Hot water riser';
+rod(V(0, 0, 0), V(0, D + 0.5, 0), 2.2, steel);
+HOVER = 'Booth 1 · lighting panel (runs venue 1)';
+add(new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.8, 28), mat(0x26272b)), 0, D + 0.4, 0);
+const ring1 = add(new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.2, 6, 36), glow(0xffa43d)), 0, D + 0.85, 0); ring1.rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 1), mat(0x3a3c42)), 0, D + 1.25, -1);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 1), glow(0x4fc3ff)), 0, D + 1.8, -1);
+const panel1 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.9), glow(0xffa43d)), 0, D + 1.8, 0.1); panel1.rotation.x = -0.4;
+HOVER = null;
+djFigure(0, D + 0.8, -2.2, 0);
+// rain falls in the rain zone under the deck, on and off
+const RAIN = 2600, rainPos = new Float32Array(RAIN * 3);
+for (let i = 0; i < RAIN; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.sqrt(Math.random()) * 31; rainPos[i * 3] = Math.cos(a) * r; rainPos[i * 3 + 1] = 0.6 + Math.random() * (D - 1); rainPos[i * 3 + 2] = Math.sin(a) * r; }
+const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xbfe6ff, size: 0.35, transparent: true, opacity: 0, depthWrite: false })); scene.add(rain);
+const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(34, 9, 170, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, D + 85, 0, venueLights[0]);
+const puffs = [];
+for (let i = 0; i < 90; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2.4 + Math.random() * 3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.1, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 170, hue: Math.random() }; puffs.push(p); }
+// lightning: jagged bolts that flash inside the smoke, a storm of them each time a set starts
+const bolts = [];
+function makeBolt() { const pts = []; let x = (Math.random() - 0.5) * 14, z = (Math.random() - 0.5) * 14, y = D + 20 + Math.random() * 90;
+  for (let k = 0; k < 9; k++) { pts.push(V(x, y, z)); x += (Math.random() - 0.5) * 6; z += (Math.random() - 0.5) * 6; y -= 3 + Math.random() * 4; }
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0 })); venueLights[0].add(l); return l; }
+for (let i = 0; i < 10; i++) bolts.push(makeBolt());
+let stormUntil = 3, flashGlow = add(new THREE.PointLight(0xbfe0ff, 0, 160), 0, 70, 0, venueLights[0]);
+kinds.wash.push(add(new THREE.Mesh(new THREE.TorusGeometry(22.8, 0.55, 8, 96), glow(0x4fc3ff)), 0, 82, 0, venueLights[0])); kinds.wash[kinds.wash.length - 1].rotation.x = Math.PI / 2;
+kinds.wash.push(smoke, ...puffs);
+const lasers = [];
+for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(Math.cos(a) * 4.5, D + 2, Math.sin(a) * 4.5), V(Math.cos(a) * 46, TOP + 110, Math.sin(a) * 46)]), new THREE.LineBasicMaterial({ color: 0x8dff5a, transparent: true, opacity: 0.9 })); venueLights[0].add(l); lasers.push(l); }
+const heads = [];
+function movingHead(x, y, z, color, g, len = 22, aim = 0) {
+  kinds.heads.push(add(new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glow(color)), x, y, z, g));
+  const beam = new THREE.Mesh(new THREE.ConeGeometry(3, len, 16, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.11, side: THREE.DoubleSide, depthWrite: false }));
+  beam.geometry.translate(0, -len / 2, 0); beam.position.set(x, y, z); g.add(beam); heads.push({ beam, a: aim }); kinds.heads.push(beam);
+}
+for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, r = rAt(D + 16) - 1.5; movingHead(Math.cos(a) * r, D + 16, Math.sin(a) * r, 0xff5ad8, venueLights[0], 22, a); }
+crowd(0, 0, 6.5, 33, 210, D + 0.2);
+const titles = {}; titles['1'] = label('1 · The Stack', 0, 34, 0, '#8dff5a', true, route);
+
+// The giant water pipe: long straight runs with elbow turns, from the stack into the turbine hall
+const PY = 3.8, PR = 3.8, BEND = 6;
+const pipeCorners = [V(34, PY, 0), V(46, PY, 0), V(46, PY, 16), V(64, PY, 16), V(64, PY, 0), V(77, PY, 0)];
+const waterPipeMat = ghost(0x4fc3ff, 0.26);
+HOVER = 'Circulating water pipe: walk through it from the stack to the turbine hall';
+const pathPts = [];
+for (let i = 0; i < pipeCorners.length - 1; i++) {
+  const a = pipeCorners[i], b = pipeCorners[i + 1], dir = b.clone().sub(a).normalize();
+  const s0 = i === 0 ? a.clone() : a.clone().addScaledVector(dir, BEND);
+  const s1 = i === pipeCorners.length - 2 ? b.clone() : b.clone().addScaledVector(dir, -BEND);
+  const len = s0.distanceTo(s1);
+  const seg = tagIt(new THREE.Mesh(new THREE.CylinderGeometry(PR, PR, len, 32, 1, true), waterPipeMat));
+  seg.position.copy(s0).add(s1).multiplyScalar(0.5); seg.quaternion.setFromUnitVectors(V(0, 1, 0), dir); scene.add(seg); walls.push(seg);
+  pathPts.push(s0, s1);
+  const yaw = -Math.atan2(dir.z, dir.x);
+  for (let d = 0; d <= len; d += 3) { // ribs, a bolted flange every 12 m, saddles, walkway, lights
+    const p = s0.clone().addScaledVector(dir, d), big = d % 12 < 0.01;
+    const rib = new THREE.Mesh(new THREE.TorusGeometry(PR + 0.1, big ? 0.32 : 0.12, 6, 28), big ? mat(0x2e7d5b) : steel);
+    rib.position.copy(p); rib.lookAt(p.clone().add(dir)); scene.add(rib);
+    if (d % 6 < 0.01) { const sd = add(new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 9), mat(0x8f8f8a)), p.x, 0.4, p.z); sd.rotation.y = yaw; }
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(3, 0.15, 3), mat(0x5b6670)); plank.position.set(p.x, PY - 2.6, p.z); plank.rotation.y = yaw; scene.add(plank);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), glow(0xbfe9ff)); lamp.position.set(p.x, PY + 3.3, p.z); scene.add(lamp);
+  }
+  const n = V(-dir.z, 0, dir.x);
+  for (const off of [-1.4, 1.4]) scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([s0.clone().addScaledVector(n, off).setY(PY - 1.6), s1.clone().addScaledVector(n, off).setY(PY - 1.6)]), new THREE.LineBasicMaterial({ color: 0xffc93c })));
+  if (i < pipeCorners.length - 2) { // elbow into the next run
+    const nb = pipeCorners[i + 2], dir2 = nb.clone().sub(b).normalize();
+    const elbow = new THREE.QuadraticBezierCurve3(s1, b, b.clone().addScaledVector(dir2, BEND));
+    const el = tagIt(new THREE.Mesh(new THREE.TubeGeometry(elbow, 16, PR, 32, false), waterPipeMat)); scene.add(el); walls.push(el);
+    for (const t of [0, 1]) { const q = elbow.getPoint(t), tg = elbow.getTangent(t); const f = new THREE.Mesh(new THREE.TorusGeometry(PR + 0.1, 0.32, 6, 28), mat(0x2e7d5b)); f.position.copy(q); f.lookAt(q.clone().add(tg)); scene.add(f); }
+    for (let k = 1; k < 8; k++) pathPts.push(elbow.getPoint(k / 8));
+  }
+}
+const pipeCurve = new THREE.CatmullRomCurve3(pathPts, false, 'catmullrom', 0.05);
+const mid = V(55, PY, 16);
+HOVER = 'Manway and valve';
+add(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 1.4, 20), mat(0x2e7d5b)), mid.x, PY + 4.2, mid.z);
+add(new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.12, 6, 20), mat(0xd04040)), mid.x, PY + 5.1, mid.z).rotation.x = Math.PI / 2;
+HOVER = 'Service water pipes';
+rod(V(36, 10, 9), V(74, 10, 9), 0.9, mat(0x2e7d5b)); rod(V(36, 10, -7), V(74, 10, -7), 0.9, mat(0x2e7d5b));
+HOVER = null;
+
+// VENUE 2: TURBINE HALL (74 to 140 on x), attached to the pipe and to the dome.
+// A real turbine hall: a long high bay with an arched roof, a crane, and one turbine train on its concrete pedestal.
+const HX0 = 74, HX1 = 140, HZ = 20, HW = 18, HL = HX1 - HX0, HXM = (HX0 + HX1) / 2;
+const hall = add(new THREE.Mesh(new THREE.BoxGeometry(HL, HW, HZ * 2), ghost(0x7f8b90, 0.2)), HXM, HW / 2, 0); walls.push(hall);
+const roof = add(new THREE.Mesh(new THREE.CylinderGeometry(HZ, HZ, HL, 48, 1, true, 0, Math.PI), ghost(0x9aa7ad, 0.18)), HXM, HW, 0); roof.rotation.z = Math.PI / 2; walls.push(roof);
+for (const x of [HX0, HX1]) { const g = add(new THREE.Mesh(new THREE.CircleGeometry(HZ, 32, 0, Math.PI), ghost(0x9aa7ad, 0.18)), x, HW, 0); g.rotation.y = Math.PI / 2; walls.push(g); }
+HOVER = 'Roof arch and wall columns';
+for (let x = HX0; x <= HX1; x += 6) {
+  const rib = add(new THREE.Mesh(new THREE.TorusGeometry(HZ, 0.25, 6, 32, Math.PI), steel), x, HW, 0); rib.rotation.y = Math.PI / 2;
+  for (const z of [-HZ, HZ]) rod(V(x, 0, z), V(x, HW, z), 0.35, steel);
+}
+HOVER = 'Clerestory windows';
+for (const z of [-HZ + 0.2, HZ - 0.2]) add(new THREE.Mesh(new THREE.BoxGeometry(HL - 2, 2.4, 0.2), glow(0xbfe9ff, 0.45)), HXM, HW - 2.5, z);
+HOVER = 'Crane girders';
+for (const z of [-HZ + 1, HZ - 1]) rod(V(HX0, HW - 4, z), V(HX1, HW - 4, z), 0.45, steel);
+HOVER = 'Overhead crane';
+add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, HZ * 2 - 2), mat(0xffa43d)), 118, HW - 3.2, 0);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 2, 3), mat(0xd04040)), 118, HW - 4.6, -6);
+HOVER = 'Turbine pedestal: the concrete table the turbines sit on';
+add(new THREE.Mesh(new THREE.BoxGeometry(56, 6, 12), mat(0x8f8f8a)), 107, 3, -10);
+HOVER = 'High-pressure turbine: steam from the reactor building enters here';
+const hp = add(new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.8, 8, 24), mat(0xe8e8e4)), 86, 8.6, -10); hp.rotation.z = Math.PI / 2;
+HOVER = 'Low-pressure turbine: steam expands, so these are the biggest';
+for (const x of [97, 108, 119]) {
+  const lp = add(new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 9, 32, 1, false, 0, Math.PI), mat(0xcfd8d4)), x, 6.1, -10); lp.rotation.z = Math.PI / 2;
+  add(new THREE.Mesh(new THREE.BoxGeometry(9.4, 1.2, 9.4), mat(0xb7c2be)), x, 6.6, -10);
+}
+HOVER = 'Generator: turns the spinning shaft into electricity';
+const gen = add(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 9, 28), mat(0xd04040)), 129, 9.1, -10); gen.rotation.z = Math.PI / 2;
+const exc = add(new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 2.6, 20), mat(0x8a2e2e)), 135, 7.6, -10); exc.rotation.z = Math.PI / 2;
+HOVER = 'Turbine shaft';
+rod(V(82, 8.4, -10), V(136.5, 8.4, -10), 0.35, steel);
+HOVER = 'Crossover pipes: steam from the high-pressure to the low-pressure turbines';
+for (const [x, z] of [[97, -12.5], [108, -7.5], [119, -12.5]]) {
+  const c = new THREE.CatmullRomCurve3([V(88, 10.5, z), V((88 + x) / 2, 17, z), V(x, 10.6, z)]);
+  tagIt(add(new THREE.Mesh(new THREE.TubeGeometry(c, 30, 0.9, 12, false), mat(0xb0b6ba, { metalness: 0.4 })), 0, 0, 0));
+}
+HOVER = 'Moisture separator reheaters: dry and reheat the steam between turbines';
+for (const z of [-17.6, -2.6]) { const m = add(new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 22, 20), mat(0xdfe3e0)), 103, 9, z); m.rotation.z = Math.PI / 2; }
+HOVER = 'Catwalk along the wall';
+add(new THREE.Mesh(new THREE.BoxGeometry(HL - 6, 0.3, 2.4), mat(0x5b6670)), HXM, 7, HZ - 1.5);
+add(new THREE.Mesh(new THREE.BoxGeometry(HL - 6, 0.1, 0.1), rail), HXM, 8.1, HZ - 2.7);
+HOVER = null;
+add(new THREE.Mesh(new THREE.PlaneGeometry(58, 16), mat(0x3a3f44, { emissive: 0x220f22 })), HXM, 0.08, 10).rotation.x = -Math.PI / 2;
+HOVER = 'Booth 2 · the control room: lighting panel runs venues 1 and 2';
+add(new THREE.Mesh(new THREE.BoxGeometry(12, 1, 6), mat(0x3a3c42)), 107, 0.5, 1.2);                         // raised floor
+add(new THREE.Mesh(new THREE.BoxGeometry(12, 4, 0.3), mat(0xd9d6c4)), 107, 3, -1.7);                       // back panel wall, plant beige
+for (const x of [101.15, 112.85]) add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 4, 6), mat(0xd9d6c4)), x, 3, 1.2);
+add(new THREE.Mesh(new THREE.BoxGeometry(12.3, 0.3, 6.3), mat(0x2b2d31)), 107, 5.1, 1.2);                   // roof
+add(new THREE.Mesh(new THREE.BoxGeometry(11.4, 2.6, 0.08), mat(0x9fd8ff, { transparent: true, opacity: 0.18, depthWrite: false })), 107, 3.2, 4.2); // glass front
+const annunciators = [];
+for (let r = 0; r < 4; r++) for (let c = 0; c < 18; c++) { // alarm windows (annunciators) across the top of the wall
+  const w = add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.32, 0.05), glow([0xffd23f, 0xff5a5a, 0x8dff5a, 0xffffff][(r + c) % 4], 0.9)), 101.9 + c * 0.6, 4.4 - r * 0.4, -1.5);
+  annunciators.push(w); }
+for (let c = 0; c < 9; c++) { const g = add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 16), mat(0xf4f1e6)), 102.2 + c * 1.2, 2.6, -1.5); g.rotation.x = Math.PI / 2; } // dials
+add(new THREE.Mesh(new THREE.BoxGeometry(10, 0.9, 1.1), mat(0xd9d6c4)), 107, 1.45, 0.2);                 // benchboard
+const panel2 = add(new THREE.Mesh(new THREE.BoxGeometry(10, 0.15, 1.1), glow(0xffa43d)), 107, 1.97, 0.2); panel2.rotation.x = -0.3;
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 0.9), mat(0x3a3c42)), 107, 1.45, 3);                   // the DJ decks, facing the floor
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 0.9), glow(0x4fc3ff)), 107, 2, 3);
+HOVER = null;
+djFigure(107, 1, 2.1, 0);
+for (const z of [-HZ + 0.6, HZ - 0.6]) kinds.wash.push(add(new THREE.Mesh(new THREE.BoxGeometry(HL - 4, 0.6, 0.4), glow(0xff5ad8)), HXM, 12, z, venueLights[1]));
+for (let i = 0; i < 6; i++) movingHead(82 + i * 10, HW - 4.8, HZ - 1, 0xff5ad8, venueLights[1], 20);
+for (let i = 0; i < 6; i++) movingHead(82 + i * 10, HW - 4.8, -HZ + 1, 0x8dff5a, venueLights[1], 20);
+const strobes = [];
+for (let i = 0; i < 6; i++) strobes.push(add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.5), glow(0xffffff)), 80 + i * 11, 6, HZ - 0.8, venueLights[1]));
+crowdBox(80, 134, 4, 17, 90, 0.1);
+titles['2'] = label('2 · Turbine Hall', HXM, HW + HZ + 6, 0, '#ff5ad8', true, route);
+
+// VENUE 3: REACTOR HALL. A pressurized water reactor's containment during a refuelling outage.
+// The operating floor is 8 m up; the reactor vessel sits below it in its concrete cavity, under the flooded pool.
+const RC = 166, RR = 26, RH = 36, FL = 8;
+const cont = add(new THREE.Mesh(new THREE.CylinderGeometry(RR, RR, RH, 64, 1, true), ghost(0xb7b7b2, 0.18)), RC, RH / 2, 0); walls.push(cont);
+const dome = add(new THREE.Mesh(new THREE.SphereGeometry(RR, 64, 18, 0, Math.PI * 2, 0, Math.PI / 2), cont.material), RC, RH, 0); walls.push(dome);
+HOVER = 'Equipment hatch: the way into the dome';
+add(new THREE.Mesh(new THREE.TorusGeometry(4, 0.7, 8, 32), steel), HX1 + 0.4, 4.4, 0).rotation.y = Math.PI / 2;
+HOVER = 'Scaffold stairs up to the operating floor';
+scaffoldStair(HX1 + 1.2, 0.2, 0, 1, 0, 16, 0.5, 0.55, 3.2);
+HOVER = 'Equipment hatch: the way into the dome';
+HOVER = 'Operating floor';
+add(new THREE.Mesh(new THREE.RingGeometry(10.5, RR - 0.6, 64), mat(0x4a5258, { side: THREE.DoubleSide })), RC, FL, 0).rotation.x = -Math.PI / 2;
+add(new THREE.Mesh(new THREE.TorusGeometry(10.5, 0.1, 4, 64), rail), RC, FL + 1.1, 0).rotation.x = Math.PI / 2;
+// refuelling pool: concrete cavity, water, the reactor vessel and its core
+HOVER = 'Refuelling pool, flooded: the water shields the open reactor';
+const cavity = add(new THREE.Mesh(new THREE.BoxGeometry(16, FL + 6, 16), ghost(0x8f8f8a, 0.22)), RC, (FL - 6) / 2, 0); walls.push(cavity);
+const water = add(new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.15, 14.6), glow(0x4fc3ff, 0.55)), RC, FL - 0.4, 0, venueLights[2]);
+HOVER = 'Reactor vessel and core: the reactor itself, lid off';
+const vesselMat = mat(0x9aa3a8, { metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+add(new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 10, 32, 1, true), vesselMat), RC, 0, 0);
+add(new THREE.Mesh(new THREE.SphereGeometry(3.2, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), vesselMat), RC, -5, 0);
+add(new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.45, 8, 32), steel), RC, 5, 0).rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 4, 24), glow(0x6fd6ff, 0.6)), RC, -1.8, 0); // the core's own Cherenkov glow is always on
+for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { if (i * i + j * j > 6) continue; add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 4.2, 0.7), glow(0xbfefff, 0.85)), RC + i * 0.85, -1.8, j * 0.85); }
+HOVER = null;
+const coreGlow = add(new THREE.PointLight(0x4fc3ff, 3, 70), RC, FL + 2, 0, venueLights[2]);
+const LOOPS = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+const pipeMat = mat(0xb0b6ba, { metalness: 0.4 });
+for (const a of LOOPS) {
+  const x = RC + Math.cos(a) * 18, z = Math.sin(a) * 18;
+  HOVER = 'Hot leg: hot water from the reactor to a steam generator';
+  rod(V(RC + Math.cos(a) * 3.2, 3, Math.sin(a) * 3.2), V(x, 3, z), 0.75, pipeMat); // hot leg to the steam generator
+  const px = RC + Math.cos(a + 0.2) * 13, pz = Math.sin(a + 0.2) * 13;
+  HOVER = 'Cold leg: cooled water back into the reactor';
+  rod(V(RC + Math.cos(a + 0.2) * 3.2, 1.8, Math.sin(a + 0.2) * 3.2), V(px, 1.8, pz), 0.6, mat(0x8f99a0, { metalness: 0.4 })); // cold leg back from the pump
+  HOVER = 'Steam generator: boils the second water loop into steam';
+  rod(V(x, 3, z), V(x, FL + 13, z), 2.3, mat(0xe2e2dc)); // steam generator
+  add(new THREE.Mesh(new THREE.SphereGeometry(3, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xe2e2dc)), x, FL + 13, z);
+  rod(V(x, 1.2, z), V(px, 1.2, pz), 0.6, pipeMat);
+  HOVER = 'Reactor coolant pump';
+  rod(V(px, 0, pz), V(px, 5.5, pz), 1.3, mat(0x3f6fa0)); // reactor coolant pump
+  add(new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 2.2, 16), mat(0x2a2a2a)), px, 6.6, pz);
+  HOVER = 'Steam generator compartment';
+  const dr = add(new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, FL + 2, 24, 1, true), ghost(0x8f8f8a, 0.16)), x, (FL + 2) / 2, z); walls.push(dr);
+}
+HOVER = 'Pressurizer: keeps the reactor water under pressure so it never boils';
+rod(V(RC + 4, FL, 19.5), V(RC + 4, FL + 15, 19.5), 1.7, mat(0xe2e2dc)); // pressurizer
+add(new THREE.Mesh(new THREE.SphereGeometry(1.7, 16, 8), mat(0xe2e2dc)), RC + 4, FL + 15, 19.5);
+const hx = RC - 13, hz = 10; // vessel head on its stand with the control rod drives
+HOVER = 'Vessel head on its stand, with the control rod drives';
+add(new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 1.2, 24), steel), hx, FL + 0.6, hz);
+add(new THREE.Mesh(new THREE.SphereGeometry(3.4, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x9aa3a8, { metalness: 0.5 })), hx, FL + 1.2, hz);
+for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { if (i * i + j * j > 5) continue; rod(V(hx + i * 0.9, FL + 3, hz + j * 0.9), V(hx + i * 0.9, FL + 7.5, hz + j * 0.9), 0.18, mat(0x6a7278)); }
+HOVER = 'Upper internals, parked in the pool';
+add(new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 4, 20), mat(0x7d868c)), RC + 5, FL - 3, 5); // upper internals parked in the pool
+// refuelling machine: bridge over the pool, trolley and mast; booth 3 rides the bridge
+HOVER = 'Refuelling machine: bridge, trolley and mast';
+add(new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.8, 24), mat(0xffd27a)), RC, FL + 1.6, 0);
+for (const z of [-12, 12]) add(new THREE.Mesh(new THREE.BoxGeometry(26, 0.3, 0.6), steel), RC, FL + 0.9, z);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 2.4, 3), mat(0xffa43d)), RC, FL + 3.2, -3);
+rod(V(RC, FL + 4.4, -3), V(RC, 0.5, -3), 0.35, steel);
+HOVER = 'Booth 3 · lighting panel (runs all three venues)';
+add(new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.5, 28), mat(0x26272b)), RC, FL + 2.25, 3);
+add(new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.14, 6, 32), glow(0xffa43d)), RC, FL + 2.5, 3).rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 0.9), mat(0x3a3c42)), RC, FL + 2.95, 3.9);
+const panel3 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 0.9), glow(0xffa43d)), RC, FL + 3.5, 3.9); panel3.rotation.x = -0.4;
+HOVER = null;
+djFigure(RC, FL + 2.5, 2.6, 0);
+HOVER = 'Fuel transfer tube to the fuel building';
+rod(V(RC + 8, 1, 0), V(RC + 31, 1, 0), 0.8, steel); // fuel transfer tube
+add(new THREE.Mesh(new THREE.BoxGeometry(14, 16, 18), ghost(0x7f8b90, 0.22)), RC + 38, 8, 0);
+add(new THREE.Mesh(new THREE.BoxGeometry(8, 0.2, 10), glow(0x4fc3ff, 0.6)), RC + 38, 4, 0, venueLights[2]);
+HOVER = 'Polar crane: lifts the vessel head';
+add(new THREE.Mesh(new THREE.TorusGeometry(RR - 1, 0.45, 6, 72), steel), RC, RH - 4, 0).rotation.x = Math.PI / 2; // polar crane rail
+add(new THREE.Mesh(new THREE.BoxGeometry(RR * 2 - 2, 1.8, 2.8), mat(0xffa43d)), RC, RH - 3, 0);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 2, 4), mat(0xd04040)), RC + 6, RH - 4.4, 0);
+HOVER = null;
+for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; movingHead(RC + Math.cos(a) * (RR - 3), RH - 5, Math.sin(a) * (RR - 3), 0x4fc3ff, venueLights[2], 30, a); }
+crowd(RC, 0, 11.5, 15.5, 60, FL + 0.1);
+titles['3'] = label('3 · Reactor Hall', RC, RH + RR + 6, 0, '#4fc3ff', true, route);
+titles['in'] = label('IN · Break in', -90, 11, 0, '#ffa43d', true, route); titles['in'].visible = false;
+titles['back'] = label('Pad back to 1', 96, 54, -48, '#c8d0d8', false, route); titles['back'].visible = false;
+
+// Pads
+add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), RC - 4, FL + 0.2, -19);
+add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), 14, D + 0.4, -14);
+
+// The route: break in -> 1 -> pipe -> 2 -> hatch -> 3, pad back
+const pipeIn = pipeCurve.getSpacedPoints(20).map(p => p.clone().setY(PY - 2));
+const path = new THREE.CatmullRomCurve3([V(-96, 1, 7), V(-82, 1, 7), V(-86, 1.2, 3), V(-84, 4.6, 0), V(-70, 4.9, 0), V(-58, 5.2, 0), V(-46, 5.5, 0), V(-39, 5.6, 0), V(-36, 4.4, 0), V(-32, 1.3, 0), V(-26, 1.2, -6), V(-19.5, 1.2, -7), V(-19.5, D + 1, 7.5), V(-8, D + 1, 12), V(8, D + 1, 12), V(19.5, D + 1, 7.5), V(19.5, 1.2, -7), V(28, 1.4, -3), V(32, 1.8, -1), ...pipeIn, V(86, 1, 6), V(108, 1, 10), V(130, 1, 5), V(140, 1.2, 0), V(148, FL + 0.8, 0), V(152, FL + 0.8, -9), V(RC - 4, FL + 0.8, -18)]);
+route.add(new THREE.Mesh(new THREE.TubeGeometry(path, 400, 0.45, 8, false), glow(0xffa43d, 0.75)));
+const back = new THREE.CatmullRomCurve3([V(RC - 4, FL + 2, -19), V(120, 48, -50), V(50, 52, -44), V(14, D + 2, -14)]);
+const backLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(back.getPoints(100)), new THREE.LineDashedMaterial({ color: 0xc8d0d8, dashSize: 3, gapSize: 2 })); backLine.computeLineDistances(); route.add(backLine);
+const walkers = [];
+for (let i = 0; i < 20; i++) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glow(0xffd23f)); route.add(w); walkers.push({ w, t: i / 20 }); }
+
+// Lighting control: the live booth lights its venue and every venue already passed
+let live = 0;
+const liveLine = document.getElementById('liveLine');
+const ranges = ['venue 1', 'venues 1 and 2', 'venues 1, 2 and 3'];
+function setLive(n) {
+  live = n; stormUntil = clock.elapsedTime + 3; // lightning in the smoke as the set starts
+  venueLights.forEach((g, i) => { g.visible = i <= n; });
+  [panel1, panel2, panel3].forEach((p, i) => { p.material.color.set(i === n ? 0xffa43d : 0x5a4a30); });
+  liveLine.textContent = `Live: booth ${n + 1} · lights on ${ranges[n]}`;
+}
+setLive(0);
+let cycling = true, lastSwap = 0;
+
+// Switches
+function toggle(btn, fn) { btn.addEventListener('click', () => { const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', String(on)); fn(on); }); }
+toggle(document.getElementById('tCycle'), on => { cycling = on; if (!on) setLive(2); });
+toggle(document.getElementById('tRoute'), on => { route.visible = on; });
+const baseOp = new Map(walls.map(w => [w, w.material.opacity]));
+toggle(document.getElementById('tShell'), on => { walls.forEach(w => { w.material.opacity = on ? 0.92 : baseOp.get(w); w.material.depthWrite = on; }); });
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const spinBtn = document.getElementById('tSpin');
+function setSpin(on) { spinning = on; spinBtn.setAttribute('aria-pressed', String(on)); spinBtn.textContent = on ? 'Stop spinning' : 'Start spinning'; }
+if (reduce) setSpin(false);
+spinBtn.addEventListener('click', () => setSpin(!spinning));
+renderer.domElement.addEventListener('pointerdown', () => setSpin(false));
+// hold right mouse to look, W A S D to fly, Q / E down and up, Shift faster, F back to the whole plant
+const keys = new Set(); let looking = false; const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 2) return; looking = true; controls.enabled = false; euler.setFromQuaternion(camera.quaternion); renderer.domElement.setPointerCapture(e.pointerId); });
+addEventListener('pointerup', e => { if (e.button !== 2 || !looking) return; looking = false;
+  const dist = Math.min(Math.max(camera.position.distanceTo(controls.target), 8), 60);
+  controls.target.copy(camera.position).add(V(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(dist)); controls.enabled = true; });
+addEventListener('pointermove', e => { if (!looking) return; euler.y -= e.movementX * .0035; euler.x = Math.max(-1.5, Math.min(1.5, euler.x - e.movementY * .0035)); camera.quaternion.setFromEuler(euler); });
+addEventListener('keydown', e => { const k = e.key.toLowerCase();
+  if (('wasdqe'.includes(k) && k.length === 1) || e.key.startsWith('Arrow') || k === 'shift') { keys.add(k); setSpin(false); }
+  if (k === 'f') { camera.position.copy(HOME_C); camera.up.set(0, 1, 0); controls.target.copy(HOME_T); } });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+function move(dt) { if (!keys.size) return;
+  const f = V(0, 0, -1).applyQuaternion(camera.quaternion), r = V(1, 0, 0).applyQuaternion(camera.quaternion), v = V(0, 0, 0);
+  if (keys.has('w') || keys.has('arrowup')) v.add(f); if (keys.has('s') || keys.has('arrowdown')) v.sub(f);
+  if (keys.has('d') || keys.has('arrowright')) v.add(r); if (keys.has('a') || keys.has('arrowleft')) v.sub(r);
+  if (keys.has('e')) v.y += 1; if (keys.has('q')) v.y -= 1;
+  if (!v.lengthSq()) return; v.normalize().multiplyScalar((keys.has('shift') ? 90 : 30) * dt);
+  camera.position.add(v); if (!looking) controls.target.add(v); }
+// scroll zooms toward the middle of the view; scroll-click drag turns freely, with Shift it pans
+renderer.domElement.addEventListener('wheel', e => { e.preventDefault(); setSpin(false);
+  const off = camera.position.clone().sub(controls.target);
+  const len = Math.min(Math.max(off.length() * Math.pow(1.0015, e.deltaY), controls.minDistance), controls.maxDistance);
+  camera.position.copy(controls.target).add(off.setLength(len)); }, { passive: false });
+let midDrag = null;
+renderer.domElement.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 1) return; e.preventDefault(); midDrag = { x: e.clientX, y: e.clientY, pan: e.shiftKey }; try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} });
+addEventListener('pointermove', e => { if (!midDrag) return; const dx = e.clientX - midDrag.x, dy = e.clientY - midDrag.y; midDrag.x = e.clientX; midDrag.y = e.clientY;
+  const off = camera.position.clone().sub(controls.target);
+  if (midDrag.pan || e.shiftKey) { const k = off.length() * .0016, right = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 0), up = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 1);
+    const mv = right.multiplyScalar(-dx * k).add(up.multiplyScalar(dy * k)); camera.position.add(mv); controls.target.add(mv); return; }
+  const up = camera.up.clone().normalize(), right = V(0, 0, 0).crossVectors(up, off).normalize();
+  const qq = new THREE.Quaternion().setFromAxisAngle(up, -dx * .006).multiply(new THREE.Quaternion().setFromAxisAngle(right, -dy * .006));
+  off.applyQuaternion(qq); camera.up.applyQuaternion(qq).normalize(); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target); });
+addEventListener('pointerup', e => { if (e.button === 1) midDrag = null; });
+const kindOn = { lasers: true, heads: true, wash: true, beacons: true, crowd: true };
+document.querySelectorAll('.kind').forEach(li => { const flip = () => { const k = li.dataset.k, on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); kindOn[k] = on;
+    const list = k === 'lasers' ? lasers : kinds[k]; list.forEach(o => { o.visible = on; }); if (k === 'wash') { bolts.forEach(b => { b.visible = on; }); strobes.forEach(x => { x.userData.off = !on; }); } };
+  li.addEventListener('click', flip); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }); });
+// clicking a line in the key shows or hides that title in the model
+document.querySelectorAll('.tgl').forEach(li => { const flip = () => { const on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); titles[li.dataset.t].visible = on; };
+  li.addEventListener('click', flip); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }); });
+// hover (or tap) a part to see its name
+const tip = document.getElementById('tip'), ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+function showTip(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(hoverables, false).find(h => h.object.visible);
+  if (!hit) { tip.hidden = true; renderer.domElement.style.cursor = ''; return; }
+  tip.textContent = hit.object.userData.name; tip.hidden = false; renderer.domElement.style.cursor = 'help';
+  tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+}
+renderer.domElement.addEventListener('pointermove', showTip);
+renderer.domElement.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') showTip(e); });
+renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; });
+if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('key').open = false;
+
+function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); controls.handleResize(); }
+window.addEventListener('resize', resize); resize();
+
+function frame() {
+  const t = clock.elapsedTime;
+  if (cycling && t - lastSwap > 7) { lastSwap = t; setLive((live + 1) % 3); }
+  if (!reduce) {
+    const beat = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * 2.1);
+    lasers.forEach((l, i) => { l.material.opacity = 0.3 + 0.7 * (Math.sin(t * 3 + i) > 0 ? beat : 0.15); });
+    heads.forEach(({ beam, a }, i) => { beam.rotation.set(0.55 * Math.sin(t * 0.9 + i), a, 0.45 * Math.cos(t * 0.7 + i)); });
+    strobes.forEach((s, i) => { s.visible = !s.userData.off && Math.sin(t * 18 + i * 1.7) > 0.6; });
+    annunciators.forEach((w, i) => { w.visible = beat > 0.75 ? ((i * 7 + Math.floor(t * 4)) % 5) !== 0 : (i % 3) === 0; });
+    coreGlow.intensity = 2 + beat * 2.2; water.material.opacity = 0.45 + 0.3 * beat;
+    puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.09) % 170; const spread = u.y > TOP - D ? 1 + (u.y - (TOP - D)) / 25 : 1; // the plume widens once it leaves the top
+      p.position.set(Math.cos(u.a + t * 0.1) * u.r * spread, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r * spread);
+      p.material.color.setHSL((u.hue + t * 0.05) % 1, 0.9, 0.62); p.scale.setScalar(spread); }); // LED-lit haze
+    const storm = t < stormUntil, rate = storm ? 0.35 : 0.012;
+    let lit = 0;
+    bolts.forEach(b => { if (b.material.opacity > 0) b.material.opacity = Math.max(0, b.material.opacity - 0.12); else if (Math.random() < rate) { b.geometry.dispose(); const nb = makeBolt(); b.geometry = nb.geometry; venueLights[0].remove(nb); b.material.opacity = 1; } lit += b.material.opacity; });
+    flashGlow.intensity = Math.min(4, lit * 1.2);
+    const raining = (t % 11) < 6; // 6 s of rain, 5 s dry
+    rain.material.opacity += ((raining ? 0.8 : 0) - rain.material.opacity) * 0.06;
+    const rp = rainGeo.attributes.position.array;
+    for (let i = 1; i < rp.length; i += 3) { rp[i] -= 0.28; if (rp[i] < 0.6) rp[i] = D - 0.4; }
+    rainGeo.attributes.position.needsUpdate = true;
+    dancers.forEach(d => { d.g.position.y = d.y + 0.35 * Math.max(0, Math.sin(t * 8.6 + d.p)); });
+    walkers.forEach(o => { o.t = (o.t + 0.001) % 1; o.w.position.copy(path.getPointAt(o.t)).add(V(0, 0.8, 0)); });
+  }
+  const dt = Math.min(clock.getDelta(), 0.05); move(dt);
+  if (spinning) { const off = camera.position.clone().sub(controls.target).applyAxisAngle(V(0, 1, 0), 0.0012); camera.position.copy(controls.target).add(off); }
+  if (!looking) controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+
+</html>
