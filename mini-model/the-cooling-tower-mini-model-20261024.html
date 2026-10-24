@@ -61,7 +61,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <h2>The night, in order</h2>
   <ol class="route">
     <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, slip through the cut in the barbed-wire fence, then climb the scaffold stair over the raised basin wall where one panel of the inlet netting has been cut. The concrete X-legs can’t be broken; you go between them.</span></li>
-    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
+    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
     <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
     <li><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
     <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
@@ -100,7 +100,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 view.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x14161a);
-scene.fog = new THREE.Fog(0x14161a, 320, 700);
+scene.fog = new THREE.Fog(0x14161a, 360, 900);
+const clock = new THREE.Clock(); // made early: setLive() reads it when the page starts
 const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
 camera.position.set(-170, 140, 190);
 // Same navigation as Astra's PetOS System Map: trackball turning, scroll zoom, scroll-click drag, right-hold to fly.
@@ -301,53 +302,20 @@ HOVER = 'Caged ladder to the rim: climb up and watch the show from the top';
   for (let y = CURB + 2.5; y < TOP; y += 2) { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.05, 4, 14, Math.PI), steel); hoop.position.copy(at(y, 0, 1.2)); hoop.lookAt(at(y, 0, 3)); hoop.rotateX(Math.PI / 2); scene.add(hoop); tagIt(hoop); }
   for (const y of [40, 80]) { const q = at(y, 0, 2.2); const pl = add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 2.6), mat(0x6f7c82)), q.x, y, q.z); pl.rotation.y = -LA; } // rest platforms
 }
-// a couple at the top of the ladder, holding hands, watching the stack show
-{ const LA = Math.PI - 0.32, r = rAt(TOP) + 0.3, couple = [];
-  for (const da of [-0.018, 0.018]) { const g = new THREE.Group(); g.add(new THREE.LineSegments(figLines, new THREE.LineBasicMaterial({ color: 0xff9ad8 })));
-    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat); g.scale.setScalar(1.6);
-    g.position.set(Math.cos(LA + da) * r, TOP + 0.35, Math.sin(LA + da) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); couple.push(g);
-    g.traverse(o => { o.userData.name = 'A couple at the top of the ladder, watching the stack show'; }); hoverables.push(g.children[0], hat); }
-  const hand = (g, side) => V(side * 0.38 * 1.6, TOP + 0.35 + 1.0 * 1.6, 0).applyAxisAngle(V(0, 1, 0), g.rotation.y).add(V(g.position.x, 0, g.position.z));
-  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([hand(couple[0], -1), hand(couple[1], 1)]), new THREE.LineBasicMaterial({ color: 0xff9ad8 }))); }
-// graffiti: neon spray-paint tags round the top edge and up the ladder
-function graffitiTexture(w, h, n, seed) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
-  let k = seed; const rnd = () => { k = (k * 16807) % 2147483647; return k / 2147483647; };
-  const words = ['SCRAM', 'HARD HAT CREW', 'CRITICAL', 'MELTDOWN', 'RAVE', 'NO OSHA', 'GLOW', 'STACK', '1 2 3', 'K=1', 'COOLING', 'BASS', 'AFTER HOURS', 'BREAK IN', 'NEUTRONS', 'SPIN'];
-  const inks = ['#ff5ad8', '#8dff5a', '#4fc3ff', '#ffd23f', '#ff7a1a', '#b98cff', '#ffffff'];
-  for (let i = 0; i < n; i++) {
-    const x = rnd() * w, y = h * 0.18 + rnd() * h * 0.7, size = h * (0.16 + rnd() * 0.22), ink = inks[Math.floor(rnd() * inks.length)];
-    g.save(); g.translate(x, y); g.rotate((rnd() - 0.5) * 0.5);
-    g.font = `900 ${size}px Impact, 'Arial Black', sans-serif`; g.lineJoin = 'round';
-    const word = words[Math.floor(rnd() * words.length)];
-    g.lineWidth = size * 0.16; g.strokeStyle = '#111'; g.strokeText(word, 0, 0);
-    g.fillStyle = ink; g.fillText(word, 0, 0);
-    const tw = g.measureText(word).width; g.fillStyle = ink;
-    for (let d = 0; d < 5; d++) g.fillRect(rnd() * tw, size * 0.05, size * 0.05, size * (0.2 + rnd() * 0.6)); // drips
-    for (let d = 0; d < 40; d++) { g.globalAlpha = 0.5; g.beginPath(); g.arc(rnd() * tw, -rnd() * size, rnd() * 2.5, 0, 7); g.fill(); } // overspray
-    g.restore(); g.globalAlpha = 1;
-  }
-  const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; return t;
-}
-HOVER = 'Graffiti';
-{ const prof2 = []; for (let i = 0; i <= 8; i++) { const y = TOP - 16 + i * 2; prof2.push(new THREE.Vector2(rAt(y) + 0.12, y)); } // outside, near the top
-  const gt = graffitiTexture(4096, 512, 70, 7); gt.repeat.set(2, 1);
-  tagIt(add(new THREE.Mesh(new THREE.LatheGeometry(prof2, 96), new THREE.MeshBasicMaterial({ map: gt, transparent: true, side: THREE.DoubleSide, depthWrite: false })), 0, 0, 0));
-  const gt2 = graffitiTexture(4096, 256, 50, 31); gt2.repeat.set(2, 1); // round the outer face of the rim
-  tagIt(add(new THREE.Mesh(new THREE.CylinderGeometry(rAt(TOP) + 0.95, rAt(TOP) + 0.95, 0.6, 96, 1, true), new THREE.MeshBasicMaterial({ map: gt2, transparent: true, depthWrite: false })), 0, TOP, 0));
-  const LA = Math.PI - 0.32; // patches up the ladder
-  for (let i = 0; i < 9; i++) { const y = CURB + 8 + i * 11 + (i % 2) * 3, off = (i % 2 ? 2.4 : -2.4), r = rAt(Math.max(y, LEG)) + 0.15;
-    const pt = graffitiTexture(512, 256, 2, 101 + i);
-    const q = tagIt(add(new THREE.Mesh(new THREE.PlaneGeometry(5, 2.5), new THREE.MeshBasicMaterial({ map: pt, transparent: true, side: THREE.DoubleSide, depthWrite: false })), Math.cos(LA) * r - Math.sin(LA) * off, y, Math.sin(LA) * r + Math.cos(LA) * off));
-    q.lookAt(Math.cos(LA) * (r + 5) - Math.sin(LA) * off, y, Math.sin(LA) * (r + 5) + Math.cos(LA) * off); }
-}
-HOVER = null;
+// a couple at the top of the ladder, sitting on the rim, feet over the inside edge, holding hands
 // people sitting on the rim, legs over the inside edge
 const sitLines = (() => { const p = [], seg = (a, b) => p.push(...a, ...b);
   seg([0, 0.45, 0], [0, 1.0, 0]); seg([0, 0.45, 0], [0, 0.45, 0.45]); seg([0, 0.45, 0.45], [0, 0, 0.55]); seg([0.12, 0.45, 0], [0.12, 0.45, 0.45]); seg([0.12, 0.45, 0.45], [0.12, 0, 0.55]);
   seg([0, 0.85, 0], [-0.3, 0.5, 0.1]); seg([0, 0.85, 0], [0.3, 0.5, 0.1]);
   for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = (i + 1) / 10 * Math.PI * 2; seg([Math.cos(a) * 0.17, 1.17 + Math.sin(a) * 0.17, 0], [Math.cos(b) * 0.17, 1.17 + Math.sin(b) * 0.17, 0]); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g; })();
+{ const LA = Math.PI - 0.32, r = rAt(TOP) - 0.4, pair = [];
+  for (const da of [-0.016, 0.016]) { const g = new THREE.Group(); g.add(new THREE.LineSegments(sitLines, new THREE.LineBasicMaterial({ color: 0xff9ad8 })));
+    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat); g.scale.setScalar(1.7);
+    g.position.set(Math.cos(LA + da) * r, TOP + 0.35, Math.sin(LA + da) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); pair.push(g);
+    g.traverse(o => { o.userData.name = 'A couple at the top of the ladder, feet over the edge, watching the stack show'; }); hoverables.push(g.children[0], hat); }
+  const hand = (g, side) => V(side * 0.3 * 1.7, 0.5 * 1.7, 0.1 * 1.7).applyQuaternion(g.quaternion).add(g.position);
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([hand(pair[0], 1), hand(pair[1], -1)]), new THREE.LineBasicMaterial({ color: 0xff9ad8 }))); }
 for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, r = rAt(TOP) - 0.3, g = new THREE.Group();
   g.add(new THREE.LineSegments(sitLines, figMat)); const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat);
   g.scale.setScalar(1.5); g.position.set(Math.cos(a) * r, TOP + 0.35, Math.sin(a) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); }
@@ -366,12 +334,19 @@ const RAIN = 2600, rainPos = new Float32Array(RAIN * 3);
 for (let i = 0; i < RAIN; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.sqrt(Math.random()) * 31; rainPos[i * 3] = Math.cos(a) * r; rainPos[i * 3 + 1] = 0.6 + Math.random() * (D - 1); rainPos[i * 3 + 2] = Math.sin(a) * r; }
 const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
 const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xbfe6ff, size: 0.35, transparent: true, opacity: 0, depthWrite: false })); scene.add(rain);
-const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(14, 9, 100, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, 58, 0, venueLights[0]);
+const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(34, 9, 170, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, D + 85, 0, venueLights[0]);
 const puffs = [];
-for (let i = 0; i < 50; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2 + Math.random() * 2, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.07, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 95 }; puffs.push(p); }
+for (let i = 0; i < 90; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2.4 + Math.random() * 3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.1, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 170, hue: Math.random() }; puffs.push(p); }
+// lightning: jagged bolts that flash inside the smoke, a storm of them each time a set starts
+const bolts = [];
+function makeBolt() { const pts = []; let x = (Math.random() - 0.5) * 14, z = (Math.random() - 0.5) * 14, y = D + 20 + Math.random() * 90;
+  for (let k = 0; k < 9; k++) { pts.push(V(x, y, z)); x += (Math.random() - 0.5) * 6; z += (Math.random() - 0.5) * 6; y -= 3 + Math.random() * 4; }
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0 })); venueLights[0].add(l); return l; }
+for (let i = 0; i < 10; i++) bolts.push(makeBolt());
+let stormUntil = 3, flashGlow = add(new THREE.PointLight(0xbfe0ff, 0, 160), 0, 70, 0, venueLights[0]);
 add(new THREE.Mesh(new THREE.TorusGeometry(22.8, 0.55, 8, 96), glow(0x4fc3ff)), 0, 82, 0, venueLights[0]).rotation.x = Math.PI / 2;
 const lasers = [];
-for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(Math.cos(a) * 4.5, D + 2, Math.sin(a) * 4.5), V(Math.cos(a) * 20, TOP + 1, Math.sin(a) * 20)]), new THREE.LineBasicMaterial({ color: 0x8dff5a, transparent: true, opacity: 0.9 })); venueLights[0].add(l); lasers.push(l); }
+for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(Math.cos(a) * 4.5, D + 2, Math.sin(a) * 4.5), V(Math.cos(a) * 46, TOP + 110, Math.sin(a) * 46)]), new THREE.LineBasicMaterial({ color: 0x8dff5a, transparent: true, opacity: 0.9 })); venueLights[0].add(l); lasers.push(l); }
 const heads = [];
 function movingHead(x, y, z, color, g, len = 22, aim = 0) {
   add(new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glow(color)), x, y, z, g);
@@ -592,7 +567,7 @@ let live = 0;
 const liveLine = document.getElementById('liveLine');
 const ranges = ['venue 1', 'venues 1 and 2', 'venues 1, 2 and 3'];
 function setLive(n) {
-  live = n;
+  live = n; stormUntil = clock.elapsedTime + 3; // lightning in the smoke as the set starts
   venueLights.forEach((g, i) => { g.visible = i <= n; });
   [panel1, panel2, panel3].forEach((p, i) => { p.material.color.set(i === n ? 0xffa43d : 0x5a4a30); });
   liveLine.textContent = `Live: booth ${n + 1} · lights on ${ranges[n]}`;
@@ -667,7 +642,6 @@ if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('ke
 function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); controls.handleResize(); }
 window.addEventListener('resize', resize); resize();
 
-const clock = new THREE.Clock();
 function frame() {
   const t = clock.elapsedTime;
   if (cycling && t - lastSwap > 7) { lastSwap = t; setLive((live + 1) % 3); }
@@ -678,7 +652,13 @@ function frame() {
     strobes.forEach((s, i) => { s.visible = Math.sin(t * 18 + i * 1.7) > 0.6; });
     annunciators.forEach((w, i) => { w.visible = beat > 0.75 ? ((i * 7 + Math.floor(t * 4)) % 5) !== 0 : (i % 3) === 0; });
     coreGlow.intensity = 2 + beat * 2.2; water.material.opacity = 0.45 + 0.3 * beat;
-    puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.07) % 95; p.position.set(Math.cos(u.a + t * 0.1) * u.r, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r); });
+    puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.09) % 170; const spread = u.y > TOP - D ? 1 + (u.y - (TOP - D)) / 25 : 1; // the plume widens once it leaves the top
+      p.position.set(Math.cos(u.a + t * 0.1) * u.r * spread, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r * spread);
+      p.material.color.setHSL((u.hue + t * 0.05) % 1, 0.9, 0.62); p.scale.setScalar(spread); }); // LED-lit haze
+    const storm = t < stormUntil, rate = storm ? 0.35 : 0.012;
+    let lit = 0;
+    bolts.forEach(b => { if (b.material.opacity > 0) b.material.opacity = Math.max(0, b.material.opacity - 0.12); else if (Math.random() < rate) { b.geometry.dispose(); const nb = makeBolt(); b.geometry = nb.geometry; venueLights[0].remove(nb); b.material.opacity = 1; } lit += b.material.opacity; });
+    flashGlow.intensity = Math.min(4, lit * 1.2);
     const raining = (t % 11) < 6; // 6 s of rain, 5 s dry
     rain.material.opacity += ((raining ? 0.8 : 0) - rain.material.opacity) * 0.06;
     const rp = rainGeo.attributes.position.array;
