@@ -40,6 +40,11 @@ h2 { font-size: 12px; font-family: var(--mono); letter-spacing: .1em; text-trans
 .route li { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: start; }
 .n { font-family: var(--mono); font-weight: 500; font-size: 13px; text-align: center; border-radius: 4px; padding: 2px 0; color: #1d1e22; }
 .text { margin: 0 0 6px; }
+.tgl { cursor: pointer; border-radius: 6px; padding: 3px 4px; }
+.tgl:hover { background: rgba(255,255,255,.05); }
+.tgl:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.tgl[aria-pressed="false"] .n { opacity: .45; }
+.tgl[aria-pressed="false"] .n::after { content: ' ·'; }
 .live { margin: 8px 0 0; padding: 8px 10px; border: 1px solid var(--amber); border-radius: 6px; font-family: var(--mono); font-size: 12px; color: var(--amber); }
 ul.legend { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
@@ -58,13 +63,13 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 <details id="key" open>
   <summary><b class="title">The Cooling Tower Mini Model</b> <span class="toggle-hint">key</span></summary>
   <p class="sub">A pocket-sized look at the world, no VR needed · 3 connected venues · tower 110 m tall</p>
-  <h2>The night, in order</h2>
+  <h2>The night, in order <span style="text-transform:none;letter-spacing:0">(click a line to show or hide its title)</span></h2>
   <ol class="route">
-    <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops through the cut in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
-    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
-    <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
-    <li><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
-    <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
+    <li class="tgl" data-t="in" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops through the cut in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
+    <li class="tgl" data-t="1" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
+    <li class="tgl" data-t="2" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
+    <li class="tgl" data-t="3" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
+    <li class="tgl" data-t="back" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
   </ol>
   <p class="hint">All three are joined: the pipe runs straight from the stack into the turbine hall, and the hatch opens from the hall into the dome.</p>
   <h2>Inside the reactor hall</h2>
@@ -363,7 +368,7 @@ function movingHead(x, y, z, color, g, len = 22, aim = 0) {
 }
 for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, r = rAt(D + 16) - 1.5; movingHead(Math.cos(a) * r, D + 16, Math.sin(a) * r, 0xff5ad8, venueLights[0], 22, a); }
 crowd(0, 0, 6.5, 33, 210, D + 0.2);
-label('1 · The Stack', 0, 34, 0, '#8dff5a', true, route);
+const titles = {}; titles['1'] = label('1 · The Stack', 0, 34, 0, '#8dff5a', true, route);
 
 // The giant water pipe: long straight runs with elbow turns, from the stack into the turbine hall
 const PY = 3.8, PR = 3.8, BEND = 6;
@@ -474,7 +479,7 @@ for (let i = 0; i < 6; i++) movingHead(82 + i * 10, HW - 4.8, -HZ + 1, 0x8dff5a,
 const strobes = [];
 for (let i = 0; i < 6; i++) strobes.push(add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.5), glow(0xffffff)), 80 + i * 11, 6, HZ - 0.8, venueLights[1]));
 crowdBox(80, 134, 4, 17, 90, 0.1);
-label('2 · Turbine Hall', HXM, HW + HZ + 6, 0, '#ff5ad8', true, route);
+titles['2'] = label('2 · Turbine Hall', HXM, HW + HZ + 6, 0, '#ff5ad8', true, route);
 
 // VENUE 3: REACTOR HALL. A pressurized water reactor's containment during a refuelling outage.
 // The operating floor is 8 m up; the reactor vessel sits below it in its concrete cavity, under the flooded pool.
@@ -555,7 +560,9 @@ add(new THREE.Mesh(new THREE.BoxGeometry(3, 2, 4), mat(0xd04040)), RC + 6, RH - 
 HOVER = null;
 for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; movingHead(RC + Math.cos(a) * (RR - 3), RH - 5, Math.sin(a) * (RR - 3), 0x4fc3ff, venueLights[2], 30, a); }
 crowd(RC, 0, 11.5, 15.5, 60, FL + 0.1);
-label('3 · Reactor Hall', RC, RH + RR + 6, 0, '#4fc3ff', true, route);
+titles['3'] = label('3 · Reactor Hall', RC, RH + RR + 6, 0, '#4fc3ff', true, route);
+titles['in'] = label('IN · Break in', -90, 11, 0, '#ffa43d', true, route); titles['in'].visible = false;
+titles['back'] = label('Pad back to 1', 96, 54, -48, '#c8d0d8', false, route); titles['back'].visible = false;
 
 // Pads
 add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), RC - 4, FL + 0.2, -19);
@@ -631,6 +638,9 @@ addEventListener('pointermove', e => { if (!midDrag) return; const dx = e.client
   const qq = new THREE.Quaternion().setFromAxisAngle(up, -dx * .006).multiply(new THREE.Quaternion().setFromAxisAngle(right, -dy * .006));
   off.applyQuaternion(qq); camera.up.applyQuaternion(qq).normalize(); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target); });
 addEventListener('pointerup', e => { if (e.button === 1) midDrag = null; });
+// clicking a line in the key shows or hides that title in the model
+document.querySelectorAll('.tgl').forEach(li => { const flip = () => { const on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); titles[li.dataset.t].visible = on; };
+  li.addEventListener('click', flip); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }); });
 // hover (or tap) a part to see its name
 const tip = document.getElementById('tip'), ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 function showTip(e) {
