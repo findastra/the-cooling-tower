@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Cooling Tower</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="World portfolio for The Cooling Tower, a VRChat rave world inside a nuclear plant: real photos, the science behind each one, and how the DJ and the crowd play it.">
@@ -40,6 +44,13 @@ h1 { font-family: var(--display); font-weight: 800; font-size: clamp(56px, 11vw,
 .status { display: flex; flex-wrap: wrap; gap: 10px 14px; padding-block: 18px; border-bottom: 1px solid var(--line); }
 .chip { font-family: var(--mono); font-size: 13px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink-soft); white-space: nowrap; }
 .chip b { color: var(--alarm); font-weight: 500 }
+
+/* 3D draft */
+.draft3d { padding-block: 40px 8px; }
+.frame { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; min-height: 420px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #14161a; }
+.frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.open-full { margin: 10px 0 0; font-size: 15px; }
+@media (max-width: 640px) { .frame { aspect-ratio: 3 / 4; } }
 
 /* Energy path */
 .path { padding-block: 44px 8px; }
@@ -103,23 +114,30 @@ footer em { color: var(--ink) }
 </style>
 
 <header class="hero">
-  <img src="images/tower-sky-ring-20261024.jpg" alt="Looking straight up inside a nuclear cooling tower at a ring of cloudy sky">
+  <img src="portfolio/images/tower-sky-ring-20261024.jpg" alt="Looking straight up inside a nuclear cooling tower at a ring of cloudy sky">
   <div class="hero-text">
     <div class="wrap">
-      <div class="eyebrow">VRChat world · in design</div>
+      <div class="eyebrow">Draft · VRChat world · in design</div>
       <h1>The Cooling Tower</h1>
-      <p class="lede">A rave inside a nuclear plant during a refuelling outage. You walk in between the tower’s concrete legs as steam, follow the energy back upstream through a giant water pipe, and reach the core, where the DJ runs the reactor and the bass rises out of the blue glow.</p>
+      <p class="lede">A rave crew in hard hats breaks into a nuclear plant during a refuelling outage. The cooling tower is dry, so the stack becomes the dance floor, with the DJ on the water riser in the middle and lasers shooting up to the sky. Down the water pipe, a second booth waits on the bridge over the glowing reactor.</p>
     </div>
   </div>
 </header>
 
 <div class="wrap">
   <div class="status" aria-label="Project status">
-    <span class="chip">Seeded <b>2026-10-24</b></span>
+    <span class="chip"><b>Draft</b> · seeded 2026-10-24</span>
     <span class="chip">Design first · no Unity build yet</span>
-    <span class="chip">Story: recommended answers, <b>awaiting Astra</b></span>
+    <span class="chip">2 DJ venues · 1 DJ live at a time</span>
     <span class="chip">PC VR / desktop (planned)</span>
   </div>
+
+  <section class="draft3d" id="draft" aria-labelledby="draft-title">
+    <h2 id="draft-title">Mini Model</h2>
+    <p class="section-intro">The whole world as a little 3D model you can spin on a phone, no VR needed. This one is a draft block-out at half size. Follow the night: break in through the fence, <b>1</b> dance in the stack, <b>2</b> walk the water pipe to the reactor hall, then take the pad back. Each DJ booth has its own lighting panel; the live booth runs the lights. Drag to look around.</p>
+    <div class="frame"><iframe src="mini-model/the-cooling-tower-mini-model-20261024.html" title="Mini Model of The Cooling Tower" loading="lazy"></iframe></div>
+    <p class="open-full"><a href="mini-model/the-cooling-tower-mini-model-20261024.html">Open the Mini Model full screen</a></p>
+  </section>
 
   <section class="path" aria-labelledby="path-title">
     <h2 id="path-title">How the plant moves energy</h2>
@@ -138,11 +156,11 @@ footer em { color: var(--ink) }
   </section>
 
   <section class="stop" id="tower" aria-labelledby="tower-title">
-    <div class="stop-head"><span class="stop-no">Stop 6</span><h2 id="tower-title">The cooling tower</h2></div>
-    <p class="section-intro">Where the night begins. The tower is dry and walkable only during a refuelling outage, which is the only time anyone could dance inside one.</p>
+    <div class="stop-head"><span class="stop-no extra">Venue 1</span><h2 id="tower-title">The cooling tower</h2></div>
+    <p class="section-intro">Venue 1, the main floor, where the night begins. The tower is dry and walkable only during a refuelling outage, which is the only time anyone could dance inside one.</p>
     <div class="cards">
       <figure class="card">
-        <img src="images/tower-x-legs-inside-20261024.jpg" alt="Inside a natural draft cooling tower: the curved shell rising over a ring of X-shaped concrete legs" loading="lazy">
+        <img src="portfolio/images/tower-x-legs-inside-20261024.jpg" alt="Inside a natural draft cooling tower: the curved shell rising over a ring of X-shaped concrete legs" loading="lazy">
         <figcaption>
           <h3>The X-legs, from inside the shell</h3>
           <p class="sci"><span class="tag">The science</span>Pairs of slanted concrete columns carry the whole shell, and the gaps between them are the air inlet, open all the way round. Cold air pours in here, rises through the fill where hot water rains down, and carries the heat away.</p>
@@ -151,16 +169,16 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/tower-sky-ring-20261024.jpg" alt="Looking straight up through a cooling tower’s throat at a ring of cloudy sky" loading="lazy">
+        <img src="portfolio/images/tower-sky-ring-20261024.jpg" alt="Looking straight up through a cooling tower’s throat at a ring of cloudy sky" loading="lazy">
         <figcaption>
           <h3>The throat and the ring of sky</h3>
           <p class="sci"><span class="tag">The science</span>The shell is a hyperboloid, a curved surface that can be built entirely from straight lines. That shape lets a concrete wall only about 20 cm thick stand 150 m tall or more. Warm, wet air inside is lighter than the air outside, so it rises like smoke up a chimney; the taller the tower, the stronger the draft.</p>
-          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>This ring is the plant’s exhaust, where about two thirds of the reactor’s heat leaves. In the world it is where the dancers’ energy goes: lasers aim straight up, and the crowd in the tower plays the steam.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>This ring is the plant’s exhaust, where about two thirds of the reactor’s heat leaves. Every laser in the world aims at it, and the smoke drifts up the stack and out through it, the way the plant’s heat does.</p>
           <p class="credit-line">Jakob Madsen (Unsplash) · CC0</p>
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/grating-stairs-railing-20261024.jpg" alt="Yellow steel guardrails turning corners around grating stairs and a walkway" loading="lazy">
+        <img src="portfolio/images/grating-stairs-railing-20261024.jpg" alt="Yellow steel guardrails turning corners around grating stairs and a walkway" loading="lazy">
         <figcaption>
           <h3>Grating stairs and guardrails</h3>
           <p class="sci"><span class="tag">The science</span>Open steel grating sheds water and dust and stays grippy when wet, which matters on a deck under spray. US workplace rules put a guardrail’s top rail at 42 in (1.07 m), with a mid rail halfway down and a toe board at the floor.</p>
@@ -169,7 +187,7 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card tall">
-        <img src="images/caged-ladder-20261024.jpg" alt="A galvanised steel fixed ladder with a round safety cage on the side of a building" loading="lazy">
+        <img src="portfolio/images/caged-ladder-20261024.jpg" alt="A galvanised steel fixed ladder with a round safety cage on the side of a building" loading="lazy">
         <figcaption>
           <h3>A fixed ladder with a cage</h3>
           <p class="sci"><span class="tag">The science</span>Fixed ladders have rungs 10 to 14 in apart and at least 16 in wide. Cages like this are being phased out in the US: by November 2036, tall fixed ladders need a ladder safety or fall-arrest system instead.</p>
@@ -178,7 +196,7 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/scaffold-clamps-20261024.jpg" alt="Close-up of brass-coloured scaffolding clamps joining steel tubes" loading="lazy">
+        <img src="portfolio/images/scaffold-clamps-20261024.jpg" alt="Close-up of brass-coloured scaffolding clamps joining steel tubes" loading="lazy">
         <figcaption>
           <h3>Tube-and-clamp scaffolding</h3>
           <p class="sci"><span class="tag">The science</span>Steel tubes 48.3 mm across, joined by right-angle and swivel clamps, can be built into almost any shape. During an outage, crews scaffold the inside of a dry tower to inspect and repair the concrete and the fill.</p>
@@ -190,20 +208,20 @@ footer em { color: var(--ink) }
   </section>
 
   <section class="stop" id="pipes" aria-labelledby="pipes-title">
-    <div class="stop-head"><span class="stop-no">Stop 5</span><h2 id="pipes-title">Circulating water</h2></div>
-    <p class="section-intro">The walk upstream. Cooling water runs between the condenser and the tower through pipes big enough to walk through.</p>
+    <div class="stop-head"><span class="stop-no side">The walk</span><h2 id="pipes-title">Circulating water</h2></div>
+    <p class="section-intro">The walk between venues. Cooling water runs between the condenser and the tower through pipes big enough to walk through.</p>
     <div class="cards">
       <figure class="card tall">
-        <img src="images/big-water-pipes-20261024.jpg" alt="Three giant steel water pipes running side by side down a green hillside" loading="lazy">
+        <img src="portfolio/images/big-water-pipes-20261024.jpg" alt="Three giant steel water pipes running side by side down a green hillside" loading="lazy">
         <figcaption>
           <h3>Giant water pipes</h3>
           <p class="sci"><span class="tag">The science</span>These are penstocks feeding a hydroelectric plant in Kerala, India. A nuclear plant’s circulating water pipes are the same scale, around 3 to 4 m across, moving tens of cubic metres of cooling water every second.</p>
-          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>One of these pipes is the walk between the two floors. You travel upstream against the flow, and signs count the stops down from 6 at the tower to 1 at the core.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>One of these pipes is the walk from venue 1, the stack, to venue 2, the reactor hall. A glowing pad brings you back.</p>
           <p class="credit-line">Chinchu.c · CC0</p>
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/pipe-elbow-forming-20261024.jpg" alt="A glowing hot steel pipe being bent into an elbow under gas flames in a factory" loading="lazy">
+        <img src="portfolio/images/pipe-elbow-forming-20261024.jpg" alt="A glowing hot steel pipe being bent into an elbow under gas flames in a factory" loading="lazy">
         <figcaption>
           <h3>Making a pipe elbow, 1940s</h3>
           <p class="sci"><span class="tag">The science</span>Workers at Tube Turns in Louisville heat steel pipe until it glows and bend it into a smooth elbow. A standard long-radius elbow bends at 1.5 times the pipe’s size, which keeps pressure loss and wear low.</p>
@@ -212,7 +230,7 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/duisburg-pipes-stairs-20261024.jpg" alt="Rusty steel stairs and catwalks threading through old industrial pipes in the mist" loading="lazy">
+        <img src="portfolio/images/duisburg-pipes-stairs-20261024.jpg" alt="Rusty steel stairs and catwalks threading through old industrial pipes in the mist" loading="lazy">
         <figcaption>
           <h3>Landschaftspark Duisburg-Nord</h3>
           <p class="sci"><span class="tag">The science</span>A former ironworks in Germany’s Ruhr valley that stopped making iron in 1985. Its blast furnaces, gas pipes and catwalks were kept as they were, and it is now a public park, lit in colour at night and used for concerts and festivals.</p>
@@ -224,11 +242,11 @@ footer em { color: var(--ink) }
   </section>
 
   <section class="stop" id="turbine" aria-labelledby="turbine-title">
-    <div class="stop-head"><span class="stop-no">Stops 4 · 3</span><h2 id="turbine-title">Generator and turbine</h2></div>
-    <p class="section-intro">The halfway point. Steam becomes spin, and spin becomes electricity.</p>
+    <div class="stop-head"><span class="stop-no side">Optional 3rd floor</span><h2 id="turbine-title">Generator and turbine</h2></div>
+    <p class="section-intro">On the walk, and maybe a third floor later. Steam becomes spin, and spin becomes electricity.</p>
     <div class="cards">
       <figure class="card">
-        <img src="images/turbine-rotor-20261024.jpg" alt="A huge steam turbine rotor with rings of curved blades, on display outdoors" loading="lazy">
+        <img src="portfolio/images/turbine-rotor-20261024.jpg" alt="A huge steam turbine rotor with rings of curved blades, on display outdoors" loading="lazy">
         <figcaption>
           <h3>A low-pressure turbine rotor</h3>
           <p class="sci"><span class="tag">The science</span>From the Philippsburg nuclear plant in Germany. Steam expands as it loses pressure, so each ring of blades is bigger than the last. In Europe these shafts turn 1,500 times a minute to make 50 Hz power; in the US, 1,800 times for 60 Hz.</p>
@@ -237,11 +255,11 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/turbine-hall-20261024.jpg" alt="A long turbine hall with white turbine and generator housings in a row and yellow-railed platforms" loading="lazy">
+        <img src="portfolio/images/turbine-hall-20261024.jpg" alt="A long turbine hall with white turbine and generator housings in a row and yellow-railed platforms" loading="lazy">
         <figcaption>
           <h3>The turbine hall at Balakovo</h3>
           <p class="sci"><span class="tag">The science</span>At Russia’s Balakovo nuclear plant, turbine and generator sit end to end on one long shaft under the white housings, with the condensers below the floor.</p>
-          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The generator is where the plant’s electricity, and so every speaker’s power, is made. Here the bass hums low through the floor on the way to the core.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The generator is where the plant’s electricity, and so every speaker’s power, is made. Here the bass hums low through the floor on the walk to the reactor hall. The hall itself is an optional third floor.</p>
           <p class="credit-line">Alexander Seetenky · CC BY-SA 3.0</p>
         </figcaption>
       </figure>
@@ -252,11 +270,11 @@ footer em { color: var(--ink) }
     <div class="stop-head"><span class="stop-no side">Beside the path</span><h2 id="control-title">The control room</h2></div>
     <div class="cards">
       <figure class="card wide">
-        <img src="images/control-room-panorama-20261024.jpg" alt="Panorama of a nuclear plant control room: a long curved wall of panels, dials and switches with desks in front" loading="lazy">
+        <img src="portfolio/images/control-room-panorama-20261024.jpg" alt="Panorama of a nuclear plant control room: a long curved wall of panels, dials and switches with desks in front" loading="lazy">
         <figcaption>
           <h3>Shearon Harris control room</h3>
           <p class="sci"><span class="tag">The science</span>Shearon Harris in North Carolina runs one pressurized water reactor. Licensed operators run the plant from boards like these and never stand at the core. When something is off normal, a window on the alarm panel, called an annunciator, lights up and sounds.</p>
-          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The DJ is the reactor operator. The decks are the console and the faders work like control rods: pull them out and the power rises. On every drop, the annunciator windows flash.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>Each DJ booth gets its own small version of this board: a lighting panel built into the decks. The live booth runs the lights, its faders set the show’s intensity like control rods set a reactor’s power, and the alarm windows flash on every drop.</p>
           <p class="credit-line">RadioFan · CC BY-SA 4.0</p>
         </figcaption>
       </figure>
@@ -265,29 +283,29 @@ footer em { color: var(--ink) }
   </section>
 
   <section class="stop" id="core" aria-labelledby="core-title">
-    <div class="stop-head"><span class="stop-no">Stop 1</span><h2 id="core-title">The core</h2></div>
-    <p class="section-intro">The end of the walk upstream and the peak of the night.</p>
+    <div class="stop-head"><span class="stop-no">Venue 2</span><h2 id="core-title">The core</h2></div>
+    <p class="section-intro">Venue 2: the second booth, on the bridge over the glowing pool.</p>
     <div class="cards">
       <figure class="card">
-        <img src="images/reactor-vessel-top-20261024.jpg" alt="Top of an open research reactor under water, the core glowing blue in the middle" loading="lazy">
+        <img src="portfolio/images/reactor-vessel-top-20261024.jpg" alt="Top of an open research reactor under water, the core glowing blue in the middle" loading="lazy">
         <figcaption>
           <h3>Looking down into a reactor</h3>
           <p class="sci"><span class="tag">The science</span>Oak Ridge’s High Flux Isotope Reactor during refuelling. The core sits under several metres of water that cools it and blocks its radiation. The blue is Cherenkov light: electrons moving faster than light can travel in water (about 225,000 km/s) give off a blue glow, and it brightens as reactor power rises.</p>
-          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The sound comes from here. Sub-bass rises out of the core, and the glow brightens with loudness the way real Cherenkov light brightens with power.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>Venue 2 sits right above it. The pool glow pulses with the music, brightening with loudness the way real Cherenkov light brightens with power.</p>
           <p class="credit-line">Oak Ridge National Laboratory · CC BY 2.0</p>
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/reactor-cherenkov-bridge-20261024.jpg" alt="A long tool lifting a glowing fuel element out of a reactor under blue water, a walkway above" loading="lazy">
+        <img src="portfolio/images/reactor-cherenkov-bridge-20261024.jpg" alt="A long tool lifting a glowing fuel element out of a reactor under blue water, a walkway above" loading="lazy">
         <figcaption>
           <h3>Lifting fuel from above</h3>
           <p class="sci"><span class="tag">The science</span>A tool on a long pole lifts a fuel element out of the core under water. The water above it is enough shielding for workers to stand over the pool. HFIR is an 85-megawatt research reactor.</p>
-          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The reactor DJ stands on a bridge like this, right over the core. The crowd rings the pool as the neutrons, and a full floor goes “critical”, which in a real reactor just means steady, normal running.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The second DJ booth stands on a bridge like this, right over the core, with the hard-hat crowd ringing the pool.</p>
           <p class="credit-line">Oak Ridge National Laboratory · CC BY 2.0</p>
         </figcaption>
       </figure>
       <figure class="card tall">
-        <img src="images/reactor-cherenkov-stairs-20261024.jpg" alt="Grating stairs leading down beside a reactor glowing bright blue under water" loading="lazy">
+        <img src="portfolio/images/reactor-cherenkov-stairs-20261024.jpg" alt="Grating stairs leading down beside a reactor glowing bright blue under water" loading="lazy">
         <figcaption>
           <h3>The glow at the foot of the stairs</h3>
           <p class="sci"><span class="tag">The science</span>Cherenkov light is strongest at the shortest wavelengths, so it looks blue to us and runs on into ultraviolet. Used fuel glows dimmer as it cools, so fresh-from-the-core fuel is the brightest thing in the pool.</p>
@@ -296,7 +314,7 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/fuel-pool-bridge-20261024.jpg" alt="A deep blue-green spent fuel pool seen from above, with a steel bridge across it" loading="lazy">
+        <img src="portfolio/images/fuel-pool-bridge-20261024.jpg" alt="A deep blue-green spent fuel pool seen from above, with a steel bridge across it" loading="lazy">
         <figcaption>
           <h3>San Onofre’s spent fuel pool</h3>
           <p class="sci"><span class="tag">The science</span>California’s San Onofre plant closed in 2013. Used fuel cools for years in racks on the floor of a pool about 12 m deep, moved by a bridge that rolls across the top.</p>
@@ -312,7 +330,7 @@ footer em { color: var(--ink) }
     <p class="section-intro">One water system for all of Astra’s worlds. Pool, ocean and lake water behave differently, so each gets its own preset.</p>
     <div class="cards">
       <figure class="card">
-        <img src="images/water-pool-20261024.jpg" alt="Underwater view of a tiled swimming pool with bright rippling light lines on the floor" loading="lazy">
+        <img src="portfolio/images/water-pool-20261024.jpg" alt="Underwater view of a tiled swimming pool with bright rippling light lines on the floor" loading="lazy">
         <figcaption>
           <h3>Pool</h3>
           <p class="sci"><span class="tag">The science</span>Ripples on the surface act like moving lenses, focusing sunlight into bright wavy lines on the tiles. These are called caustics.</p>
@@ -321,7 +339,7 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/water-lake-20261024.jpg" alt="A calm mountain lake reflecting the peaks around it" loading="lazy">
+        <img src="portfolio/images/water-lake-20261024.jpg" alt="A calm mountain lake reflecting the peaks around it" loading="lazy">
         <figcaption>
           <h3>Lake</h3>
           <p class="sci"><span class="tag">The science</span>Still water reflects more light the lower you look across it, so a lake turns into a mirror toward the far shore and stays clear right at your feet.</p>
@@ -330,7 +348,7 @@ footer em { color: var(--ink) }
         </figcaption>
       </figure>
       <figure class="card">
-        <img src="images/water-ocean-20261024.jpg" alt="Ocean waves seen from straight above, white foam over deep blue water" loading="lazy">
+        <img src="portfolio/images/water-ocean-20261024.jpg" alt="Ocean waves seen from straight above, white foam over deep blue water" loading="lazy">
         <figcaption>
           <h3>Ocean</h3>
           <p class="sci"><span class="tag">The science</span>A wave breaks when its height reaches roughly four fifths of the water’s depth. The white is air churned into the water as foam.</p>
@@ -345,7 +363,7 @@ footer em { color: var(--ink) }
     <div class="stop-head"><span class="stop-no extra">How it gets built</span><h2 id="tools-title">One tool per part of the plant</h2></div>
     <div class="cards">
       <figure class="card">
-        <img src="images/freecad-screenshot-20261024.jpg" alt="The free CAD program FreeCAD showing a grid-shaped part, its feature tree and a dependency graph" loading="lazy">
+        <img src="portfolio/images/freecad-screenshot-20261024.jpg" alt="The free CAD program FreeCAD showing a grid-shaped part, its feature tree and a dependency graph" loading="lazy">
         <figcaption>
           <h3>Real engineering, not guesses</h3>
           <p class="sci"><span class="tag">The science</span>CAD files such as STEP store exact mathematical surfaces, not triangles, so they have to be cut into a mesh before a game engine can draw them. Free engineering models are mostly for reference, so the tools follow the real rules instead of copying anyone’s file.</p>
@@ -401,3 +419,5 @@ footer em { color: var(--ink) }
     <a href="https://github.com/findastra/the-cooling-tower">findastra/the-cooling-tower on GitHub</a>
   </footer>
 </div>
+
+</html>

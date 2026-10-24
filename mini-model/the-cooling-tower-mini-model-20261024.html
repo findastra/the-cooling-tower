@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Cooling Tower Mini Model</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one full-screen 3D view of the plant; the night's route is numbered in the scene and in the panel. */
+:root {
+  color-scheme: dark;
+  --ground: #1d1e22;
+  --panel: rgba(29,30,34,.9);
+  --line: #3a3c42;
+  --ink: #eceef2;
+  --soft: #b4b8c2;
+  --blue: #4fc3ff;
+  --green: #8dff5a;
+  --amber: #ffa43d;
+  --magenta: #ff5ad8;
+  --hat: #ffd23f;
+  --body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, monospace;
+}
+html, body { height: 100%; margin: 0; }
+body { background: var(--ground); color: var(--ink); font-family: var(--body); overflow: hidden; }
+#view { position: fixed; inset: 0; }
+.panel { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: max(12px, env(safe-area-inset-left, 0px)); width: min(350px, calc(100% - 24px)); max-height: calc(100% - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 14px; line-height: 1.45; box-sizing: border-box; }
+.badge { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #1d1e22; background: var(--amber); padding: 2px 7px; border-radius: 3px; }
+.panel h1 { font-size: 18px; margin: 6px 0 2px; }
+.panel .sub { font-family: var(--mono); font-size: 12px; color: var(--soft); margin: 0 0 8px; }
+.panel h2 { font-size: 12px; font-family: var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); margin: 12px 0 6px; font-weight: 500; }
+.route { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.route li { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: start; }
+.route .n { font-family: var(--mono); font-weight: 500; font-size: 13px; text-align: center; border-radius: 4px; padding: 2px 0; color: #1d1e22; }
+.panel ul.legend { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.switches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+button { font: 600 13px var(--body); color: var(--ink); background: #2c2e34; border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
+button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.hint { color: var(--soft); font-size: 12px; margin: 10px 0 0; }
+.text { margin: 0 0 6px; }
+summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+summary::-webkit-details-marker { display: none; }
+summary .title { font-size: 17px; }
+summary .toggle-hint { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--soft); border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; }
+details[open] summary .toggle-hint::after { content: " ▲"; }
+details:not([open]) summary .toggle-hint::after { content: " ▼"; }
+summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+@media (max-width: 520px) { .panel { max-height: 44%; } }
+</style>
+
+<div id="view" aria-label="Mini Model of The Cooling Tower world with the night's route numbered"></div>
+<aside class="panel">
+<details id="key" open>
+  <summary><span class="badge">Mini Model · draft</span> <b class="title">The Cooling Tower</b> <span class="toggle-hint">key</span></summary>
+  <p class="sub">A pocket-sized look at the world, no VR needed · half size · tower 75 m tall · 2 DJ venues</p>
+  <h2>The night, in order</h2>
+  <ol class="route">
+    <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard, slip through the cut fence and duck between the X-legs.</span></li>
+    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Main floor on the drained basin, crowd all round the DJ booth on the water riser. Lasers and smoke up to the sky.</span></li>
+    <li><span class="n" style="background:var(--blue)">2</span><span><b>Reactor Hall.</b> Down the stairs and through the water pipe. Second booth on the refuelling bridge over the glowing pool.</span></li>
+    <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1.</b> A glowing pad by the pool returns you to the stack mid-set.</span></li>
+  </ol>
+  <p class="hint">One DJ live at a time; both floors hear the same set. The turbine hall on the way is an optional third floor.</p>
+  <h2>Who runs the lights</h2>
+  <p class="text">Each DJ booth has its own <b style="color:var(--amber)">lighting panel</b>, built into the decks (the amber consoles labelled in the view). The live booth has the lights:</p>
+  <ul class="legend">
+    <li><b>Riser booth (1)</b> runs the Stack’s rig: lasers, moving heads, wash ring, smoke, beacons.</li>
+    <li><b>Bridge booth (2)</b> runs the Reactor Hall’s rig: pool glow, crane lights, and the Stack’s rig too while it is live, since both floors hear its set.</li>
+    <li>When the set moves booths, the lights follow. Under the panel, the Light Show Generator keeps the show running from the music by itself; the panel is for steering: colour, intensity, strobe, smoke burst, blackout, breakdown.</li>
+  </ul>
+  <h2>Lighting rig</h2>
+  <ul class="legend">
+    <li><span class="dot" style="background:var(--green)"></span>8 lasers from the floor to the open top</li>
+    <li><span class="dot" style="background:var(--magenta)"></span>16 moving heads on the balcony ring</li>
+    <li><span class="dot" style="background:var(--blue)"></span>Wash ring at the throat, reactor glow</li>
+    <li><span class="dot" style="background:var(--amber)"></span>Beacons on the X-legs (breakdown look)</li>
+    <li><span class="dot" style="background:var(--hat)"></span>Hard-hat crowd</li>
+  </ul>
+  <div class="switches">
+    <button id="tLights" aria-pressed="true">Lights</button>
+    <button id="tRoute" aria-pressed="true">Route</button>
+    <button id="tShell" aria-pressed="false">Solid walls</button>
+    <button id="tSpin" aria-pressed="true">Turn</button>
+  </div>
+  <p class="hint">Drag to orbit, scroll or pinch to zoom. Tap the title to fold this key away.</p>
+</details>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x14161a);
+scene.fog = new THREE.Fog(0x14161a, 240, 560);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 1500);
+camera.position.set(-130, 100, 150);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(60, 14, 0);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.45;
+
+scene.add(new THREE.HemisphereLight(0x9fb4c8, 0x202020, 0.8));
+const sun = new THREE.DirectionalLight(0xffffff, 0.55); sun.position.set(-80, 160, 60); scene.add(sun);
+
+const mat = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, o));
+const glow = (c, op = 1) => new THREE.MeshBasicMaterial({ color: c, transparent: op < 1, opacity: op, depthWrite: op >= 1 });
+const steel = mat(0x8a8d93, { metalness: 0.3, roughness: 0.6 });
+const rail = mat(0xffc93c);
+const lights = new THREE.Group(); scene.add(lights);
+const route = new THREE.Group(); scene.add(route);
+const walls = [];
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+function rod(a, b, r, m) { // a cylinder between two points
+  const d = new THREE.Vector3().subVectors(b, a);
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), m);
+  c.position.copy(a).addScaledVector(d, 0.5);
+  c.quaternion.setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
+  scene.add(c); return c;
+}
+function label(text, x, y, z, color = '#eceef2', big = false, group = scene) {
+  const c = document.createElement('canvas'); c.width = 640; c.height = 112;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(20,22,26,.86)'; g.fillRect(0, 0, 640, 112);
+  g.strokeStyle = color; g.lineWidth = 6; g.strokeRect(3, 3, 634, 106);
+  g.fillStyle = color; g.font = (big ? '700 54px' : '600 44px') + ' "IBM Plex Sans", Arial, sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 320, 58);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  const w = big ? 34 : 26; s.scale.set(w, w * 112 / 640, 1); s.position.set(x, y, z); s.renderOrder = 10; group.add(s);
+}
+
+// Yard, fence with a cut, a crate of hard hats
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(640, 320), mat(0x2b2d2a)); ground.rotation.x = -Math.PI / 2; ground.position.set(70, -0.05, 0); scene.add(ground);
+const yard = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), mat(0x3a3a36)); yard.rotation.x = -Math.PI / 2; yard.position.set(-58, 0.01, 0); scene.add(yard);
+for (let i = 0; i < 72; i++) {
+  const a = i / 72 * Math.PI * 2;
+  if (a > 3.0 && a < 3.28) continue;
+  rod(V(Math.cos(a) * 38, 0, Math.sin(a) * 38), V(Math.cos(a) * 38, 3, Math.sin(a) * 38), 0.12, mat(0x6c6f75));
+  const b = (i + 1) / 72 * Math.PI * 2;
+  if (!(b > 3.0 && b < 3.28)) rod(V(Math.cos(a) * 38, 2.8, Math.sin(a) * 38), V(Math.cos(b) * 38, 2.8, Math.sin(b) * 38), 0.05, mat(0x6c6f75));
+}
+const crate = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 2), mat(0x7a5a32)); crate.position.set(-47, 0.6, 3); scene.add(crate);
+for (let i = 0; i < 6; i++) { const h = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), glow(0xffd23f)); h.position.set(-47.6 + (i % 3) * 0.6, 1.2, 2.6 + Math.floor(i / 3) * 0.7); scene.add(h); }
+
+// Tower shell (hyperboloid by lathe) and rim lookout
+const prof = [];
+for (let i = 0; i <= 24; i++) {
+  const y = 5 + i / 24 * 70;
+  const r = y < 55 ? 15 + 10 * Math.pow((55 - y) / 50, 1.6) : 15 + 2 * ((y - 55) / 20);
+  prof.push(new THREE.Vector2(r, y));
+}
+const shellMat = mat(0x9a9a96, { transparent: true, opacity: 0.26, side: THREE.DoubleSide, depthWrite: false });
+const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 80), shellMat); scene.add(shell); walls.push(shell);
+for (const y of [15, 25, 35, 45, 55, 65]) { // formwork lift lines
+  const r = y < 55 ? 15 + 10 * Math.pow((55 - y) / 50, 1.6) : 15 + 2 * ((y - 55) / 20);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.06, 4, 80), mat(0x6f6f6b)); ring.rotation.x = Math.PI / 2; ring.position.y = y; scene.add(ring);
+}
+const rim = new THREE.Mesh(new THREE.TorusGeometry(17, 0.35, 8, 80), mat(0xbdbdb8)); rim.rotation.x = Math.PI / 2; rim.position.y = 75; scene.add(rim);
+const lookout = new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 3), steel); lookout.position.set(0, 75.4, -18.2); scene.add(lookout);
+
+// X-legs ring with amber beacons
+for (let i = 0; i < 24; i++) {
+  const a = i / 24 * Math.PI * 2, a2 = (i + 0.5) / 24 * Math.PI * 2, a0 = (i - 0.5) / 24 * Math.PI * 2;
+  const top = V(Math.cos(a) * 25, 5, Math.sin(a) * 25);
+  rod(V(Math.cos(a0) * 25, 0, Math.sin(a0) * 25), top, 0.35, mat(0xa8a8a3));
+  rod(V(Math.cos(a2) * 25, 0, Math.sin(a2) * 25), top, 0.35, mat(0xa8a8a3));
+  if (i % 3 === 0) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glow(0xffa43d)); b.position.set(Math.cos(a) * 25.7, 5.8, Math.sin(a) * 25.7); lights.add(b); }
+}
+
+// Basin, dance floor ring, balcony deck with walkways and railing, stairs
+const basin = new THREE.Mesh(new THREE.CylinderGeometry(25, 25, 0.4, 64), mat(0x55585a)); basin.position.y = 0.2; scene.add(basin);
+const floor = new THREE.Mesh(new THREE.RingGeometry(4, 12.5, 48), mat(0x3a3f44, { emissive: 0x10241a })); floor.rotation.x = -Math.PI / 2; floor.position.y = 0.42; scene.add(floor);
+const deck = new THREE.Mesh(new THREE.RingGeometry(13, 24, 64), mat(0x4b5a62, { side: THREE.DoubleSide, transparent: true, opacity: 0.85 })); deck.rotation.x = -Math.PI / 2; deck.position.y = 5; scene.add(deck);
+for (let i = 0; i < 16; i++) { // radial walkways and flumes
+  const a = i / 16 * Math.PI * 2;
+  rod(V(Math.cos(a) * 13, 5.15, Math.sin(a) * 13), V(Math.cos(a) * 24, 5.15, Math.sin(a) * 24), 0.25, mat(0x6f7c82));
+}
+const railRing = new THREE.Mesh(new THREE.TorusGeometry(13, 0.08, 4, 80), rail); railRing.rotation.x = Math.PI / 2; railRing.position.y = 6.1; scene.add(railRing);
+for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2; rod(V(Math.cos(a) * 13, 5, Math.sin(a) * 13), V(Math.cos(a) * 13, 6.1, Math.sin(a) * 13), 0.05, rail); }
+for (let s = 0; s < 10; s++) { // stairs from the floor to the balcony
+  const st = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.25, 0.6), steel); st.position.set(-13 + s * 0.6 * 0, 0.5 + s * 0.5, 10 + s * 0.55); scene.add(st);
+}
+// scaffold on the inner wall
+for (let c = 0; c < 6; c++) for (let r = 0; r < 4; r++) {
+  const a = Math.PI * 0.62 + c * 0.05, y0 = 6 + r * 4;
+  const rad = 15 + 10 * Math.pow((55 - y0) / 50, 1.6) - 1.2;
+  rod(V(Math.cos(a) * rad, y0, Math.sin(a) * rad), V(Math.cos(a) * rad, y0 + 4, Math.sin(a) * rad), 0.06, steel);
+  if (c < 5) { const b = a + 0.05; rod(V(Math.cos(a) * rad, y0 + 4, Math.sin(a) * rad), V(Math.cos(b) * rad, y0 + 4, Math.sin(b) * rad), 0.05, steel); }
+}
+
+// DJ booth on the water riser
+rod(V(0, 0, 0), V(0, 5, 0), 1.4, steel);
+const booth = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 1.2, 24), mat(0x26272b)); booth.position.y = 5.6; scene.add(booth);
+const boothRing = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.15, 6, 32), glow(0xffa43d)); boothRing.rotation.x = Math.PI / 2; boothRing.position.y = 6.25; scene.add(boothRing);
+const decks = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.3, 0.8), glow(0x4fc3ff)); decks.position.set(0, 6.5, -0.6); scene.add(decks);
+const panel1 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.5, 0.7), glow(0xffa43d)); panel1.position.set(0, 6.55, 0.8); panel1.rotation.x = -0.4; scene.add(panel1);
+label('Lighting panel · runs 1', 0, 11, 7, '#ffa43d');
+
+// Caged ladder up the outside to the lookout
+for (let k = 0; k <= 36; k++) {
+  const y = 5 + k * 2; const r = (y < 55 ? 15 + 10 * Math.pow((55 - y) / 50, 1.6) : 15 + 2 * ((y - 55) / 20)) + 0.9;
+  const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.04, 4, 12, Math.PI), steel); hoop.position.set(0, y, -r); scene.add(hoop);
+  if (k < 36) { const y2 = y + 2, r2 = (y2 < 55 ? 15 + 10 * Math.pow((55 - y2) / 50, 1.6) : 15 + 2 * ((y2 - 55) / 20)) + 0.9; rod(V(-0.4, y, -r), V(-0.4, y2, -r2), 0.05, steel); rod(V(0.4, y, -r), V(0.4, y2, -r2), 0.05, steel); }
+}
+
+// Smoke, wash, lasers, moving heads
+const smoke = new THREE.Mesh(new THREE.CylinderGeometry(9, 6, 70, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false })); smoke.position.y = 38; lights.add(smoke);
+const puffs = [];
+for (let i = 0; i < 40; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(1.6 + Math.random() * 1.5, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.08, depthWrite: false })); p.userData = { a: Math.random() * 6.28, r: 2 + Math.random() * 7, y: Math.random() * 70 }; lights.add(p); puffs.push(p); }
+const wash = new THREE.Mesh(new THREE.TorusGeometry(15.2, 0.4, 8, 80), glow(0x4fc3ff)); wash.rotation.x = Math.PI / 2; wash.position.y = 55; lights.add(wash);
+const lasers = [];
+for (let i = 0; i < 8; i++) {
+  const a = i / 8 * Math.PI * 2;
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(Math.cos(a) * 3.2, 6.4, Math.sin(a) * 3.2), V(Math.cos(a) * 13, 76, Math.sin(a) * 13)]), new THREE.LineBasicMaterial({ color: 0x8dff5a, transparent: true, opacity: 0.9 }));
+  lights.add(l); lasers.push(l);
+}
+const heads = [];
+for (let i = 0; i < 16; i++) {
+  const a = i / 16 * Math.PI * 2;
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.6, 10, 8), glow(0xff5ad8)); h.position.set(Math.cos(a) * 14, 5.7, Math.sin(a) * 14); lights.add(h);
+  const beam = new THREE.Mesh(new THREE.ConeGeometry(2.4, 18, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xff5ad8, transparent: true, opacity: 0.11, side: THREE.DoubleSide, depthWrite: false }));
+  beam.geometry.translate(0, -9, 0); beam.position.copy(h.position); lights.add(beam); heads.push({ beam, a });
+}
+
+// Hard-hat crowd
+const dancers = [];
+function crowd(cx, cz, rIn, rOut, n, y = 0.4) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, r = rIn + Math.random() * (rOut - rIn);
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 1.3, 8), mat([0xff7a1a, 0x3e4a57, 0x8a8d93][i % 3])); body.position.y = 0.65; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mat(0xd9b48f)); head.position.y = 1.5; g.add(head);
+    const hat = new THREE.Mesh(new THREE.SphereGeometry(0.27, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xffd23f, { emissive: 0x332800 })); hat.position.y = 1.58; g.add(hat);
+    g.position.set(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r); scene.add(g); dancers.push({ g, p: Math.random() * 6, y });
+  }
+}
+crowd(0, 0, 4.6, 12, 70);
+
+// Stairs down to the tunnel, the water tunnel with service pipes
+const portal = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.3, 6, 24, Math.PI), mat(0x6c6f75)); portal.position.set(18, 0.4, 0); portal.rotation.y = Math.PI / 2; scene.add(portal);
+for (let s = 0; s < 8; s++) { const st = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.25, 3), steel); st.position.set(14 + s * 0.6, 0.2 - s * 0.3, 0); scene.add(st); }
+const tunnel = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 110, 24, 1, true), mat(0x4fc3ff, { transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false })); tunnel.rotation.z = Math.PI / 2; tunnel.position.set(73, -2.4, 0); scene.add(tunnel);
+rod(V(18, -3.6, 1.4), V(128, -3.6, 1.4), 0.25, mat(0x2e7d5b)); rod(V(18, -3.6, -1.4), V(128, -3.6, -1.4), 0.25, mat(0x2e7d5b));
+
+// Turbine hall (optional third floor)
+const hall = new THREE.Mesh(new THREE.BoxGeometry(46, 16, 22), mat(0x7f8b90, { transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false })); hall.position.set(80, 8, 0); scene.add(hall); walls.push(hall);
+for (let i = 0; i < 3; i++) { const t = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 9, 20), mat(0xe8e8e4)); t.rotation.z = Math.PI / 2; t.position.set(68 + i * 11, 3, -4); scene.add(t); }
+label('Turbine Hall · optional', 80, 21, 0, '#93a3ad');
+
+// Reactor hall: containment, polar crane, pool, refuelling bridge, lid on its stand
+const cont = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 26, 48, 1, true), mat(0xb7b7b2, { transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false })); cont.position.set(145, 13, 0); scene.add(cont); walls.push(cont);
+const dome = new THREE.Mesh(new THREE.SphereGeometry(18, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), cont.material); dome.position.set(145, 26, 0); scene.add(dome); walls.push(dome);
+const craneRail = new THREE.Mesh(new THREE.TorusGeometry(17, 0.3, 6, 64), steel); craneRail.rotation.x = Math.PI / 2; craneRail.position.set(145, 22, 0); scene.add(craneRail);
+const crane = new THREE.Mesh(new THREE.BoxGeometry(34, 1.2, 2), mat(0xffa43d)); crane.position.set(145, 22.6, 0); scene.add(crane);
+const poolWall = new THREE.Mesh(new THREE.BoxGeometry(11, 1.2, 11), mat(0x5d6a70)); poolWall.position.set(145, 0.6, 0); scene.add(poolWall);
+const pool = new THREE.Mesh(new THREE.BoxGeometry(10, 0.2, 10), glow(0x4fc3ff)); pool.position.set(145, 1.25, 0); lights.add(pool);
+const poolGlow = new THREE.PointLight(0x4fc3ff, 2.2, 45); poolGlow.position.set(145, 4, 0); lights.add(poolGlow);
+const bridge = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 16), mat(0xffd27a)); bridge.position.set(145, 3.2, 0); scene.add(bridge);
+const rBooth = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 2.4), mat(0x26272b)); rBooth.position.set(145, 4.1, 0); scene.add(rBooth);
+const panel2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.4, 0.8), glow(0xffa43d)); panel2.position.set(145, 4.85, 0.9); panel2.rotation.x = -0.4; scene.add(panel2);
+label('Lighting panel · runs 2', 145, 10, 12, '#ffa43d');
+const lid = new THREE.Mesh(new THREE.SphereGeometry(3, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x8a8d93, { metalness: 0.4 })); lid.position.set(156, 0.4, 6); scene.add(lid);
+const rFloor = new THREE.Mesh(new THREE.RingGeometry(7.5, 15, 48), mat(0x3a3f44, { side: THREE.DoubleSide })); rFloor.rotation.x = -Math.PI / 2; rFloor.position.set(145, 0.1, 0); scene.add(rFloor);
+crowd(145, 0, 8.2, 14, 26, 0.12);
+
+// Pads
+const padA = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.15, 24), glow(0xc8d0d8)); padA.position.set(133, 0.2, -9); scene.add(padA);
+const padB = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.15, 24), glow(0xc8d0d8)); padB.position.set(10, 0.55, -8); scene.add(padB);
+
+// The night's route: break in -> 1 The Stack -> 2 Reactor Hall, pad back
+const path = new THREE.CatmullRomCurve3([V(-60, 1, 0), V(-47, 1, 2), V(-38, 1, 0.5), V(-26, 1, 0), V(-14, 1.2, -2), V(-6, 1.2, -6), V(6, 1.2, -6), V(14, 0.6, 0), V(20, -2.4, 0), V(60, -2.4, 0), V(110, -2.4, 0), V(128, -2.4, 0), V(131, 0.6, -4), V(137, 0.6, -9)]);
+const tube = new THREE.Mesh(new THREE.TubeGeometry(path, 300, 0.35, 8, false), glow(0xffa43d, 0.75)); route.add(tube);
+const back = new THREE.CatmullRomCurve3([V(133, 1.5, -9), V(90, 30, -30), V(40, 30, -24), V(10, 1.5, -8)]);
+const backLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(back.getPoints(80)), new THREE.LineDashedMaterial({ color: 0xc8d0d8, dashSize: 2, gapSize: 1.5 })); backLine.computeLineDistances(); route.add(backLine);
+const walkers = [];
+for (let i = 0; i < 14; i++) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), glow(0xffd23f)); route.add(w); walkers.push({ w, t: i / 14 }); }
+label('IN · Break in', -56, 9, 0, '#ffa43d', true, route);
+label('1 · The Stack', 0, 22, 0, '#8dff5a', true, route);
+label('2 · Reactor Hall', 145, 48, 0, '#4fc3ff', true, route);
+label('Pad back to 1', 75, 34, -28, '#c8d0d8', false, route);
+
+// Switches
+function toggle(btn, fn) { btn.addEventListener('click', () => { const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', String(on)); fn(on); }); }
+toggle(document.getElementById('tLights'), on => { lights.visible = on; });
+toggle(document.getElementById('tRoute'), on => { route.visible = on; });
+const baseOp = new Map(walls.map(w => [w, w.material.opacity]));
+toggle(document.getElementById('tShell'), on => { walls.forEach(w => { w.material.opacity = on ? 0.92 : baseOp.get(w); w.material.depthWrite = on; }); });
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const spinBtn = document.getElementById('tSpin');
+if (reduce) { controls.autoRotate = false; spinBtn.setAttribute('aria-pressed', 'false'); }
+toggle(spinBtn, on => { controls.autoRotate = on; });
+
+if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('key').open = false;
+function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+window.addEventListener('resize', resize); resize();
+
+const clock = new THREE.Clock();
+function frame() {
+  const t = clock.getElapsedTime();
+  if (!reduce) {
+    const beat = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * 2.1);
+    lasers.forEach((l, i) => { l.material.opacity = 0.3 + 0.7 * (Math.sin(t * 3 + i) > 0 ? beat : 0.15); });
+    heads.forEach(({ beam, a }, i) => { beam.rotation.set(0.6 * Math.sin(t * 0.9 + i), a, 0.5 * Math.cos(t * 0.7 + i)); });
+    poolGlow.intensity = 1.6 + beat * 1.6;
+    puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.06) % 72; p.position.set(Math.cos(u.a + t * 0.1) * u.r, u.y + 2, Math.sin(u.a + t * 0.1) * u.r); });
+    dancers.forEach(d => { d.g.position.y = d.y + 0.18 * Math.max(0, Math.sin(t * 8.6 + d.p)); });
+    walkers.forEach(o => { o.t = (o.t + 0.0012) % 1; o.w.position.copy(path.getPointAt(o.t)).add(V(0, 0.6, 0)); });
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+
+</html>
