@@ -60,6 +60,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .hint { color: var(--soft); font-size: 12px; margin: 10px 0 0; }
 @media (max-width: 520px) { .panel { max-height: 46%; } }
 .tip { position: fixed; pointer-events: none; max-width: 260px; background: rgba(20,22,26,.94); border: 1px solid var(--blue); color: var(--ink); font-size: 13px; padding: 6px 9px; border-radius: 5px; }
+.orbit { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); margin: 0; max-width: calc(100% - 200px); font-size: 13px; color: var(--ink); background: rgba(29,30,34,.88); border: 1px solid #ff4fa3; border-radius: 6px; padding: 8px 12px; }
 .spin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 10px 16px; background: rgba(29,30,34,.92); border-color: var(--amber); color: var(--amber); }
 </style>
 
@@ -95,14 +96,15 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     <button id="tRoute" aria-pressed="true">Route</button>
     <button id="tShell" aria-pressed="false">Solid walls</button>
   </div>
-  <p class="hint">Mouse like the System Map: drag to turn, scroll to zoom, scroll-click drag to turn (with Shift to pan), hold right mouse to look and fly with W A S D, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag and pinch. Tap the title to fold this key away.</p>
+  <p class="hint">Moving around: <b>click any part</b> and the view glides to it and turns around it (the pink ring marks it). Drag to turn, scroll to zoom, right-drag to slide along the ground. The ground always stays level. W A S D or the arrow keys move you, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag to turn and pinch to zoom. Tap the title to fold this key away.</p>
 </details>
 </aside>
 <button id="tSpin" class="spin" aria-pressed="true">Stop spinning</button>
+<p id="orbitLine" class="orbit" aria-live="polite">Turning around: the whole plant</p>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 const view = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -114,14 +116,17 @@ scene.fog = new THREE.Fog(0x14161a, 360, 900);
 const clock = new THREE.Clock(); // made early: setLive() reads it when the page starts
 const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
 camera.position.set(-170, 140, 190);
-// Same navigation as Astra's PetOS System Map: trackball turning, scroll zoom, scroll-click drag, right-hold to fly.
+// Orbit navigation: the ground always stays level; it turns around whatever you clicked last.
 const HOME_T = new THREE.Vector3(55, 20, 0), HOME_C = new THREE.Vector3(-170, 140, 190);
-const controls = new THREE.TrackballControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.target.copy(HOME_T);
-controls.rotateSpeed = 1.2; controls.zoomSpeed = 1.4; controls.panSpeed = .6; controls.dynamicDampingFactor = .2;
-controls.minDistance = 4; controls.maxDistance = 900;
-controls.mouseButtons = { LEFT: 0, MIDDLE: -9, RIGHT: -8 }; controls.noZoom = true; // scroll and scroll-click drag are handled below
-controls.keys = ['NoKeyA', 'NoKeyS', 'NoKeyD'];
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.screenSpacePanning = false;           // pans slide along the ground, never tilt it
+controls.maxPolarAngle = Math.PI * 0.49;       // never looks up from under the ground
+controls.minDistance = 3; controls.maxDistance = 700;
+controls.zoomSpeed = 1.2; controls.rotateSpeed = 0.7;
+controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.ROTATE, RIGHT: THREE.MOUSE.PAN };
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 let spinning = true;
 
 scene.add(new THREE.HemisphereLight(0x9fb4c8, 0x202020, 0.8));
@@ -609,42 +614,43 @@ function setSpin(on) { spinning = on; spinBtn.setAttribute('aria-pressed', Strin
 if (reduce) setSpin(false);
 spinBtn.addEventListener('click', () => setSpin(!spinning));
 renderer.domElement.addEventListener('pointerdown', () => setSpin(false));
-// hold right mouse to look, W A S D to fly, Q / E down and up, Shift faster, F back to the whole plant
-const keys = new Set(); let looking = false; const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
-renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 2) return; looking = true; controls.enabled = false; euler.setFromQuaternion(camera.quaternion); renderer.domElement.setPointerCapture(e.pointerId); });
-addEventListener('pointerup', e => { if (e.button !== 2 || !looking) return; looking = false;
-  const dist = Math.min(Math.max(camera.position.distanceTo(controls.target), 8), 60);
-  controls.target.copy(camera.position).add(V(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(dist)); controls.enabled = true; });
-addEventListener('pointermove', e => { if (!looking) return; euler.y -= e.movementX * .0035; euler.x = Math.max(-1.5, Math.min(1.5, euler.x - e.movementY * .0035)); camera.quaternion.setFromEuler(euler); });
+// click a part (without dragging) and the view glides over to turn around it
+const marker = add(new THREE.Mesh(new THREE.RingGeometry(1.6, 2.1, 32), new THREE.MeshBasicMaterial({ color: 0xff4fa3, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthTest: false })), HOME_T.x, HOME_T.y, HOME_T.z);
+marker.renderOrder = 11; marker.visible = false;
+const orbitLine = document.getElementById('orbitLine');
+let glide = null, downAt = null;
+function orbitAround(point, name) {
+  const off = camera.position.clone().sub(controls.target);
+  const dist = Math.min(off.length(), 90); off.setLength(dist);
+  glide = { t0: performance.now(), fromT: controls.target.clone(), toT: point.clone(), fromC: camera.position.clone(), toC: point.clone().add(off) };
+  marker.position.copy(point); marker.visible = true; orbitLine.textContent = 'Turning around: ' + name; setSpin(false);
+}
+const pickRay = new THREE.Raycaster(), pickPtr = new THREE.Vector2();
+renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, b: e.button }; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || downAt.b !== 0 || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  pickPtr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  pickRay.setFromCamera(pickPtr, camera);
+  const named = pickRay.intersectObjects(hoverables, false).find(h => h.object.visible);
+  if (named) { orbitAround(named.point, named.object.userData.name); return; }
+  const any = pickRay.intersectObjects(scene.children, true).find(h => h.object.visible && h.object.isMesh && !(h.object.material && h.object.material.transparent && h.object.material.opacity < 0.5));
+  if (any) orbitAround(any.point, 'this spot');
+});
+// W A S D (or the arrow keys) slide along the ground, Q / E down and up, Shift faster, F back to the whole plant
+const keys = new Set();
 addEventListener('keydown', e => { const k = e.key.toLowerCase();
   if (('wasdqe'.includes(k) && k.length === 1) || e.key.startsWith('Arrow') || k === 'shift') { keys.add(k); setSpin(false); }
-  if (k === 'f') { camera.position.copy(HOME_C); camera.up.set(0, 1, 0); controls.target.copy(HOME_T); } });
+  if (k === 'f') { glide = { t0: performance.now(), fromT: controls.target.clone(), toT: HOME_T.clone(), fromC: camera.position.clone(), toC: HOME_C.clone() }; marker.visible = false; orbitLine.textContent = 'Turning around: the whole plant'; } });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 function move(dt) { if (!keys.size) return;
-  const f = V(0, 0, -1).applyQuaternion(camera.quaternion), r = V(1, 0, 0).applyQuaternion(camera.quaternion), v = V(0, 0, 0);
+  const f = V(0, 0, -1).applyQuaternion(camera.quaternion).setY(0).normalize(), r = V(1, 0, 0).applyQuaternion(camera.quaternion).setY(0).normalize(), v = V(0, 0, 0);
   if (keys.has('w') || keys.has('arrowup')) v.add(f); if (keys.has('s') || keys.has('arrowdown')) v.sub(f);
   if (keys.has('d') || keys.has('arrowright')) v.add(r); if (keys.has('a') || keys.has('arrowleft')) v.sub(r);
   if (keys.has('e')) v.y += 1; if (keys.has('q')) v.y -= 1;
   if (!v.lengthSq()) return; v.normalize().multiplyScalar((keys.has('shift') ? 90 : 30) * dt);
-  camera.position.add(v); if (!looking) controls.target.add(v); }
-// scroll zooms toward the middle of the view; scroll-click drag turns freely, with Shift it pans
-renderer.domElement.addEventListener('wheel', e => { e.preventDefault(); setSpin(false);
-  const off = camera.position.clone().sub(controls.target);
-  const len = Math.min(Math.max(off.length() * Math.pow(1.0015, e.deltaY), controls.minDistance), controls.maxDistance);
-  camera.position.copy(controls.target).add(off.setLength(len)); }, { passive: false });
-let midDrag = null;
-renderer.domElement.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
-renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 1) return; e.preventDefault(); midDrag = { x: e.clientX, y: e.clientY, pan: e.shiftKey }; try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} });
-addEventListener('pointermove', e => { if (!midDrag) return; const dx = e.clientX - midDrag.x, dy = e.clientY - midDrag.y; midDrag.x = e.clientX; midDrag.y = e.clientY;
-  const off = camera.position.clone().sub(controls.target);
-  if (midDrag.pan || e.shiftKey) { const k = off.length() * .0016, right = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 0), up = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 1);
-    const mv = right.multiplyScalar(-dx * k).add(up.multiplyScalar(dy * k)); camera.position.add(mv); controls.target.add(mv); return; }
-  const up = camera.up.clone().normalize(), right = V(0, 0, 0).crossVectors(up, off).normalize();
-  const qq = new THREE.Quaternion().setFromAxisAngle(up, -dx * .006).multiply(new THREE.Quaternion().setFromAxisAngle(right, -dy * .006));
-  off.applyQuaternion(qq); camera.up.applyQuaternion(qq).normalize(); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target); });
-addEventListener('pointerup', e => { if (e.button === 1) midDrag = null; });
+  camera.position.add(v); controls.target.add(v); marker.position.add(v); }
 const kindOn = { lasers: true, heads: true, wash: true, beacons: true, crowd: true };
 document.querySelectorAll('.kind').forEach(li => { const flip = () => { const k = li.dataset.k, on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); kindOn[k] = on;
     const list = k === 'lasers' ? lasers : kinds[k]; list.forEach(o => { o.visible = on; }); if (k === 'wash') { bolts.forEach(b => { b.visible = on; }); strobes.forEach(x => { x.userData.off = !on; }); } };
@@ -668,7 +674,7 @@ renderer.domElement.addEventListener('pointerup', (e) => { if (e.pointerType !==
 renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; });
 if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('key').open = false;
 
-function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); controls.handleResize(); }
+function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 window.addEventListener('resize', resize); resize();
 
 function frame() {
@@ -698,7 +704,10 @@ function frame() {
   }
   const dt = Math.min(clock.getDelta(), 0.05); move(dt);
   if (spinning) { const off = camera.position.clone().sub(controls.target).applyAxisAngle(V(0, 1, 0), 0.0012); camera.position.copy(controls.target).add(off); }
-  if (!looking) controls.update();
+  if (glide) { const k = Math.min(1, (performance.now() - glide.t0) / 700), e = k * k * (3 - 2 * k);
+    controls.target.lerpVectors(glide.fromT, glide.toT, e); camera.position.lerpVectors(glide.fromC, glide.toC, e); if (k >= 1) glide = null; }
+  marker.lookAt(camera.position);
+  controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
