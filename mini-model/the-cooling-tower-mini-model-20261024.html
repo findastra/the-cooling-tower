@@ -66,6 +66,15 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
   </ol>
   <p class="hint">All three are joined: the pipe runs straight from the stack into the turbine hall, and the hatch opens from the hall into the dome.</p>
+  <h2>Inside the reactor hall</h2>
+  <p class="text">A pressurized water reactor’s containment during a refuelling outage, every part labelled (switch “Part labels”). The <b style="color:var(--blue)">reactor</b> is the steel vessel under the pool, beneath the bridge: its lid is off, the core glows blue at the bottom, and 8 m of water above it make it safe to stand over.</p>
+  <ul class="legend">
+    <li>Reactor vessel and core, in a concrete cavity below the floor</li>
+    <li>Refuelling pool, flooded, and the refuelling machine on its bridge (booth 3 rides it)</li>
+    <li>Vessel head on its stand, with the control rod drives sticking up</li>
+    <li>4 steam generators and 4 reactor coolant pumps, joined to the vessel by the hot and cold legs</li>
+    <li>Pressurizer, polar crane, equipment hatch, fuel transfer tube to the fuel building</li>
+  </ul>
   <h2>Who runs the lights</h2>
   <p class="text">Every venue has a DJ booth with a <b style="color:var(--amber)">lighting panel</b> in its decks. One DJ is live at a time. The live booth runs the lights in <b>its own venue and every venue the night has already passed</b>: booth 1 runs 1, booth 2 runs 1 and 2, booth 3 runs all three. Venues still ahead stay dark until the set reaches them. Under the panel, the Light Show Generator keeps the show running from the music.</p>
   <p class="live" id="liveLine" aria-live="polite">Live: booth 1 · lights on venue 1</p>
@@ -316,8 +325,8 @@ const vesselMat = mat(0x9aa3a8, { metalness: 0.5, roughness: 0.4, side: THREE.Do
 add(new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 10, 32, 1, true), vesselMat), RC, 0, 0);
 add(new THREE.Mesh(new THREE.SphereGeometry(3.2, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), vesselMat), RC, -5, 0);
 add(new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.45, 8, 32), steel), RC, 5, 0).rotation.x = Math.PI / 2;
-add(new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 4, 24), glow(0x6fd6ff, 0.6)), RC, -1.8, 0, venueLights[2]);
-for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { if (i * i + j * j > 6) continue; add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 4.2, 0.7), glow(0xbfefff, 0.85)), RC + i * 0.85, -1.8, j * 0.85, venueLights[2]); }
+add(new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 4, 24), glow(0x6fd6ff, 0.6)), RC, -1.8, 0); // the core's own Cherenkov glow is always on
+for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { if (i * i + j * j > 6) continue; add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 4.2, 0.7), glow(0xbfefff, 0.85)), RC + i * 0.85, -1.8, j * 0.85); }
 const coreGlow = add(new THREE.PointLight(0x4fc3ff, 3, 70), RC, FL + 2, 0, venueLights[2]);
 const LOOPS = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
 const pipeMat = mat(0xb0b6ba, { metalness: 0.4 });
