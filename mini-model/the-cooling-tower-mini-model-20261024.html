@@ -302,6 +302,14 @@ add(new THREE.Mesh(new THREE.RingGeometry(rAt(TOP) - 0.5, rAt(TOP) + 1.6, 96), m
 add(new THREE.Mesh(new THREE.TorusGeometry(rAt(TOP) + 1.6, 0.07, 4, 96), rail), 0, TOP + 1.4, 0).rotation.x = Math.PI / 2;
 for (let i = 0; i < 72; i++) { const a = i / 72 * Math.PI * 2, r = rAt(TOP) + 1.6; rod(V(Math.cos(a) * r, TOP + 0.3, Math.sin(a) * r), V(Math.cos(a) * r, TOP + 1.4, Math.sin(a) * r), 0.05, rail); }
 HOVER = null;
+// a couple at the top of the ladder, holding hands, watching the stack show
+{ const LA = Math.PI - 0.32, r = rAt(TOP) + 0.7, couple = [];
+  for (const da of [-0.018, 0.018]) { const g = new THREE.Group(); g.add(new THREE.LineSegments(figLines, new THREE.LineBasicMaterial({ color: 0xff9ad8 })));
+    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat); g.scale.setScalar(1.6);
+    g.position.set(Math.cos(LA + da) * r, TOP + 0.35, Math.sin(LA + da) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); couple.push(g);
+    g.traverse(o => { o.userData.name = 'A couple at the top of the ladder, watching the stack show'; }); hoverables.push(g.children[0], hat); }
+  const hand = (g, side) => V(side * 0.38 * 1.6, TOP + 0.35 + 1.0 * 1.6, 0).applyAxisAngle(V(0, 1, 0), g.rotation.y).add(V(g.position.x, 0, g.position.z));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([hand(couple[0], -1), hand(couple[1], 1)]), new THREE.LineBasicMaterial({ color: 0xff9ad8 }))); }
 // people sitting on the rim, legs over the inside edge
 const sitLines = (() => { const p = [], seg = (a, b) => p.push(...a, ...b);
   seg([0, 0.45, 0], [0, 1.0, 0]); seg([0, 0.45, 0], [0, 0.45, 0.45]); seg([0, 0.45, 0.45], [0, 0, 0.55]); seg([0.12, 0.45, 0], [0.12, 0.45, 0.45]); seg([0.12, 0.45, 0.45], [0.12, 0, 0.55]);
