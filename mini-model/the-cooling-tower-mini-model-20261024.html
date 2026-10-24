@@ -61,7 +61,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <h2>The night, in order</h2>
   <ol class="route">
     <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, slip through the cut in the barbed-wire fence, then climb the scaffold stair over the raised basin wall where one panel of the inlet netting has been cut. The concrete X-legs can’t be broken; you go between them.</span></li>
-    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then. A caged ladder up the outside leads to the rim walk, where people sit on the edge and watch.</span></li>
+    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
     <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
     <li><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
     <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
@@ -246,7 +246,11 @@ const rAt = (y) => y < 82 ? 22.5 + 15 * Math.pow((82 - y) / (82 - LEG), 1.6) : 2
 const prof = []; for (let i = 0; i <= 30; i++) { const y = LEG + i / 30 * (TOP - LEG); prof.push(new THREE.Vector2(rAt(y), y)); }
 const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 96), ghost(0x9a9a96, 0.24)); scene.add(shell); walls.push(shell);
 for (let y = 17; y < TOP; y += 10) { const ring = add(new THREE.Mesh(new THREE.TorusGeometry(rAt(y), 0.08, 4, 96), mat(0x6f6f6b)), 0, y, 0); ring.rotation.x = Math.PI / 2; }
-add(new THREE.Mesh(new THREE.TorusGeometry(rAt(TOP), 0.5, 8, 96), mat(0xbdbdb8)), 0, TOP, 0).rotation.x = Math.PI / 2;
+HOVER = 'The rim: a wide concrete lip people sit on (no railing, no platform)';
+add(new THREE.Mesh(new THREE.RingGeometry(rAt(TOP) - 0.9, rAt(TOP) + 0.9, 96), mat(0xb3b3ad, { side: THREE.DoubleSide })), 0, TOP + 0.3, 0).rotation.x = -Math.PI / 2;
+add(new THREE.Mesh(new THREE.CylinderGeometry(rAt(TOP) + 0.9, rAt(TOP) + 0.9, 0.6, 96, 1, true), mat(0xa3a39d, { side: THREE.DoubleSide })), 0, TOP, 0);
+add(new THREE.Mesh(new THREE.CylinderGeometry(rAt(TOP) - 0.9, rAt(TOP) - 0.9, 0.6, 96, 1, true), mat(0xa3a39d, { side: THREE.DoubleSide })), 0, TOP, 0);
+HOVER = null;
 HOVER = 'X-legs: the air inlet all round the base';
 for (let i = 0; i < 36; i++) {
   const a = i / 36 * Math.PI * 2, a0 = (i - 0.5) / 36 * Math.PI * 2, a2 = (i + 0.5) / 36 * Math.PI * 2;
@@ -297,19 +301,47 @@ HOVER = 'Caged ladder to the rim: climb up and watch the show from the top';
   for (let y = CURB + 2.5; y < TOP; y += 2) { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.05, 4, 14, Math.PI), steel); hoop.position.copy(at(y, 0, 1.2)); hoop.lookAt(at(y, 0, 3)); hoop.rotateX(Math.PI / 2); scene.add(hoop); tagIt(hoop); }
   for (const y of [40, 80]) { const q = at(y, 0, 2.2); const pl = add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 2.6), mat(0x6f7c82)), q.x, y, q.z); pl.rotation.y = -LA; } // rest platforms
 }
-HOVER = 'Rim walk: sit on the edge and watch the stack show';
-add(new THREE.Mesh(new THREE.RingGeometry(rAt(TOP) - 0.5, rAt(TOP) + 1.6, 96), mat(0x6f7c82, { side: THREE.DoubleSide })), 0, TOP + 0.3, 0).rotation.x = -Math.PI / 2;
-add(new THREE.Mesh(new THREE.TorusGeometry(rAt(TOP) + 1.6, 0.07, 4, 96), rail), 0, TOP + 1.4, 0).rotation.x = Math.PI / 2;
-for (let i = 0; i < 72; i++) { const a = i / 72 * Math.PI * 2, r = rAt(TOP) + 1.6; rod(V(Math.cos(a) * r, TOP + 0.3, Math.sin(a) * r), V(Math.cos(a) * r, TOP + 1.4, Math.sin(a) * r), 0.05, rail); }
-HOVER = null;
 // a couple at the top of the ladder, holding hands, watching the stack show
-{ const LA = Math.PI - 0.32, r = rAt(TOP) + 0.7, couple = [];
+{ const LA = Math.PI - 0.32, r = rAt(TOP) + 0.3, couple = [];
   for (const da of [-0.018, 0.018]) { const g = new THREE.Group(); g.add(new THREE.LineSegments(figLines, new THREE.LineBasicMaterial({ color: 0xff9ad8 })));
     const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat); g.scale.setScalar(1.6);
     g.position.set(Math.cos(LA + da) * r, TOP + 0.35, Math.sin(LA + da) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); couple.push(g);
     g.traverse(o => { o.userData.name = 'A couple at the top of the ladder, watching the stack show'; }); hoverables.push(g.children[0], hat); }
   const hand = (g, side) => V(side * 0.38 * 1.6, TOP + 0.35 + 1.0 * 1.6, 0).applyAxisAngle(V(0, 1, 0), g.rotation.y).add(V(g.position.x, 0, g.position.z));
   scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([hand(couple[0], -1), hand(couple[1], 1)]), new THREE.LineBasicMaterial({ color: 0xff9ad8 }))); }
+// graffiti: neon spray-paint tags round the top edge and up the ladder
+function graffitiTexture(w, h, n, seed) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  let k = seed; const rnd = () => { k = (k * 16807) % 2147483647; return k / 2147483647; };
+  const words = ['SCRAM', 'HARD HAT CREW', 'CRITICAL', 'MELTDOWN', 'RAVE', 'NO OSHA', 'GLOW', 'STACK', '1 2 3', 'K=1', 'COOLING', 'BASS', 'AFTER HOURS', 'BREAK IN', 'NEUTRONS', 'SPIN'];
+  const inks = ['#ff5ad8', '#8dff5a', '#4fc3ff', '#ffd23f', '#ff7a1a', '#b98cff', '#ffffff'];
+  for (let i = 0; i < n; i++) {
+    const x = rnd() * w, y = h * 0.18 + rnd() * h * 0.7, size = h * (0.16 + rnd() * 0.22), ink = inks[Math.floor(rnd() * inks.length)];
+    g.save(); g.translate(x, y); g.rotate((rnd() - 0.5) * 0.5);
+    g.font = `900 ${size}px Impact, 'Arial Black', sans-serif`; g.lineJoin = 'round';
+    const word = words[Math.floor(rnd() * words.length)];
+    g.lineWidth = size * 0.16; g.strokeStyle = '#111'; g.strokeText(word, 0, 0);
+    g.fillStyle = ink; g.fillText(word, 0, 0);
+    const tw = g.measureText(word).width; g.fillStyle = ink;
+    for (let d = 0; d < 5; d++) g.fillRect(rnd() * tw, size * 0.05, size * 0.05, size * (0.2 + rnd() * 0.6)); // drips
+    for (let d = 0; d < 40; d++) { g.globalAlpha = 0.5; g.beginPath(); g.arc(rnd() * tw, -rnd() * size, rnd() * 2.5, 0, 7); g.fill(); } // overspray
+    g.restore(); g.globalAlpha = 1;
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; return t;
+}
+HOVER = 'Graffiti';
+{ const prof2 = []; for (let i = 0; i <= 8; i++) { const y = TOP - 16 + i * 2; prof2.push(new THREE.Vector2(rAt(y) + 0.12, y)); } // outside, near the top
+  const gt = graffitiTexture(4096, 512, 70, 7); gt.repeat.set(2, 1);
+  tagIt(add(new THREE.Mesh(new THREE.LatheGeometry(prof2, 96), new THREE.MeshBasicMaterial({ map: gt, transparent: true, side: THREE.DoubleSide, depthWrite: false })), 0, 0, 0));
+  const gt2 = graffitiTexture(4096, 256, 50, 31); gt2.repeat.set(2, 1); // round the outer face of the rim
+  tagIt(add(new THREE.Mesh(new THREE.CylinderGeometry(rAt(TOP) + 0.95, rAt(TOP) + 0.95, 0.6, 96, 1, true), new THREE.MeshBasicMaterial({ map: gt2, transparent: true, depthWrite: false })), 0, TOP, 0));
+  const LA = Math.PI - 0.32; // patches up the ladder
+  for (let i = 0; i < 9; i++) { const y = CURB + 8 + i * 11 + (i % 2) * 3, off = (i % 2 ? 2.4 : -2.4), r = rAt(Math.max(y, LEG)) + 0.15;
+    const pt = graffitiTexture(512, 256, 2, 101 + i);
+    const q = tagIt(add(new THREE.Mesh(new THREE.PlaneGeometry(5, 2.5), new THREE.MeshBasicMaterial({ map: pt, transparent: true, side: THREE.DoubleSide, depthWrite: false })), Math.cos(LA) * r - Math.sin(LA) * off, y, Math.sin(LA) * r + Math.cos(LA) * off));
+    q.lookAt(Math.cos(LA) * (r + 5) - Math.sin(LA) * off, y, Math.sin(LA) * (r + 5) + Math.cos(LA) * off); }
+}
+HOVER = null;
 // people sitting on the rim, legs over the inside edge
 const sitLines = (() => { const p = [], seg = (a, b) => p.push(...a, ...b);
   seg([0, 0.45, 0], [0, 1.0, 0]); seg([0, 0.45, 0], [0, 0.45, 0.45]); seg([0, 0.45, 0.45], [0, 0, 0.55]); seg([0.12, 0.45, 0], [0.12, 0.45, 0.45]); seg([0.12, 0.45, 0.45], [0.12, 0, 0.55]);
