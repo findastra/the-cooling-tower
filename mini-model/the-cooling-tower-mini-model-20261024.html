@@ -250,7 +250,7 @@ label('1 · The Stack', 0, 34, 0, '#8dff5a', true, route);
 
 // The giant water pipe: a curved walk-through pipe from the stack into the turbine hall
 const partLabels = new THREE.Group(); scene.add(partLabels);
-function part(text, x, y, z) { return label(text, x, y, z, '#d7dde3', false, partLabels); }
+function part(text, x, y, z) { const s = label(text, x, y, z, '#d7dde3', false, partLabels); s.material.sizeAttenuation = false; s.scale.set(0.15, 0.025, 1); return s; } // same size on screen at any zoom
 const PY = 3.8;
 const pipeCurve = new THREE.CatmullRomCurve3([V(34, PY, 0), V(40, PY, 4), V(48, PY, 13), V(58, PY, 16), V(67, PY, 11), V(72, PY, 3), V(76, PY, 0)]);
 const pipe = new THREE.Mesh(new THREE.TubeGeometry(pipeCurve, 120, 3.8, 32, false), ghost(0x4fc3ff, 0.26)); scene.add(pipe); walls.push(pipe);
