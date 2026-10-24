@@ -19,6 +19,7 @@
   --amber: #ffa43d;
   --magenta: #ff5ad8;
   --hat: #ffd23f;
+  --mm: #ff4fa3; /* the System Map's name colour, used for "Mini Model" */
   --body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
   --mono: "IBM Plex Mono", Consolas, monospace;
 }
@@ -30,6 +31,7 @@ body { background: var(--ground); color: var(--ink); font-family: var(--body); o
 summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 summary::-webkit-details-marker { display: none; }
 summary .title { font-size: 17px; }
+.mm { color: var(--mm); }
 summary .toggle-hint { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--soft); border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; }
 details[open] summary .toggle-hint::after { content: " ▲"; }
 details:not([open]) summary .toggle-hint::after { content: " ▼"; }
@@ -61,7 +63,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 <div id="view" aria-label="Mini Model of The Cooling Tower: three connected venues and the night's route"></div>
 <aside class="panel">
 <details id="key" open>
-  <summary><b class="title">The Cooling Tower Mini Model</b> <span class="toggle-hint">key</span></summary>
+  <summary><b class="title">The Cooling Tower <span class="mm">Mini Model</span></b> <span class="toggle-hint">key</span></summary>
   <p class="sub">A pocket-sized look at the world, no VR needed · 3 connected venues · tower 110 m tall</p>
   <h2>The night, in order <span style="text-transform:none;letter-spacing:0">(click a line to show or hide its title)</span></h2>
   <ol class="route">

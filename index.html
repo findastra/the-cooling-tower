@@ -22,6 +22,7 @@
   --uranium: #8dff5a;      /* crossover notes */
   --uranium-bg: #1f2b1c;
   --alarm: #ffa43d;        /* annunciator amber */
+  --mm: #ff4fa3;           /* the System Map's name colour, for "Mini Model" */
   --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
   --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
@@ -46,6 +47,7 @@ h1 { font-family: var(--display); font-weight: 800; font-size: clamp(56px, 11vw,
 .chip b { color: var(--alarm); font-weight: 500 }
 
 /* 3D draft */
+.mm { color: var(--mm); }
 .draft3d { padding-block: 40px 8px; }
 .frame { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; min-height: 420px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #14161a; }
 .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
@@ -133,7 +135,7 @@ footer em { color: var(--ink) }
   </div>
 
   <section class="draft3d" id="draft" aria-labelledby="draft-title">
-    <h2 id="draft-title">Mini Model</h2>
+    <h2 id="draft-title">The Cooling Tower <span class="mm">Mini Model</span></h2>
     <p class="section-intro">The whole world as a little 3D model you can spin on a phone, no VR needed. Follow the night: break in through the fence, <b>1</b> dance in the stack, <b>2</b> walk the water pipe into the turbine hall, <b>3</b> go through the hatch into the reactor hall, then take the pad back. All three are joined. Each booth has its own lighting panel; the live booth runs the lights in its venue and every venue already passed. Drag to look around.</p>
     <div class="frame"><iframe src="mini-model/the-cooling-tower-mini-model-20261024.html" title="Mini Model of The Cooling Tower" loading="lazy"></iframe></div>
     <p class="open-full"><a href="mini-model/the-cooling-tower-mini-model-20261024.html">Open the Mini Model full screen</a></p>
