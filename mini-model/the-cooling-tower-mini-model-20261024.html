@@ -61,8 +61,8 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <h2>The night, in order</h2>
   <ol class="route">
     <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, slip through the cut in the barbed-wire fence, then climb the scaffold stair over the raised basin wall where one panel of the inlet netting has been cut. The concrete X-legs can’t be broken; you go between them.</span></li>
-    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then.</span></li>
-    <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 on a round low stage in front of it.</span></li>
+    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then. A caged ladder up the outside leads to the rim walk, where people sit on the edge and watch.</span></li>
+    <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
     <li><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
     <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
   </ol>
@@ -247,7 +247,6 @@ const prof = []; for (let i = 0; i <= 30; i++) { const y = LEG + i / 30 * (TOP -
 const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 96), ghost(0x9a9a96, 0.24)); scene.add(shell); walls.push(shell);
 for (let y = 17; y < TOP; y += 10) { const ring = add(new THREE.Mesh(new THREE.TorusGeometry(rAt(y), 0.08, 4, 96), mat(0x6f6f6b)), 0, y, 0); ring.rotation.x = Math.PI / 2; }
 add(new THREE.Mesh(new THREE.TorusGeometry(rAt(TOP), 0.5, 8, 96), mat(0xbdbdb8)), 0, TOP, 0).rotation.x = Math.PI / 2;
-add(new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 4), steel), 0, TOP + 0.4, -rAt(TOP) - 1.6);
 HOVER = 'X-legs: the air inlet all round the base';
 for (let i = 0; i < 36; i++) {
   const a = i / 36 * Math.PI * 2, a0 = (i - 0.5) / 36 * Math.PI * 2, a2 = (i + 0.5) / 36 * Math.PI * 2;
@@ -289,11 +288,29 @@ for (let c = 0; c < 8; c++) for (let r = 0; r < 5; r++) { // scaffold on the inn
   rod(V(Math.cos(a) * rad, y0, Math.sin(a) * rad), V(Math.cos(a) * rad, y0 + 5, Math.sin(a) * rad), 0.08, steel);
   if (c < 7) { const b = a + 0.04; rod(V(Math.cos(a) * rad, y0 + 5, Math.sin(a) * rad), V(Math.cos(b) * rad, y0 + 5, Math.sin(b) * rad), 0.07, steel); }
 }
-for (let k = 0; k <= 52; k++) { // caged ladder up the outside
-  const y = LEG + k * 2; if (y > TOP) break; const r = rAt(y) + 1.1;
-  add(new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.05, 4, 12, Math.PI), steel), 0, y, -r);
-  const y2 = y + 2; if (y2 <= TOP) { const r2 = rAt(y2) + 1.1; rod(V(-0.45, y, -r), V(-0.45, y2, -r2), 0.06, steel); rod(V(0.45, y, -r), V(0.45, y2, -r2), 0.06, steel); }
+// caged ladder up the outside, on the break-in side, to the rim walk at the top
+HOVER = 'Caged ladder to the rim: climb up and watch the show from the top';
+{ const LA = Math.PI - 0.32, c = Math.cos(LA), sn = Math.sin(LA), tx = -sn, tz = c; // ladder angle and its sideways direction
+  const at = (y, off, out = 1.2) => { const r = rAt(Math.max(y, LEG)) + out; return V(c * r + tx * off, y, sn * r + tz * off); };
+  rod(at(CURB, -0.5), at(TOP + 1, -0.5), 0.09, steel); rod(at(CURB, 0.5), at(TOP + 1, 0.5), 0.09, steel); // the two stiles
+  for (let y = CURB + 0.4; y < TOP; y += 0.6) rod(at(y, -0.5), at(y, 0.5), 0.04, steel); // rungs
+  for (let y = CURB + 2.5; y < TOP; y += 2) { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.05, 4, 14, Math.PI), steel); hoop.position.copy(at(y, 0, 1.2)); hoop.lookAt(at(y, 0, 3)); hoop.rotateX(Math.PI / 2); scene.add(hoop); tagIt(hoop); }
+  for (const y of [40, 80]) { const q = at(y, 0, 2.2); const pl = add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 2.6), mat(0x6f7c82)), q.x, y, q.z); pl.rotation.y = -LA; } // rest platforms
 }
+HOVER = 'Rim walk: sit on the edge and watch the stack show';
+add(new THREE.Mesh(new THREE.RingGeometry(rAt(TOP) - 0.5, rAt(TOP) + 1.6, 96), mat(0x6f7c82, { side: THREE.DoubleSide })), 0, TOP + 0.3, 0).rotation.x = -Math.PI / 2;
+add(new THREE.Mesh(new THREE.TorusGeometry(rAt(TOP) + 1.6, 0.07, 4, 96), rail), 0, TOP + 1.4, 0).rotation.x = Math.PI / 2;
+for (let i = 0; i < 72; i++) { const a = i / 72 * Math.PI * 2, r = rAt(TOP) + 1.6; rod(V(Math.cos(a) * r, TOP + 0.3, Math.sin(a) * r), V(Math.cos(a) * r, TOP + 1.4, Math.sin(a) * r), 0.05, rail); }
+HOVER = null;
+// people sitting on the rim, legs over the inside edge
+const sitLines = (() => { const p = [], seg = (a, b) => p.push(...a, ...b);
+  seg([0, 0.45, 0], [0, 1.0, 0]); seg([0, 0.45, 0], [0, 0.45, 0.45]); seg([0, 0.45, 0.45], [0, 0, 0.55]); seg([0.12, 0.45, 0], [0.12, 0.45, 0.45]); seg([0.12, 0.45, 0.45], [0.12, 0, 0.55]);
+  seg([0, 0.85, 0], [-0.3, 0.5, 0.1]); seg([0, 0.85, 0], [0.3, 0.5, 0.1]);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = (i + 1) / 10 * Math.PI * 2; seg([Math.cos(a) * 0.17, 1.17 + Math.sin(a) * 0.17, 0], [Math.cos(b) * 0.17, 1.17 + Math.sin(b) * 0.17, 0]); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g; })();
+for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, r = rAt(TOP) - 0.3, g = new THREE.Group();
+  g.add(new THREE.LineSegments(sitLines, figMat)); const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat);
+  g.scale.setScalar(1.5); g.position.set(Math.cos(a) * r, TOP + 0.35, Math.sin(a) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); }
 HOVER = 'Hot water riser';
 rod(V(0, 0, 0), V(0, D + 0.5, 0), 2.2, steel);
 HOVER = 'Booth 1 · lighting panel (runs venue 1)';
@@ -411,13 +428,23 @@ add(new THREE.Mesh(new THREE.BoxGeometry(HL - 6, 0.3, 2.4), mat(0x5b6670)), HXM,
 add(new THREE.Mesh(new THREE.BoxGeometry(HL - 6, 0.1, 0.1), rail), HXM, 8.1, HZ - 2.7);
 HOVER = null;
 add(new THREE.Mesh(new THREE.PlaneGeometry(58, 16), mat(0x3a3f44, { emissive: 0x220f22 })), HXM, 0.08, 10).rotation.x = -Math.PI / 2;
-HOVER = 'Booth 2 · lighting panel (runs venues 1 and 2)';
-add(new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 0.9, 32), mat(0x26272b)), 107, 0.45, 2);
-add(new THREE.Mesh(new THREE.TorusGeometry(4, 0.18, 6, 36), glow(0xffa43d)), 107, 0.92, 2).rotation.x = Math.PI / 2;
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 0.9), mat(0x3a3c42)), 107, 1.35, 2.4);
-const panel2 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.9), glow(0xffa43d)), 107, 1.95, 2.7); panel2.rotation.x = -0.4;
+HOVER = 'Booth 2 · the control room: lighting panel runs venues 1 and 2';
+add(new THREE.Mesh(new THREE.BoxGeometry(12, 1, 6), mat(0x3a3c42)), 107, 0.5, 1.2);                         // raised floor
+add(new THREE.Mesh(new THREE.BoxGeometry(12, 4, 0.3), mat(0xd9d6c4)), 107, 3, -1.7);                       // back panel wall, plant beige
+for (const x of [101.15, 112.85]) add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 4, 6), mat(0xd9d6c4)), x, 3, 1.2);
+add(new THREE.Mesh(new THREE.BoxGeometry(12.3, 0.3, 6.3), mat(0x2b2d31)), 107, 5.1, 1.2);                   // roof
+add(new THREE.Mesh(new THREE.BoxGeometry(11.4, 2.6, 0.08), mat(0x9fd8ff, { transparent: true, opacity: 0.18, depthWrite: false })), 107, 3.2, 4.2); // glass front
+const annunciators = [];
+for (let r = 0; r < 4; r++) for (let c = 0; c < 18; c++) { // alarm windows (annunciators) across the top of the wall
+  const w = add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.32, 0.05), glow([0xffd23f, 0xff5a5a, 0x8dff5a, 0xffffff][(r + c) % 4], 0.9)), 101.9 + c * 0.6, 4.4 - r * 0.4, -1.5);
+  annunciators.push(w); }
+for (let c = 0; c < 9; c++) { const g = add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 16), mat(0xf4f1e6)), 102.2 + c * 1.2, 2.6, -1.5); g.rotation.x = Math.PI / 2; } // dials
+add(new THREE.Mesh(new THREE.BoxGeometry(10, 0.9, 1.1), mat(0xd9d6c4)), 107, 1.45, 0.2);                 // benchboard
+const panel2 = add(new THREE.Mesh(new THREE.BoxGeometry(10, 0.15, 1.1), glow(0xffa43d)), 107, 1.97, 0.2); panel2.rotation.x = -0.3;
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 0.9), mat(0x3a3c42)), 107, 1.45, 3);                   // the DJ decks, facing the floor
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 0.9), glow(0x4fc3ff)), 107, 2, 3);
 HOVER = null;
-djFigure(107, 0.92, 1.2, 0);
+djFigure(107, 1, 2.1, 0);
 for (const z of [-HZ + 0.6, HZ - 0.6]) add(new THREE.Mesh(new THREE.BoxGeometry(HL - 4, 0.6, 0.4), glow(0xff5ad8)), HXM, 12, z, venueLights[1]);
 for (let i = 0; i < 6; i++) movingHead(82 + i * 10, HW - 4.8, HZ - 1, 0xff5ad8, venueLights[1], 20);
 for (let i = 0; i < 6; i++) movingHead(82 + i * 10, HW - 4.8, -HZ + 1, 0x8dff5a, venueLights[1], 20);
@@ -488,10 +515,12 @@ for (const z of [-12, 12]) add(new THREE.Mesh(new THREE.BoxGeometry(26, 0.3, 0.6
 add(new THREE.Mesh(new THREE.BoxGeometry(3, 2.4, 3), mat(0xffa43d)), RC, FL + 3.2, -3);
 rod(V(RC, FL + 4.4, -3), V(RC, 0.5, -3), 0.35, steel);
 HOVER = 'Booth 3 · lighting panel (runs all three venues)';
-add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 1.2), mat(0x26272b)), RC, FL + 2.45, 3.6);
-const panel3 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 0.9), glow(0xffa43d)), RC, FL + 3.05, 3.6); panel3.rotation.x = -0.4;
+add(new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.5, 28), mat(0x26272b)), RC, FL + 2.25, 3);
+add(new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.14, 6, 32), glow(0xffa43d)), RC, FL + 2.5, 3).rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 0.9), mat(0x3a3c42)), RC, FL + 2.95, 3.9);
+const panel3 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 0.9), glow(0xffa43d)), RC, FL + 3.5, 3.9); panel3.rotation.x = -0.4;
 HOVER = null;
-djFigure(RC, FL + 2, 2.2, 0);
+djFigure(RC, FL + 2.5, 2.6, 0);
 HOVER = 'Fuel transfer tube to the fuel building';
 rod(V(RC + 8, 1, 0), V(RC + 31, 1, 0), 0.8, steel); // fuel transfer tube
 add(new THREE.Mesh(new THREE.BoxGeometry(14, 16, 18), ghost(0x7f8b90, 0.22)), RC + 38, 8, 0);
@@ -607,6 +636,7 @@ function frame() {
     lasers.forEach((l, i) => { l.material.opacity = 0.3 + 0.7 * (Math.sin(t * 3 + i) > 0 ? beat : 0.15); });
     heads.forEach(({ beam, a }, i) => { beam.rotation.set(0.55 * Math.sin(t * 0.9 + i), a, 0.45 * Math.cos(t * 0.7 + i)); });
     strobes.forEach((s, i) => { s.visible = Math.sin(t * 18 + i * 1.7) > 0.6; });
+    annunciators.forEach((w, i) => { w.visible = beat > 0.75 ? ((i * 7 + Math.floor(t * 4)) % 5) !== 0 : (i % 3) === 0; });
     coreGlow.intensity = 2 + beat * 2.2; water.material.opacity = 0.45 + 0.3 * beat;
     puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.07) % 95; p.position.set(Math.cos(u.a + t * 0.1) * u.r, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r); });
     const raining = (t % 11) < 6; // 6 s of rain, 5 s dry
