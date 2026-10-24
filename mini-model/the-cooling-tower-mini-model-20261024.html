@@ -61,8 +61,8 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <h2>The night, in order</h2>
   <ol class="route">
     <li><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, slip through the cut fence and duck between the X-legs.</span></li>
-    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the booth on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then.</span></li>
-    <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. Floor beside three turbines, booth on the turbine deck.</span></li>
+    <li><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and smoke up to the sky; rain falls in the rain zone underneath now and then.</span></li>
+    <li><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 on a low stage in front of it.</span></li>
     <li><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
     <li><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
   </ol>
@@ -85,14 +85,14 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     <button id="tRoute" aria-pressed="true">Route</button>
     <button id="tShell" aria-pressed="false">Solid walls</button>
   </div>
-  <p class="hint">Drag to orbit, scroll or pinch to zoom. Tap the title to fold this key away.</p>
+  <p class="hint">Mouse like the System Map: drag to turn, scroll to zoom, scroll-click drag to turn (with Shift to pan), hold right mouse to look and fly with W A S D, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag and pinch. Tap the title to fold this key away.</p>
 </details>
 </aside>
 <button id="tSpin" class="spin" aria-pressed="true">Stop spinning</button>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
 <script>
 const view = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -103,11 +103,15 @@ scene.background = new THREE.Color(0x14161a);
 scene.fog = new THREE.Fog(0x14161a, 320, 700);
 const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
 camera.position.set(-170, 140, 190);
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.target.set(55, 20, 0);
-controls.enableDamping = true;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.4;
+// Same navigation as Astra's PetOS System Map: trackball turning, scroll zoom, scroll-click drag, right-hold to fly.
+const HOME_T = V(55, 20, 0), HOME_C = V(-170, 140, 190);
+const controls = new THREE.TrackballControls(camera, renderer.domElement);
+controls.target.copy(HOME_T);
+controls.rotateSpeed = 1.2; controls.zoomSpeed = 1.4; controls.panSpeed = .6; controls.dynamicDampingFactor = .2;
+controls.minDistance = 4; controls.maxDistance = 900;
+controls.mouseButtons = { LEFT: 0, MIDDLE: -9, RIGHT: -8 }; controls.noZoom = true; // scroll and scroll-click drag are handled below
+controls.keys = ['NoKeyA', 'NoKeyS', 'NoKeyD'];
+let spinning = true;
 
 scene.add(new THREE.HemisphereLight(0x9fb4c8, 0x202020, 0.8));
 const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(-100, 220, 80); scene.add(sun);
@@ -168,6 +172,13 @@ function crowd(cx, cz, rIn, rOut, n, y, scale = 1.5) {
     g.scale.setScalar(scale); g.position.set(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r);
     g.lookAt(cx, y, cz); scene.add(g); dancers.push({ g, p: Math.random() * 6, y });
   }
+}
+function djFigure(x, y, z, yaw) {
+  const g = new THREE.Group();
+  g.add(new THREE.LineSegments(figLines, new THREE.LineBasicMaterial({ color: 0xffa43d })));
+  const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat);
+  g.scale.setScalar(1.9); g.position.set(x, y, z); g.rotation.y = yaw; scene.add(g);
+  g.traverse(o => { o.userData.name = 'The DJ'; }); hoverables.push(g.children[0], hat); dancers.push({ g, p: 0, y });
 }
 function crowdBox(x0, x1, z0, z1, n, y, scale = 1.5) {
   for (let i = 0; i < n; i++) {
@@ -240,11 +251,13 @@ for (let k = 0; k <= 52; k++) { // caged ladder up the outside
 HOVER = 'Hot water riser';
 rod(V(0, 0, 0), V(0, D + 0.5, 0), 2.2, steel);
 HOVER = 'Booth 1 · lighting panel (runs venue 1)';
-add(new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 1.4, 28), mat(0x26272b)), 0, D + 1.1, 0);
-const ring1 = add(new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.2, 6, 36), glow(0xffa43d)), 0, D + 1.85, 0); ring1.rotation.x = Math.PI / 2;
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.35, 1), glow(0x4fc3ff)), 0, D + 2.1, -1);
-const panel1 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 0.9), glow(0xffa43d)), 0, D + 2.15, 1.2); panel1.rotation.x = -0.4;
+add(new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.8, 28), mat(0x26272b)), 0, D + 0.4, 0);
+const ring1 = add(new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.2, 6, 36), glow(0xffa43d)), 0, D + 0.85, 0); ring1.rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 1), mat(0x3a3c42)), 0, D + 1.25, -1);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 1), glow(0x4fc3ff)), 0, D + 1.8, -1);
+const panel1 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.9), glow(0xffa43d)), 0, D + 1.8, 0.1); panel1.rotation.x = -0.4;
 HOVER = null;
+djFigure(0, D + 0.8, -2.2, 0);
 // rain falls in the rain zone under the deck, on and off
 const RAIN = 2600, rainPos = new Float32Array(RAIN * 3);
 for (let i = 0; i < RAIN; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.sqrt(Math.random()) * 31; rainPos[i * 3] = Math.cos(a) * r; rainPos[i * 3 + 1] = 0.6 + Math.random() * (D - 1); rainPos[i * 3 + 2] = Math.sin(a) * r; }
@@ -292,35 +305,64 @@ HOVER = 'Service water pipes';
 rod(V(36, 10, 9), V(74, 10, 9), 0.9, mat(0x2e7d5b)); rod(V(36, 10, -7), V(74, 10, -7), 0.9, mat(0x2e7d5b));
 HOVER = null;
 
-// VENUE 2: TURBINE HALL (74 to 140 on x), attached to the pipe and to the dome
-const HX0 = 74, HX1 = 140, HZ = 20, HH = 26;
-const hall = add(new THREE.Mesh(new THREE.BoxGeometry(HX1 - HX0, HH, HZ * 2), ghost(0x7f8b90, 0.22)), (HX0 + HX1) / 2, HH / 2, 0); walls.push(hall);
-add(new THREE.Mesh(new THREE.BoxGeometry(HX1 - HX0, 0.4, 14), mat(0x5b6670)), (HX0 + HX1) / 2, 7, -12);
-for (let x = HX0 + 4; x < HX1; x += 8) rod(V(x, 0, -5.2), V(x, 7, -5.2), 0.25, steel);
-add(new THREE.Mesh(new THREE.BoxGeometry(HX1 - HX0, 0.12, 0.12), rail), (HX0 + HX1) / 2, 8.1, -5.1);
-for (let i = 0; i < 3; i++) {
-  const x = 86 + i * 18;
-  HOVER = 'Steam turbine';
-  const t = add(new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 12, 24), mat(0xe8e8e4)), x, 10.6, -12); t.rotation.z = Math.PI / 2;
-  HOVER = 'Generator';
-  add(new THREE.Mesh(new THREE.BoxGeometry(5, 5.5, 5.5), mat(0xd04040)), x + 8, 9.8, -12);
-  HOVER = null;
+// VENUE 2: TURBINE HALL (74 to 140 on x), attached to the pipe and to the dome.
+// A real turbine hall: a long high bay with an arched roof, a crane, and one turbine train on its concrete pedestal.
+const HX0 = 74, HX1 = 140, HZ = 20, HW = 18, HL = HX1 - HX0, HXM = (HX0 + HX1) / 2;
+const hall = add(new THREE.Mesh(new THREE.BoxGeometry(HL, HW, HZ * 2), ghost(0x7f8b90, 0.2)), HXM, HW / 2, 0); walls.push(hall);
+const roof = add(new THREE.Mesh(new THREE.CylinderGeometry(HZ, HZ, HL, 48, 1, true, 0, Math.PI), ghost(0x9aa7ad, 0.18)), HXM, HW, 0); roof.rotation.z = Math.PI / 2; walls.push(roof);
+for (const x of [HX0, HX1]) { const g = add(new THREE.Mesh(new THREE.CircleGeometry(HZ, 32, 0, Math.PI), ghost(0x9aa7ad, 0.18)), x, HW, 0); g.rotation.y = Math.PI / 2; walls.push(g); }
+HOVER = 'Roof arch and wall columns';
+for (let x = HX0; x <= HX1; x += 6) {
+  const rib = add(new THREE.Mesh(new THREE.TorusGeometry(HZ, 0.25, 6, 32, Math.PI), steel), x, HW, 0); rib.rotation.y = Math.PI / 2;
+  for (const z of [-HZ, HZ]) rod(V(x, 0, z), V(x, HW, z), 0.35, steel);
 }
-for (const z of [-HZ + 1, HZ - 1]) rod(V(HX0, HH - 2, z), V(HX1, HH - 2, z), 0.4, steel);
+HOVER = 'Clerestory windows';
+for (const z of [-HZ + 0.2, HZ - 0.2]) add(new THREE.Mesh(new THREE.BoxGeometry(HL - 2, 2.4, 0.2), glow(0xbfe9ff, 0.45)), HXM, HW - 2.5, z);
+HOVER = 'Crane girders';
+for (const z of [-HZ + 1, HZ - 1]) rod(V(HX0, HW - 4, z), V(HX1, HW - 4, z), 0.45, steel);
 HOVER = 'Overhead crane';
-const crane2 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.4, HZ * 2 - 2), mat(0xffa43d)), 110, HH - 1.5, 0);
+add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, HZ * 2 - 2), mat(0xffa43d)), 118, HW - 3.2, 0);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 2, 3), mat(0xd04040)), 118, HW - 4.6, -6);
+HOVER = 'Turbine pedestal: the concrete table the turbines sit on';
+add(new THREE.Mesh(new THREE.BoxGeometry(56, 6, 12), mat(0x8f8f8a)), 107, 3, -10);
+HOVER = 'High-pressure turbine: steam from the reactor building enters here';
+const hp = add(new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.8, 8, 24), mat(0xe8e8e4)), 86, 8.6, -10); hp.rotation.z = Math.PI / 2;
+HOVER = 'Low-pressure turbine: steam expands, so these are the biggest';
+for (const x of [97, 108, 119]) {
+  const lp = add(new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 9, 32, 1, false, 0, Math.PI), mat(0xcfd8d4)), x, 6.1, -10); lp.rotation.z = Math.PI / 2;
+  add(new THREE.Mesh(new THREE.BoxGeometry(9.4, 1.2, 9.4), mat(0xb7c2be)), x, 6.6, -10);
+}
+HOVER = 'Generator: turns the spinning shaft into electricity';
+const gen = add(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 9, 28), mat(0xd04040)), 129, 9.1, -10); gen.rotation.z = Math.PI / 2;
+const exc = add(new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 2.6, 20), mat(0x8a2e2e)), 135, 7.6, -10); exc.rotation.z = Math.PI / 2;
+HOVER = 'Turbine shaft';
+rod(V(82, 8.4, -10), V(136.5, 8.4, -10), 0.35, steel);
+HOVER = 'Crossover pipes: steam from the high-pressure to the low-pressure turbines';
+for (const [x, z] of [[97, -12.5], [108, -7.5], [119, -12.5]]) {
+  const c = new THREE.CatmullRomCurve3([V(88, 10.5, z), V((88 + x) / 2, 17, z), V(x, 10.6, z)]);
+  tagIt(add(new THREE.Mesh(new THREE.TubeGeometry(c, 30, 0.9, 12, false), mat(0xb0b6ba, { metalness: 0.4 })), 0, 0, 0));
+}
+HOVER = 'Moisture separator reheaters: dry and reheat the steam between turbines';
+for (const z of [-17.6, -2.6]) { const m = add(new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 22, 20), mat(0xdfe3e0)), 103, 9, z); m.rotation.z = Math.PI / 2; }
+HOVER = 'Catwalk along the wall';
+add(new THREE.Mesh(new THREE.BoxGeometry(HL - 6, 0.3, 2.4), mat(0x5b6670)), HXM, 7, HZ - 1.5);
+add(new THREE.Mesh(new THREE.BoxGeometry(HL - 6, 0.1, 0.1), rail), HXM, 8.1, HZ - 2.7);
 HOVER = null;
-add(new THREE.Mesh(new THREE.PlaneGeometry(56, 18), mat(0x3a3f44, { emissive: 0x220f22 })), (HX0 + HX1) / 2, 0.08, 9).rotation.x = -Math.PI / 2;
+add(new THREE.Mesh(new THREE.PlaneGeometry(58, 16), mat(0x3a3f44, { emissive: 0x220f22 })), HXM, 0.08, 10).rotation.x = -Math.PI / 2;
 HOVER = 'Booth 2 · lighting panel (runs venues 1 and 2)';
-add(new THREE.Mesh(new THREE.BoxGeometry(6, 1.4, 3), mat(0x26272b)), 107, 7.9, -5.6);
-const panel2 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 0.9), glow(0xffa43d)), 107, 8.9, -4.8); panel2.rotation.x = -0.4;
+add(new THREE.Mesh(new THREE.BoxGeometry(9, 0.9, 4), mat(0x26272b)), 107, 0.45, 0.6);
+add(new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.15, 4.2), glow(0xffa43d)), 107, 0.92, 0.6);
+add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 0.9), mat(0x3a3c42)), 107, 1.35, 1.1);
+const panel2 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.9), glow(0xffa43d)), 107, 1.95, 1.4); panel2.rotation.x = -0.4;
 HOVER = null;
-for (const z of [-HZ + 0.5, HZ - 0.5]) add(new THREE.Mesh(new THREE.BoxGeometry(HX1 - HX0 - 4, 0.6, 0.4), glow(0xff5ad8)), (HX0 + HX1) / 2, 20, z, venueLights[1]);
-for (let i = 0; i < 6; i++) movingHead(84 + i * 9, HH - 3, 2 + (i % 2) * 6, 0xff5ad8, venueLights[1], 22);
+djFigure(107, 0.92, 0.2, 0);
+for (const z of [-HZ + 0.6, HZ - 0.6]) add(new THREE.Mesh(new THREE.BoxGeometry(HL - 4, 0.6, 0.4), glow(0xff5ad8)), HXM, 12, z, venueLights[1]);
+for (let i = 0; i < 6; i++) movingHead(82 + i * 10, HW - 4.8, HZ - 1, 0xff5ad8, venueLights[1], 20);
+for (let i = 0; i < 6; i++) movingHead(82 + i * 10, HW - 4.8, -HZ + 1, 0x8dff5a, venueLights[1], 20);
 const strobes = [];
 for (let i = 0; i < 6; i++) strobes.push(add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.5), glow(0xffffff)), 80 + i * 11, 6, HZ - 0.8, venueLights[1]));
-crowdBox(80, 134, 2, 17, 80, 0.1);
-label('2 · Turbine Hall', (HX0 + HX1) / 2, HH + 8, 0, '#ff5ad8', true, route);
+crowdBox(80, 134, 4, 17, 90, 0.1);
+label('2 · Turbine Hall', HXM, HW + HZ + 6, 0, '#ff5ad8', true, route);
 
 // VENUE 3: REACTOR HALL. A pressurized water reactor's containment during a refuelling outage.
 // The operating floor is 8 m up; the reactor vessel sits below it in its concrete cavity, under the flooded pool.
@@ -382,8 +424,10 @@ for (const z of [-12, 12]) add(new THREE.Mesh(new THREE.BoxGeometry(26, 0.3, 0.6
 add(new THREE.Mesh(new THREE.BoxGeometry(3, 2.4, 3), mat(0xffa43d)), RC, FL + 3.2, -3);
 rod(V(RC, FL + 4.4, -3), V(RC, 0.5, -3), 0.35, steel);
 HOVER = 'Booth 3 · lighting panel (runs all three venues)';
-add(new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.3, 3), mat(0x26272b)), RC, FL + 2.65, 3);
-const panel3 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 0.9), glow(0xffa43d)), RC, FL + 3.5, 4.3); panel3.rotation.x = -0.4;
+add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 1.2), mat(0x26272b)), RC, FL + 2.45, 3.6);
+const panel3 = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 0.9), glow(0xffa43d)), RC, FL + 3.05, 3.6); panel3.rotation.x = -0.4;
+HOVER = null;
+djFigure(RC, FL + 2, 2.2, 0);
 HOVER = 'Fuel transfer tube to the fuel building';
 rod(V(RC + 8, 1, 0), V(RC + 31, 1, 0), 0.8, steel); // fuel transfer tube
 add(new THREE.Mesh(new THREE.BoxGeometry(14, 16, 18), ghost(0x7f8b90, 0.22)), RC + 38, 8, 0);
@@ -433,10 +477,46 @@ const baseOp = new Map(walls.map(w => [w, w.material.opacity]));
 toggle(document.getElementById('tShell'), on => { walls.forEach(w => { w.material.opacity = on ? 0.92 : baseOp.get(w); w.material.depthWrite = on; }); });
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const spinBtn = document.getElementById('tSpin');
-function setSpin(on) { controls.autoRotate = on; spinBtn.setAttribute('aria-pressed', String(on)); spinBtn.textContent = on ? 'Stop spinning' : 'Start spinning'; }
+function setSpin(on) { spinning = on; spinBtn.setAttribute('aria-pressed', String(on)); spinBtn.textContent = on ? 'Stop spinning' : 'Start spinning'; }
 if (reduce) setSpin(false);
-spinBtn.addEventListener('click', () => setSpin(!controls.autoRotate));
+spinBtn.addEventListener('click', () => setSpin(!spinning));
 renderer.domElement.addEventListener('pointerdown', () => setSpin(false));
+// hold right mouse to look, W A S D to fly, Q / E down and up, Shift faster, F back to the whole plant
+const keys = new Set(); let looking = false; const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 2) return; looking = true; controls.enabled = false; euler.setFromQuaternion(camera.quaternion); renderer.domElement.setPointerCapture(e.pointerId); });
+addEventListener('pointerup', e => { if (e.button !== 2 || !looking) return; looking = false;
+  const dist = Math.min(Math.max(camera.position.distanceTo(controls.target), 8), 60);
+  controls.target.copy(camera.position).add(V(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(dist)); controls.enabled = true; });
+addEventListener('pointermove', e => { if (!looking) return; euler.y -= e.movementX * .0035; euler.x = Math.max(-1.5, Math.min(1.5, euler.x - e.movementY * .0035)); camera.quaternion.setFromEuler(euler); });
+addEventListener('keydown', e => { const k = e.key.toLowerCase();
+  if (('wasdqe'.includes(k) && k.length === 1) || e.key.startsWith('Arrow') || k === 'shift') { keys.add(k); setSpin(false); }
+  if (k === 'f') { camera.position.copy(HOME_C); camera.up.set(0, 1, 0); controls.target.copy(HOME_T); } });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+function move(dt) { if (!keys.size) return;
+  const f = V(0, 0, -1).applyQuaternion(camera.quaternion), r = V(1, 0, 0).applyQuaternion(camera.quaternion), v = V(0, 0, 0);
+  if (keys.has('w') || keys.has('arrowup')) v.add(f); if (keys.has('s') || keys.has('arrowdown')) v.sub(f);
+  if (keys.has('d') || keys.has('arrowright')) v.add(r); if (keys.has('a') || keys.has('arrowleft')) v.sub(r);
+  if (keys.has('e')) v.y += 1; if (keys.has('q')) v.y -= 1;
+  if (!v.lengthSq()) return; v.normalize().multiplyScalar((keys.has('shift') ? 90 : 30) * dt);
+  camera.position.add(v); if (!looking) controls.target.add(v); }
+// scroll zooms toward the middle of the view; scroll-click drag turns freely, with Shift it pans
+renderer.domElement.addEventListener('wheel', e => { e.preventDefault(); setSpin(false);
+  const off = camera.position.clone().sub(controls.target);
+  const len = Math.min(Math.max(off.length() * Math.pow(1.0015, e.deltaY), controls.minDistance), controls.maxDistance);
+  camera.position.copy(controls.target).add(off.setLength(len)); }, { passive: false });
+let midDrag = null;
+renderer.domElement.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 1) return; e.preventDefault(); midDrag = { x: e.clientX, y: e.clientY, pan: e.shiftKey }; try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} });
+addEventListener('pointermove', e => { if (!midDrag) return; const dx = e.clientX - midDrag.x, dy = e.clientY - midDrag.y; midDrag.x = e.clientX; midDrag.y = e.clientY;
+  const off = camera.position.clone().sub(controls.target);
+  if (midDrag.pan || e.shiftKey) { const k = off.length() * .0016, right = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 0), up = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 1);
+    const mv = right.multiplyScalar(-dx * k).add(up.multiplyScalar(dy * k)); camera.position.add(mv); controls.target.add(mv); return; }
+  const up = camera.up.clone().normalize(), right = V(0, 0, 0).crossVectors(up, off).normalize();
+  const qq = new THREE.Quaternion().setFromAxisAngle(up, -dx * .006).multiply(new THREE.Quaternion().setFromAxisAngle(right, -dy * .006));
+  off.applyQuaternion(qq); camera.up.applyQuaternion(qq).normalize(); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target); });
+addEventListener('pointerup', e => { if (e.button === 1) midDrag = null; });
 // hover (or tap) a part to see its name
 const tip = document.getElementById('tip'), ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 function showTip(e) {
@@ -453,12 +533,12 @@ renderer.domElement.addEventListener('pointerup', (e) => { if (e.pointerType !==
 renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; });
 if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('key').open = false;
 
-function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); controls.handleResize(); }
 window.addEventListener('resize', resize); resize();
 
 const clock = new THREE.Clock();
 function frame() {
-  const t = clock.getElapsedTime();
+  const t = clock.elapsedTime;
   if (cycling && t - lastSwap > 7) { lastSwap = t; setLive((live + 1) % 3); }
   if (!reduce) {
     const beat = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * 2.1);
@@ -475,7 +555,9 @@ function frame() {
     dancers.forEach(d => { d.g.position.y = d.y + 0.35 * Math.max(0, Math.sin(t * 8.6 + d.p)); });
     walkers.forEach(o => { o.t = (o.t + 0.001) % 1; o.w.position.copy(path.getPointAt(o.t)).add(V(0, 0.8, 0)); });
   }
-  controls.update();
+  const dt = Math.min(clock.getDelta(), 0.05); move(dt);
+  if (spinning) { const off = camera.position.clone().sub(controls.target).applyAxisAngle(V(0, 1, 0), 0.0012); camera.position.copy(controls.target).add(off); }
+  if (!looking) controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
