@@ -36,6 +36,21 @@ What you would see walking through The Cooling Tower, grouped by the kind of thi
 | **Steam & Smoke Spawner** | Tower plume, coloured smoke columns that pulse with the music (AudioLink), steam vents, rain particles | VRChat has no built-in fog that fills a room, so particles plus soft materials | Every rave world |
 | **CAD Converter** | Brings engineers' CAD parts into Unity: STEP in, slim textured mesh out | FreeCAD (free) turns STEP into a mesh, Blender slims it and adds UVs and materials, then FBX into Unity | Any world |
 
+### Light Show Generator (Astra, 2026-10-24)
+
+Every DJ plays from their own stream link on a third-party host. The Light Show Generator turns whatever they play into the light show, and every future DJ world reuses it with its own look preset. It does not need to be clever; it needs to have no delay.
+
+How it stays delay-free: the link plays in the world's video player (ProTV or similar) on every visitor's PC. AudioLink (free, already in VCC's cache) splits that same local audio into bass, low mid, high mid and treble, many times a second, on each PC. Every light reads those bands, so each person's lights match exactly what that person hears. Nothing goes over the network except the DJ's button presses.
+
+What it is made of:
+
+1. **A Unity tool (Generator, in Unity Unicorn)** that places a rig from a venue's anchor points (floor centre, walls, top opening, booth): VRSL moving heads and washes, lasers, smoke emitters and shell washes, wired to AudioLink bands. One click builds the rig; a preset sets the colours and moves.
+2. **An automatic show, no AI:** bass pumps the floor wash and smoke, highs fire the lasers and strobes, AudioLink's built-in counters drive movement. A simple rule detects the big moments: if the bass falls well below its recent average for a couple of seconds, it is a breakdown (The Cooling Tower's "SCRAM" look: amber beacons, red light); when the bass comes back hard, it is the drop (full power: lasers fan out, smoke burst, white flash). Auto-gain keeps quiet and loud streams looking the same.
+3. **A DJ panel in the booth** (Udon buttons, synced to everyone): colour theme, intensity, strobe, smoke burst, blackout, SCRAM, and a tap-tempo button. The automatic show runs underneath; the DJ steers when they want.
+4. **Later, optional:** DJs with their own lighting operator can encode exact cues in a corner of their video (VRSL's DMX-over-video grid); the generator follows those when present and falls back to AudioLink otherwise.
+
+Limits: VRSL is built for PC worlds; Quest visitors get a lighter version. Udon reading AudioLink values needs AudioLink's readback switched on.
+
 Signs and markings start as a small decal set inside Pipe Spawner (pipe labels) and Rail Spawner (stripes); a separate tool only if they grow.
 
 Water already exists in other worlds: Liminal Doors has its own `PoolWater` shader and about ten water materials (sea, bath, channel, black water, red water), and uses Mochie's free water shader. Water Spawner starts from those, so the worlds share one water system instead of each making its own.
