@@ -1,0 +1,403 @@
+<title>The Cooling Tower</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="World portfolio for The Cooling Tower, a VRChat rave world inside a nuclear plant: real photos, the science behind each one, and how the DJ and the crowd play it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: the page is the night's route upstream through the plant, stop 6 (tower) down to stop 1 (core); each photo card pairs a science caption with a crossover note. */
+:root {
+  color-scheme: dark;
+  --ground: #1d1e22;       /* graphite, the page */
+  --panel: #26272b;        /* raised graphite */
+  --line: #3a3c42;
+  --ink: #eceef2;          /* primary text */
+  --ink-soft: #b4b8c2;     /* science captions */
+  --ink-faint: #868b96;
+  --cherenkov: #4fc3ff;    /* reactor blue: headings and links */
+  --uranium: #8dff5a;      /* crossover notes */
+  --uranium-bg: #1f2b1c;
+  --alarm: #ffa43d;        /* annunciator amber */
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55; }
+a { color: var(--cherenkov); text-underline-offset: 3px }
+a:focus-visible { outline: 2px solid var(--uranium); outline-offset: 2px }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Hero */
+.hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); background: #0d0e10; }
+.hero img { display: block; width: 100%; height: clamp(360px, 62vw, 640px); object-fit: cover; opacity: .72; }
+.hero-text { position: absolute; inset: auto 0 0 0; padding-block: 40px 44px; background: linear-gradient(0deg, rgba(13,14,16,.94) 0%, rgba(13,14,16,.6) 60%, rgba(13,14,16,0) 100%); }
+.eyebrow { font-family: var(--mono); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--cherenkov); }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(56px, 11vw, 132px); line-height: .9; letter-spacing: .01em; text-transform: uppercase; margin: 10px 0 18px; text-wrap: balance; }
+.lede { max-width: 62ch; font-size: clamp(17px, 2.1vw, 21px); color: var(--ink); margin: 0; }
+
+/* Status strip */
+.status { display: flex; flex-wrap: wrap; gap: 10px 14px; padding-block: 18px; border-bottom: 1px solid var(--line); }
+.chip { font-family: var(--mono); font-size: 13px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink-soft); white-space: nowrap; }
+.chip b { color: var(--alarm); font-weight: 500 }
+
+/* Energy path */
+.path { padding-block: 44px 8px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: clamp(34px, 5vw, 52px); line-height: 1; text-transform: uppercase; letter-spacing: .02em; margin: 0 0 12px; text-wrap: balance; }
+.section-intro { max-width: 66ch; color: var(--ink-soft); margin: 0 0 24px; }
+.flow-scroll { overflow-x: auto; padding-bottom: 6px; }
+.flow { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 10px; min-width: 940px; list-style: none; margin: 0; padding: 0; }
+.flow li { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; }
+.flow .n { font-family: var(--mono); font-size: 13px; color: var(--cherenkov); }
+.flow .t { font-family: var(--display); font-size: 24px; font-weight: 600; text-transform: uppercase; line-height: 1.05; margin: 4px 0 6px; }
+.flow p { margin: 0; font-size: 14px; color: var(--ink-soft); line-height: 1.45 }
+.flow li.hot { border-color: var(--cherenkov) }
+.flow li.out { border-color: var(--uranium) }
+.split { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 18px 0 0; font-family: var(--display); font-size: clamp(26px, 3.4vw, 36px); text-transform: uppercase; font-weight: 600; }
+.split span:last-child { color: var(--uranium) }
+
+/* Stops */
+.stop { padding-block: 56px 8px; }
+.stop-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 22px; margin-bottom: 8px; }
+.stop-no { font-family: var(--mono); font-size: 14px; color: var(--ground); background: var(--cherenkov); padding: 3px 9px; border-radius: 3px; white-space: nowrap; }
+.stop-no.side { background: var(--alarm) }
+.stop-no.extra { background: var(--uranium) }
+.stop-head h2 { margin: 0 }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 28px; margin-top: 22px; }
+.card { margin: 0; display: flex; flex-direction: column; min-width: 0; }
+.card.wide { grid-column: 1 / -1 }
+.card img { width: 100%; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: var(--panel); display: block; }
+.card.tall img { aspect-ratio: 3 / 4 }
+.card.wide img { aspect-ratio: 5 / 1 }
+.card figcaption { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; min-width: 0; }
+.card h3 { font-family: var(--display); font-weight: 600; font-size: 28px; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; margin: 0; }
+.sci { margin: 0; color: var(--ink-soft); max-width: 68ch; }
+.sci .tag, .cross .tag { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
+.sci .tag { color: var(--cherenkov) }
+.cross { margin: 0; background: var(--uranium-bg); color: #dcf7cf; border-radius: 6px; padding: 12px 14px; max-width: 68ch; }
+.cross .tag { color: var(--uranium) }
+.credit-line { font-size: 13px; color: var(--ink-faint); margin: 0 }
+.note { background: var(--panel); border: 1px dashed var(--line); border-radius: 6px; padding: 18px; color: var(--ink-soft); max-width: 68ch; margin-top: 22px; }
+.note b { color: var(--ink) }
+
+/* Tools */
+.tools { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.tools li { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.tools b { display: block; font-family: var(--display); font-size: 22px; font-weight: 600; text-transform: uppercase; }
+.tools span { font-size: 14px; color: var(--ink-soft) }
+.tools .state { font-family: var(--mono); font-size: 12px; color: var(--alarm); }
+
+/* Credits */
+.credits { padding-block: 56px 40px; }
+.table-scroll { overflow-x: auto; margin-top: 16px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); font-weight: 500; }
+td { color: var(--ink-soft) }
+footer { border-top: 1px solid var(--line); padding-block: 22px 40px; color: var(--ink-faint); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+footer em { color: var(--ink) }
+@media (prefers-reduced-motion: no-preference) {
+  .card img { transition: filter .25s ease }
+  .card img:hover { filter: brightness(1.08) }
+}
+</style>
+
+<header class="hero">
+  <img src="images/tower-sky-ring-20261024.jpg" alt="Looking straight up inside a nuclear cooling tower at a ring of cloudy sky">
+  <div class="hero-text">
+    <div class="wrap">
+      <div class="eyebrow">VRChat world · in design</div>
+      <h1>The Cooling Tower</h1>
+      <p class="lede">A rave inside a nuclear plant during a refuelling outage. You walk in between the tower’s concrete legs as steam, follow the energy back upstream through a giant water pipe, and reach the core, where the DJ runs the reactor and the bass rises out of the blue glow.</p>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="status" aria-label="Project status">
+    <span class="chip">Seeded <b>2026-10-24</b></span>
+    <span class="chip">Design first · no Unity build yet</span>
+    <span class="chip">Story: recommended answers, <b>awaiting Astra</b></span>
+    <span class="chip">PC VR / desktop (planned)</span>
+  </div>
+
+  <section class="path" aria-labelledby="path-title">
+    <h2 id="path-title">How the plant moves energy</h2>
+    <p class="section-intro">Every booth, speaker and dance floor in the world sits on one of these six real stops. The three water loops never mix, which is why a cooling tower’s plume is clean water vapour.</p>
+    <div class="flow-scroll">
+      <ol class="flow">
+        <li class="hot"><div class="n">1</div><div class="t">Core</div><p>Uranium splits and heats water to about 315 °C, kept liquid by high pressure.</p></li>
+        <li><div class="n">2</div><div class="t">Steam generator</div><p>That water boils a second, separate loop into steam.</p></li>
+        <li><div class="n">3</div><div class="t">Turbine</div><p>Steam spins rings of blades on one long shaft.</p></li>
+        <li><div class="n">4</div><div class="t">Generator</div><p>The shaft turns magnets inside coils and makes electricity.</p></li>
+        <li><div class="n">5</div><div class="t">Condenser</div><p>Used steam turns back to water, cooled by river-sized pipes.</p></li>
+        <li class="out"><div class="n">6</div><div class="t">Cooling tower</div><p>That warm water rains through the tower; the heat leaves as the plume.</p></li>
+      </ol>
+    </div>
+    <p class="split"><span>⅓ becomes electricity</span><span>⅔ leaves through the tower</span></p>
+  </section>
+
+  <section class="stop" id="tower" aria-labelledby="tower-title">
+    <div class="stop-head"><span class="stop-no">Stop 6</span><h2 id="tower-title">The cooling tower</h2></div>
+    <p class="section-intro">Where the night begins. The tower is dry and walkable only during a refuelling outage, which is the only time anyone could dance inside one.</p>
+    <div class="cards">
+      <figure class="card">
+        <img src="images/tower-x-legs-inside-20261024.jpg" alt="Inside a natural draft cooling tower: the curved shell rising over a ring of X-shaped concrete legs" loading="lazy">
+        <figcaption>
+          <h3>The X-legs, from inside the shell</h3>
+          <p class="sci"><span class="tag">The science</span>Pairs of slanted concrete columns carry the whole shell, and the gaps between them are the air inlet, open all the way round. Cold air pours in here, rises through the fill where hot water rains down, and carries the heat away.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>This is the front door. You arrive the way the tower’s air does, between the legs, and the tower DJ plays in the round from the water riser in the middle.</p>
+          <p class="credit-line">Harald the Bard · CC BY-SA 4.0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/tower-sky-ring-20261024.jpg" alt="Looking straight up through a cooling tower’s throat at a ring of cloudy sky" loading="lazy">
+        <figcaption>
+          <h3>The throat and the ring of sky</h3>
+          <p class="sci"><span class="tag">The science</span>The shell is a hyperboloid, a curved surface that can be built entirely from straight lines. That shape lets a concrete wall only about 20 cm thick stand 150 m tall or more. Warm, wet air inside is lighter than the air outside, so it rises like smoke up a chimney; the taller the tower, the stronger the draft.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>This ring is the plant’s exhaust, where about two thirds of the reactor’s heat leaves. In the world it is where the dancers’ energy goes: lasers aim straight up, and the crowd in the tower plays the steam.</p>
+          <p class="credit-line">Jakob Madsen (Unsplash) · CC0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/grating-stairs-railing-20261024.jpg" alt="Yellow steel guardrails turning corners around grating stairs and a walkway" loading="lazy">
+        <figcaption>
+          <h3>Grating stairs and guardrails</h3>
+          <p class="sci"><span class="tag">The science</span>Open steel grating sheds water and dust and stays grippy when wet, which matters on a deck under spray. US workplace rules put a guardrail’s top rail at 42 in (1.07 m), with a mid rail halfway down and a toe board at the floor.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The tower dance floor is grating over the fill, so coloured smoke rises up through it around people’s feet. Rail Spawner builds every railing to those real heights, with a post at each corner where AI-made rails used to break.</p>
+          <p class="credit-line">Fernost · public domain</p>
+        </figcaption>
+      </figure>
+      <figure class="card tall">
+        <img src="images/caged-ladder-20261024.jpg" alt="A galvanised steel fixed ladder with a round safety cage on the side of a building" loading="lazy">
+        <figcaption>
+          <h3>A fixed ladder with a cage</h3>
+          <p class="sci"><span class="tag">The science</span>Fixed ladders have rungs 10 to 14 in apart and at least 16 in wide. Cages like this are being phased out in the US: by November 2036, tall fixed ladders need a ladder safety or fall-arrest system instead.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>A caged ladder runs up the outside of the shell to a lookout on the rim, a quiet spot above the party where the music echoes out of the tower. Ladder Spawner builds it.</p>
+          <p class="credit-line">Frank C. Müller, Baden-Baden · CC BY-SA 3.0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/scaffold-clamps-20261024.jpg" alt="Close-up of brass-coloured scaffolding clamps joining steel tubes" loading="lazy">
+        <figcaption>
+          <h3>Tube-and-clamp scaffolding</h3>
+          <p class="sci"><span class="tag">The science</span>Steel tubes 48.3 mm across, joined by right-angle and swivel clamps, can be built into almost any shape. During an outage, crews scaffold the inside of a dry tower to inspect and repair the concrete and the fill.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>Scaffolding says “after hours”: the plant is shut down for refuelling, the tower is dry, and the party has moved in. Scaffold Spawner wraps it along the shell walls.</p>
+          <p class="credit-line">Jorge Royan · CC BY-SA 3.0</p>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="stop" id="pipes" aria-labelledby="pipes-title">
+    <div class="stop-head"><span class="stop-no">Stop 5</span><h2 id="pipes-title">Circulating water</h2></div>
+    <p class="section-intro">The walk upstream. Cooling water runs between the condenser and the tower through pipes big enough to walk through.</p>
+    <div class="cards">
+      <figure class="card tall">
+        <img src="images/big-water-pipes-20261024.jpg" alt="Three giant steel water pipes running side by side down a green hillside" loading="lazy">
+        <figcaption>
+          <h3>Giant water pipes</h3>
+          <p class="sci"><span class="tag">The science</span>These are penstocks feeding a hydroelectric plant in Kerala, India. A nuclear plant’s circulating water pipes are the same scale, around 3 to 4 m across, moving tens of cubic metres of cooling water every second.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>One of these pipes is the walk between the two floors. You travel upstream against the flow, and signs count the stops down from 6 at the tower to 1 at the core.</p>
+          <p class="credit-line">Chinchu.c · CC0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/pipe-elbow-forming-20261024.jpg" alt="A glowing hot steel pipe being bent into an elbow under gas flames in a factory" loading="lazy">
+        <figcaption>
+          <h3>Making a pipe elbow, 1940s</h3>
+          <p class="sci"><span class="tag">The science</span>Workers at Tube Turns in Louisville heat steel pipe until it glows and bend it into a smooth elbow. A standard long-radius elbow bends at 1.5 times the pipe’s size, which keeps pressure loss and wear low.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>Pipe Spawner gives every corner a real elbow like this one. In the world the pipes pulse with light on the kick, so you can see the beat travel through the plant like energy.</p>
+          <p class="credit-line">Alfred T. Palmer, Library of Congress · public domain</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/duisburg-pipes-stairs-20261024.jpg" alt="Rusty steel stairs and catwalks threading through old industrial pipes in the mist" loading="lazy">
+        <figcaption>
+          <h3>Landschaftspark Duisburg-Nord</h3>
+          <p class="sci"><span class="tag">The science</span>A former ironworks in Germany’s Ruhr valley that stopped making iron in 1985. Its blast furnaces, gas pipes and catwalks were kept as they were, and it is now a public park, lit in colour at night and used for concerts and festivals.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>Proof that a dead industrial plant makes a great dance space, the same idea as VRChat’s boiler-room raves. Its catwalks are the model for the walkways that hang along the tower wall.</p>
+          <p class="credit-line">Dietmar Rabich · CC BY-SA 4.0</p>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="stop" id="turbine" aria-labelledby="turbine-title">
+    <div class="stop-head"><span class="stop-no">Stops 4 · 3</span><h2 id="turbine-title">Generator and turbine</h2></div>
+    <p class="section-intro">The halfway point. Steam becomes spin, and spin becomes electricity.</p>
+    <div class="cards">
+      <figure class="card">
+        <img src="images/turbine-rotor-20261024.jpg" alt="A huge steam turbine rotor with rings of curved blades, on display outdoors" loading="lazy">
+        <figcaption>
+          <h3>A low-pressure turbine rotor</h3>
+          <p class="sci"><span class="tag">The science</span>From the Philippsburg nuclear plant in Germany. Steam expands as it loses pressure, so each ring of blades is bigger than the last. In Europe these shafts turn 1,500 times a minute to make 50 Hz power; in the US, 1,800 times for 60 Hz.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The turbine turns steam into spin the way a DJ turns tracks into sound, and its rings of blades are the plant’s turntable platters.</p>
+          <p class="credit-line">AlfvanBeem · CC0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/turbine-hall-20261024.jpg" alt="A long turbine hall with white turbine and generator housings in a row and yellow-railed platforms" loading="lazy">
+        <figcaption>
+          <h3>The turbine hall at Balakovo</h3>
+          <p class="sci"><span class="tag">The science</span>At Russia’s Balakovo nuclear plant, turbine and generator sit end to end on one long shaft under the white housings, with the condensers below the floor.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The generator is where the plant’s electricity, and so every speaker’s power, is made. Here the bass hums low through the floor on the way to the core.</p>
+          <p class="credit-line">Alexander Seetenky · CC BY-SA 3.0</p>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="stop" id="control" aria-labelledby="control-title">
+    <div class="stop-head"><span class="stop-no side">Beside the path</span><h2 id="control-title">The control room</h2></div>
+    <div class="cards">
+      <figure class="card wide">
+        <img src="images/control-room-panorama-20261024.jpg" alt="Panorama of a nuclear plant control room: a long curved wall of panels, dials and switches with desks in front" loading="lazy">
+        <figcaption>
+          <h3>Shearon Harris control room</h3>
+          <p class="sci"><span class="tag">The science</span>Shearon Harris in North Carolina runs one pressurized water reactor. Licensed operators run the plant from boards like these and never stand at the core. When something is off normal, a window on the alarm panel, called an annunciator, lights up and sounds.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The DJ is the reactor operator. The decks are the console and the faders work like control rods: pull them out and the power rises. On every drop, the annunciator windows flash.</p>
+          <p class="credit-line">RadioFan · CC BY-SA 4.0</p>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="note"><b>Stop 2, the steam generator,</b> sits sealed inside the containment building. There is no free photo of one yet, so it waits for its first in-world render.</p>
+  </section>
+
+  <section class="stop" id="core" aria-labelledby="core-title">
+    <div class="stop-head"><span class="stop-no">Stop 1</span><h2 id="core-title">The core</h2></div>
+    <p class="section-intro">The end of the walk upstream and the peak of the night.</p>
+    <div class="cards">
+      <figure class="card">
+        <img src="images/reactor-vessel-top-20261024.jpg" alt="Top of an open research reactor under water, the core glowing blue in the middle" loading="lazy">
+        <figcaption>
+          <h3>Looking down into a reactor</h3>
+          <p class="sci"><span class="tag">The science</span>Oak Ridge’s High Flux Isotope Reactor during refuelling. The core sits under several metres of water that cools it and blocks its radiation. The blue is Cherenkov light: electrons moving faster than light can travel in water (about 225,000 km/s) give off a blue glow, and it brightens as reactor power rises.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The sound comes from here. Sub-bass rises out of the core, and the glow brightens with loudness the way real Cherenkov light brightens with power.</p>
+          <p class="credit-line">Oak Ridge National Laboratory · CC BY 2.0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/reactor-cherenkov-bridge-20261024.jpg" alt="A long tool lifting a glowing fuel element out of a reactor under blue water, a walkway above" loading="lazy">
+        <figcaption>
+          <h3>Lifting fuel from above</h3>
+          <p class="sci"><span class="tag">The science</span>A tool on a long pole lifts a fuel element out of the core under water. The water above it is enough shielding for workers to stand over the pool. HFIR is an 85-megawatt research reactor.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>The reactor DJ stands on a bridge like this, right over the core. The crowd rings the pool as the neutrons, and a full floor goes “critical”, which in a real reactor just means steady, normal running.</p>
+          <p class="credit-line">Oak Ridge National Laboratory · CC BY 2.0</p>
+        </figcaption>
+      </figure>
+      <figure class="card tall">
+        <img src="images/reactor-cherenkov-stairs-20261024.jpg" alt="Grating stairs leading down beside a reactor glowing bright blue under water" loading="lazy">
+        <figcaption>
+          <h3>The glow at the foot of the stairs</h3>
+          <p class="sci"><span class="tag">The science</span>Cherenkov light is strongest at the shortest wavelengths, so it looks blue to us and runs on into ultraviolet. Used fuel glows dimmer as it cools, so fresh-from-the-core fuel is the brightest thing in the pool.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>On the breakdown the plant SCRAMs: alarms, red light, the rods slam in and the glow dies. On the drop it comes back to full power. A SCRAM is a real emergency shutdown that stops the chain reaction in seconds.</p>
+          <p class="credit-line">Oak Ridge National Laboratory · CC BY 2.0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/fuel-pool-bridge-20261024.jpg" alt="A deep blue-green spent fuel pool seen from above, with a steel bridge across it" loading="lazy">
+        <figcaption>
+          <h3>San Onofre’s spent fuel pool</h3>
+          <p class="sci"><span class="tag">The science</span>California’s San Onofre plant closed in 2013. Used fuel cools for years in racks on the floor of a pool about 12 m deep, moved by a bridge that rolls across the top.</p>
+          <p class="cross"><span class="tag">VRChat DJ &amp; crowd</span>This bridge is the model for the DJ bridge, and the pool is Water Spawner’s “reactor pool” preset: deep, still, blue-green and lit from below.</p>
+          <p class="credit-line">US Nuclear Regulatory Commission · CC BY 2.0</p>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="stop" id="water" aria-labelledby="water-title">
+    <div class="stop-head"><span class="stop-no extra">Every world</span><h2 id="water-title">Water Spawner presets</h2></div>
+    <p class="section-intro">One water system for all of Astra’s worlds. Pool, ocean and lake water behave differently, so each gets its own preset.</p>
+    <div class="cards">
+      <figure class="card">
+        <img src="images/water-pool-20261024.jpg" alt="Underwater view of a tiled swimming pool with bright rippling light lines on the floor" loading="lazy">
+        <figcaption>
+          <h3>Pool</h3>
+          <p class="sci"><span class="tag">The science</span>Ripples on the surface act like moving lenses, focusing sunlight into bright wavy lines on the tiles. These are called caustics.</p>
+          <p class="cross"><span class="tag">In the worlds</span>The “pool” preset draws those moving light lines, for Liminal Doors’ pool after closing and any other world with a pool.</p>
+          <p class="credit-line">Steven Lek · public domain</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/water-lake-20261024.jpg" alt="A calm mountain lake reflecting the peaks around it" loading="lazy">
+        <figcaption>
+          <h3>Lake</h3>
+          <p class="sci"><span class="tag">The science</span>Still water reflects more light the lower you look across it, so a lake turns into a mirror toward the far shore and stays clear right at your feet.</p>
+          <p class="cross"><span class="tag">In the worlds</span>The “lake” preset: mirror-calm in the distance, clear up close. The dry basin under the tower deck borrows its dark-mirror look.</p>
+          <p class="credit-line">Ezra Jeffrey (Unsplash) · CC0</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="images/water-ocean-20261024.jpg" alt="Ocean waves seen from straight above, white foam over deep blue water" loading="lazy">
+        <figcaption>
+          <h3>Ocean</h3>
+          <p class="sci"><span class="tag">The science</span>A wave breaks when its height reaches roughly four fifths of the water’s depth. The white is air churned into the water as foam.</p>
+          <p class="cross"><span class="tag">In the worlds</span>The “ocean” preset: waves and foam for the worlds with a sea, like Piranesi House’s tides and Astra’s Infinite Pole.</p>
+          <p class="credit-line">Caleb Jones (Unsplash) · CC0</p>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="stop" id="tools" aria-labelledby="tools-title">
+    <div class="stop-head"><span class="stop-no extra">How it gets built</span><h2 id="tools-title">One tool per part of the plant</h2></div>
+    <div class="cards">
+      <figure class="card">
+        <img src="images/freecad-screenshot-20261024.jpg" alt="The free CAD program FreeCAD showing a grid-shaped part, its feature tree and a dependency graph" loading="lazy">
+        <figcaption>
+          <h3>Real engineering, not guesses</h3>
+          <p class="sci"><span class="tag">The science</span>CAD files such as STEP store exact mathematical surfaces, not triangles, so they have to be cut into a mesh before a game engine can draw them. Free engineering models are mostly for reference, so the tools follow the real rules instead of copying anyone’s file.</p>
+          <p class="cross"><span class="tag">In the world</span>CAD Converter brings in real parts like valves, pumps and cranes, and the spawners build everything that repeats.</p>
+          <p class="credit-line">Tony Rotondas · CC BY-SA 3.0</p>
+        </figcaption>
+      </figure>
+    </div>
+    <ul class="tools">
+      <li><b>Pipe Spawner</b><span>Runs, elbows at 1.5× pipe size, tees, flanges, hangers</span><div class="state">first · planned</div></li>
+      <li><b>Rail Spawner</b><span>42 in guardrails, corner posts, toe boards, stair rails</span><div class="state">first · planned</div></li>
+      <li><b>Water Spawner</b><span>Reactor pool, basin, rain, then pool, lake, ocean</span><div class="state">planned</div></li>
+      <li><b>Walkway &amp; Stair Spawner</b><span>Grating catwalks, platforms and stairs</span><div class="state">planned</div></li>
+      <li><b>Ladder Spawner</b><span>Fixed ladders, cages and rest platforms</span><div class="state">planned</div></li>
+      <li><b>Shell Spawner</b><span>Hyperbolic tower, domes, tanks, the column ring</span><div class="state">planned</div></li>
+      <li><b>Steam &amp; Smoke Spawner</b><span>Plume, coloured smoke that pulses with the music</span><div class="state">planned</div></li>
+      <li><b>Scaffold Spawner</b><span>Tube-and-clamp scaffolding along walls</span><div class="state">planned</div></li>
+      <li><b>CAD Converter</b><span>STEP parts into slim, textured meshes</span><div class="state">planned</div></li>
+    </ul>
+  </section>
+
+  <section class="credits" aria-labelledby="credits-title">
+    <h2 id="credits-title">Photo credits</h2>
+    <p class="section-intro">Every photo comes from Wikimedia Commons, resized for this page. CC BY and CC BY-SA photos are shared under those licences.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Photo</th><th>By</th><th>Licence</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:The_view_out_of_a_nuclear_cooling_tower_(Unsplash).jpg">The view out of a nuclear cooling tower</a></td><td>Jakob Madsen</td><td>CC0</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Inside_of_a_Natural_Draft_Cooling_Tower_3.jpg">Inside of a Natural Draft Cooling Tower 3</a></td><td>Harald the Bard</td><td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Laufgitter_Treppe_und_Laufgitter-Gang_P4420737-HDR.jpg">Grating stairs and walkway</a></td><td>Fernost</td><td>Public domain</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Fluchtleiter_(fcm).jpg">Fluchtleiter</a></td><td>Frank C. Müller</td><td><a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Scaffolding_clamp_joint_connections_and_knots_Rome_-_3199.jpg">Scaffolding clamp joints, Rome</a></td><td>Jorge Royan</td><td><a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Sabarigiri_Penstock.jpg">Sabarigiri Penstock</a></td><td>Chinchu.c</td><td>CC0</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Large_pipe_elbows_for_the_Army_are_formed_at_Tube_Turns,_Inc._1a35067v.jpg">Large pipe elbows formed at Tube Turns</a></td><td>Alfred T. Palmer</td><td>Public domain</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Duisburg,_Landschaftspark_Duisburg-Nord_--_2025_--_7369.jpg">Landschaftspark Duisburg-Nord</a></td><td>Dietmar Rabich</td><td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Philippsburg_Nuclear_Power_Plant_condensation_turbine_pic1.jpg">Philippsburg condensation turbine</a></td><td>AlfvanBeem</td><td>CC0</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:BalakovoNPP_turb.JPG">Balakovo NPP turbine hall</a></td><td>Alexander Seetenky</td><td><a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Shearon_Harris_Nuclear_Power_Plant_control_room.jpg">Shearon Harris control room</a></td><td>RadioFan</td><td><a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:HFIR_Refueling_July_2015_(19348392584).jpg">HFIR Refueling July 2015</a> (also <a href="https://commons.wikimedia.org/wiki/File:HFIR_Refueling_July_2015_(19944787756).jpg">2</a>, <a href="https://commons.wikimedia.org/wiki/File:HFIR_Refueling_July_2015_(19963344882).jpg">3</a>)</td><td>Oak Ridge National Laboratory</td><td><a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:San_Onofre_Nuclear_Generating_Station_spent_fuel_pool,_2014.jpg">San Onofre spent fuel pool, 2014</a></td><td>US Nuclear Regulatory Commission</td><td><a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a></td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Swimming_pool_underwater_1.JPG">Swimming pool underwater</a></td><td>Steven Lek</td><td>Public domain</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Calm_waters_between_mountains_(Unsplash).jpg">Calm waters between mountains</a></td><td>Ezra Jeffrey</td><td>CC0</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:Drone_view_of_ocean_waves_(Unsplash).jpg">Drone view of ocean waves</a></td><td>Caleb Jones</td><td>CC0</td></tr>
+          <tr><td><a href="https://commons.wikimedia.org/wiki/File:FreeCAD_Arrays.png">FreeCAD Arrays</a></td><td>Tony Rotondas</td><td><a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span><em>By Astra.</em> The Cooling Tower, a VRChat world in design.</span>
+    <a href="https://github.com/findastra/the-cooling-tower">findastra/the-cooling-tower on GitHub</a>
+  </footer>
+</div>
