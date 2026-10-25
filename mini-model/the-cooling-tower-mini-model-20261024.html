@@ -60,6 +60,9 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .hint { color: var(--soft); font-size: 12px; margin: 10px 0 0; }
 @media (max-width: 520px) { .panel { max-height: 46%; } }
 .tip { position: fixed; pointer-events: none; max-width: 260px; background: rgba(20,22,26,.94); border: 1px solid var(--blue); color: var(--ink); font-size: 13px; padding: 6px 9px; border-radius: 5px; }
+.venues { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(52px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 200px); }
+.venues button { border-color: var(--c); color: var(--c); background: rgba(29,30,34,.9); }
+.venues button[aria-pressed="true"] { background: var(--c); color: #1d1e22; }
 .orbit { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); margin: 0; max-width: calc(100% - 200px); font-size: 13px; color: var(--ink); background: rgba(29,30,34,.88); border: 1px solid #ff4fa3; border-radius: 6px; padding: 8px 12px; }
 .spin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 10px 16px; background: rgba(29,30,34,.92); border-color: var(--amber); color: var(--amber); }
 </style>
@@ -95,11 +98,18 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     <button id="tCycle" aria-pressed="true">Move the set</button>
     <button id="tRoute" aria-pressed="true">Route</button>
     <button id="tShell" aria-pressed="false">Solid walls</button>
+    <button id="tEquip" aria-pressed="false">Equipment labels</button>
   </div>
-  <p class="hint">Moving around: <b>click any part</b> and the view glides to it and turns around it (the pink ring marks it). Drag to turn, scroll to zoom, scroll-click drag (or right-drag) to drag the model along the ground. The ground always stays level. W A S D or the arrow keys move you, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag to turn and pinch to zoom. Tap the title to fold this key away.</p>
+  <p class="hint">Moving around: pick a venue with the buttons at the bottom (or keys 1, 2, 3) and the view glides there and spins round it; <b>click any part</b> and it turns around that part instead (the pink ring marks it). Drag to turn, scroll to zoom, scroll-click drag (or right-drag) to drag the model along the ground. The ground always stays level. W A S D or the arrow keys move you, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag to turn and pinch to zoom. Tap the title to fold this key away.</p>
 </details>
 </aside>
 <button id="tSpin" class="spin" aria-pressed="true">Stop spinning</button>
+<nav class="venues" aria-label="Spin around a venue">
+  <button data-v="0" style="--c:#8dff5a">1 · The Stack</button>
+  <button data-v="1" style="--c:#ff5ad8">2 · Turbine Hall</button>
+  <button data-v="2" style="--c:#4fc3ff">3 · Reactor Hall</button>
+  <button data-v="3" style="--c:#c8d0d8" aria-pressed="true">Whole plant</button>
+</nav>
 <p id="orbitLine" class="orbit" aria-live="polite">Turning around: the whole plant</p>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 
@@ -625,7 +635,23 @@ function orbitAround(point, name) {
   const dist = Math.min(off.length(), 90); off.setLength(dist);
   glide = { t0: performance.now(), fromT: controls.target.clone(), toT: point.clone(), fromC: camera.position.clone(), toC: point.clone().add(off) };
   marker.position.copy(point); marker.visible = true; orbitLine.textContent = 'Turning around: ' + name; setSpin(false);
+  document.querySelectorAll('.venues button').forEach(b => b.setAttribute('aria-pressed', 'false'));
 }
+// the three venues (and the whole plant): pick one and the view glides there and spins round it
+const VENUES = [
+  { name: '1 · The Stack', t: V(0, 30, 0), c: V(-95, 85, 110) },
+  { name: '2 · Turbine Hall', t: V(107, 8, 0), c: V(70, 45, 75) },
+  { name: '3 · Reactor Hall', t: V(166, 10, 0), c: V(130, 50, 70) },
+  { name: 'the whole plant', t: HOME_T.clone(), c: HOME_C.clone() },
+];
+const venueBtns = [...document.querySelectorAll('.venues button')];
+function pickVenue(i) {
+  const v = VENUES[i];
+  glide = { t0: performance.now(), fromT: controls.target.clone(), toT: v.t.clone(), fromC: camera.position.clone(), toC: v.c.clone() };
+  marker.visible = false; orbitLine.textContent = 'Turning around: ' + v.name;
+  venueBtns.forEach((b, k) => b.setAttribute('aria-pressed', String(k === i))); setSpin(true);
+}
+venueBtns.forEach(b => b.addEventListener('click', () => pickVenue(+b.dataset.v)));
 const pickRay = new THREE.Raycaster(), pickPtr = new THREE.Vector2();
 renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, b: e.button }; });
 renderer.domElement.addEventListener('pointerup', e => {
@@ -645,7 +671,8 @@ renderer.domElement.addEventListener('pointerup', e => {
 const keys = new Set();
 addEventListener('keydown', e => { const k = e.key.toLowerCase();
   if (('wasdqe'.includes(k) && k.length === 1) || e.key.startsWith('Arrow') || k === 'shift') { keys.add(k); setSpin(false); }
-  if (k === 'f') { glide = { t0: performance.now(), fromT: controls.target.clone(), toT: HOME_T.clone(), fromC: camera.position.clone(), toC: HOME_C.clone() }; marker.visible = false; orbitLine.textContent = 'Turning around: the whole plant'; } });
+  if (k === 'f') pickVenue(3);
+  if (k === '1' || k === '2' || k === '3') pickVenue(+k - 1); });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 function move(dt) { if (!keys.size) return;
@@ -659,6 +686,20 @@ const kindOn = { lasers: true, heads: true, wash: true, beacons: true, crowd: tr
 document.querySelectorAll('.kind').forEach(li => { const flip = () => { const k = li.dataset.k, on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); kindOn[k] = on;
     const list = k === 'lasers' ? lasers : kinds[k]; list.forEach(o => { o.visible = on; }); if (k === 'wash') { bolts.forEach(b => { b.visible = on; }); strobes.forEach(x => { x.userData.off = !on; }); } };
   li.addEventListener('click', flip); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }); });
+// Equipment labels: one small label per named piece of equipment, made the first time the switch is turned on
+let equipLabels = null;
+function buildEquipLabels() {
+  equipLabels = new THREE.Group(); scene.add(equipLabels);
+  const skip = /Roof arch|Crane girders|X-legs|Fill supports|Outage barrier|Basin wall|compartment|Operating floor|Dance floor|Turbine pedestal|Perimeter fence|Graffiti|The DJ|crowd|couple|Clerestory|Stairs|Scaffold stairs|rim/i;
+  const seen = new Map();
+  for (const o of hoverables) { const n = o.userData.name; if (!n || skip.test(n)) continue; const w = new THREE.Vector3(); o.getWorldPosition(w); if (!seen.has(n)) seen.set(n, []); seen.get(n).push(w); }
+  for (const [n, pts] of seen) {
+    const c = pts.reduce((a, b) => a.add(b), V(0, 0, 0)).multiplyScalar(1 / pts.length); // the middle of all the parts with that name
+    const short = n.split(':')[0].split(' (')[0];
+    const lb = label(short, c.x, c.y + 3, c.z, '#d7dde3', false, equipLabels); lb.scale.multiplyScalar(0.8);
+  }
+}
+toggle(document.getElementById('tEquip'), on => { if (on && !equipLabels) buildEquipLabels(); if (equipLabels) equipLabels.visible = on; });
 // clicking a line in the key shows or hides that title in the model
 document.querySelectorAll('.tgl').forEach(li => { const flip = () => { const on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); titles[li.dataset.t].visible = on; };
   li.addEventListener('click', flip); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }); });
