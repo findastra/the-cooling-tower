@@ -74,13 +74,15 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <p class="sub">A pocket-sized look at the world, no VR needed · 3 connected venues · tower 110 m tall</p>
   <h2>The night, in order <span style="text-transform:none;letter-spacing:0">(click a line to show or hide its title)</span></h2>
   <ol class="route">
-    <li class="tgl" data-t="in" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops through the cut in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
+    <li class="tgl" data-t="in" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops between the trees, through the broken gate in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
     <li class="tgl" data-t="1" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
     <li class="tgl" data-t="2" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
     <li class="tgl" data-t="3" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
     <li class="tgl" data-t="back" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
   </ol>
   <p class="hint">All three are joined: the pipe runs straight from the stack into the turbine hall, and the hatch opens from the hall into the dome.</p>
+  <h2>The setting</h2>
+  <p class="text">A river valley ringed by forested rolling mountains, always at night under a blue-black sky full of stars that turn slowly round the pole star. Look for the Big Dipper, Cassiopeia and Orion. The rest of the plant (auxiliary building, offices, diesel generators, warehouse, pump house, switchyard) is there with every door locked. The plume drifts off on the wind.</p>
   <h2>Inside the reactor hall</h2>
   <p class="text">The <b style="color:var(--blue)">reactor</b> is the steel vessel under the pool, beneath the bridge: lid off, core glowing blue at the bottom, 8 m of water above it. Hover over or tap any part to see its name.</p>
   <h2>Who runs the lights</h2>
@@ -121,10 +123,10 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 view.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x14161a);
-scene.fog = new THREE.Fog(0x14161a, 360, 900);
+scene.background = new THREE.Color(0x03050c); // always night: blue-black
+scene.fog = new THREE.Fog(0x050812, 520, 1500);
 const clock = new THREE.Clock(); // made early: setLive() reads it when the page starts
-const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 3200);
 camera.position.set(-170, 140, 190);
 // Orbit navigation: the ground always stays level; it turns around whatever you clicked last.
 const HOME_T = new THREE.Vector3(55, 20, 0), HOME_C = new THREE.Vector3(-170, 140, 190);
@@ -139,8 +141,8 @@ controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIG
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 let spinning = true;
 
-scene.add(new THREE.HemisphereLight(0x9fb4c8, 0x202020, 0.8));
-const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(-100, 220, 80); scene.add(sun);
+scene.add(new THREE.HemisphereLight(0x6f86b0, 0x101418, 0.55)); // starlight, dim and blue
+const sun = new THREE.DirectionalLight(0xaabfe0, 0.32); sun.position.set(-100, 220, 80); scene.add(sun); // a faint sky glow, no moon
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const mat = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, o));
@@ -369,7 +371,7 @@ const RAIN = 2600, rainPos = new Float32Array(RAIN * 3);
 for (let i = 0; i < RAIN; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.sqrt(Math.random()) * 31; rainPos[i * 3] = Math.cos(a) * r; rainPos[i * 3 + 1] = 0.6 + Math.random() * (D - 1); rainPos[i * 3 + 2] = Math.sin(a) * r; }
 const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
 const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xbfe6ff, size: 0.35, transparent: true, opacity: 0, depthWrite: false })); scene.add(rain);
-const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(34, 9, 170, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, D + 85, 0, venueLights[0]);
+const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(20, 9, TOP - D, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, (TOP + D) / 2, 0, venueLights[0]);
 const puffs = [];
 for (let i = 0; i < 90; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2.4 + Math.random() * 3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.1, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 170, hue: Math.random() }; puffs.push(p); }
 // lightning: jagged bolts that flash inside the smoke, a storm of them each time a set starts
@@ -587,6 +589,109 @@ titles['3'] = label('3 · Reactor Hall', RC, RH + RR + 6, 0, '#4fc3ff', true, ro
 titles['in'] = label('IN · Break in', -90, 11, 0, '#ffa43d', true, route); titles['in'].visible = false;
 titles['back'] = label('Pad back to 1', 96, 54, -48, '#c8d0d8', false, route); titles['back'].visible = false;
 
+// ---------- The setting: a river valley ringed by forested rolling mountains, always at night ----------
+// hills rise beyond the plant pad; the valley floor stays flat along the river that feeds the plant
+const RIVER_Z = 165;
+function hillH(x, z) {
+  const d = Math.hypot(x - 60, z), k = Math.min(1, Math.max(0, (d - 230) / 280));
+  const n = Math.sin(x * 0.011) * Math.cos(z * 0.014) * 0.5 + Math.sin(x * 0.029 + 1.7) * Math.sin(z * 0.025) * 0.3 + Math.sin((x + z) * 0.006) * 0.6;
+  const river = Math.min(1, Math.abs(z - RIVER_Z) / 70);
+  return (k * k * (70 + 55 * n) + k * 25) * river;
+}
+{ const g = new THREE.PlaneGeometry(3200, 3200, 160, 160); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + 60, z = pos.getZ(i); pos.setY(i, hillH(x, z) - 0.3); }
+  g.computeVertexNormals();
+  HOVER = 'Rolling forested mountains';
+  add(new THREE.Mesh(g, mat(0x0d1712, { flatShading: true })), 60, 0, 0);
+  HOVER = 'The river: the plant draws its cooling water from it';
+  const rv = add(new THREE.Mesh(new THREE.PlaneGeometry(2600, 34, 1, 1), mat(0x0a1a2c, { roughness: 0.15, metalness: 0.6 })), 60, 0.05, RIVER_Z); rv.rotation.x = -Math.PI / 2;
+  HOVER = null; }
+// trees: dark cones on the mountains, a band along the break-in pipes and round the fence
+{ const cone = new THREE.ConeGeometry(2.6, 9, 6); cone.translate(0, 4.5, 0);
+  const spots = [];
+  for (let i = 0; i < 2600; i++) { const a = Math.random() * Math.PI * 2, d = 250 + Math.random() * 900, x = 60 + Math.cos(a) * d, z = Math.sin(a) * d; if (Math.abs(z - RIVER_Z) < 32) continue; spots.push([x, hillH(x, z) - 0.5, z, 0.8 + Math.random() * 0.8]); }
+  for (let i = 0; i < 260; i++) { const x = -150 + Math.random() * 100, side = Math.random() < 0.5 ? -1 : 1, z = side * (8 + Math.random() * 24); if (Math.hypot(x, z) < FR + 4) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // along the pipes
+  for (let i = 0; i < 260; i++) { const a = Math.random() * Math.PI * 2, d = FR + 6 + Math.random() * 40, x = Math.cos(a) * d, z = Math.sin(a) * d;
+    if (x > 20 && Math.abs(z) < 60) continue; if (x < -40 && Math.abs(z) < 10) continue; if (Math.abs(z - RIVER_Z) < 32) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // round the fence
+  const trees = new THREE.InstancedMesh(cone, mat(0x10251a, { flatShading: true }), spots.length);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
+  spots.forEach(([x, y, z, s], i) => { m4.compose(V(x, y, z), q, V(s, s * (0.9 + Math.random() * 0.4), s)); trees.setMatrixAt(i, m4); });
+  scene.add(trees); trees.userData.name = 'Trees'; }
+
+// the broken-into gate where the pipes cross the fence round the stack
+HOVER = 'The gate: chain cut, one leaf forced open, the other hanging off its hinge';
+{ const g0 = 3.04, g1 = 3.24, p0 = V(Math.cos(g0) * FR, 0, Math.sin(g0) * FR), p1 = V(Math.cos(g1) * FR, 0, Math.sin(g1) * FR);
+  for (const p of [p0, p1]) { rod(p, p.clone().setY(4.2), 0.3, mat(0x55585e)); add(new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), mat(0x55585e)), p.x, 4.3, p.z); }
+  const leaf = (hinge, yaw, tilt) => { const g = new THREE.Group(); g.position.copy(hinge); g.rotation.set(0, yaw, tilt); scene.add(g);
+    const w = 5.6, frameMat = mat(0x6c6f75);
+    for (const [a, b] of [[[0, 0.2, 0], [w, 0.2, 0]], [[0, 3.6, 0], [w, 3.6, 0]], [[0, 0.2, 0], [0, 3.6, 0]], [[w, 0.2, 0], [w, 3.6, 0]], [[0, 0.2, 0], [w, 3.6, 0]]]) { const c = rod(V(...a), V(...b), 0.07, frameMat); g.attach(c); c.position.sub(hinge); }
+    const netting = new THREE.Mesh(new THREE.PlaneGeometry(w, 3.4), mat(0x8a8d93, { transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false })); netting.position.set(w / 2, 1.9, 0); g.add(netting); tagIt(netting); };
+  const dir = Math.atan2(p1.z - p0.z, p1.x - p0.x);
+  leaf(p0, -dir - 1.25, 0);               // forced wide open, outward
+  leaf(p1, -dir + Math.PI + 0.5, 0.35);   // hanging off its bottom hinge, sagging
+  const ch = add(new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 6, 14), mat(0xb0b6ba, { metalness: 0.6 })), (p0.x + p1.x) / 2 - 2, 0.1, (p0.z + p1.z) / 2 + 1.5); ch.rotation.x = Math.PI / 2; // cut chain
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.25), mat(0xd9b030)), (p0.x + p1.x) / 2 - 1.4, 0.25, (p0.z + p1.z) / 2 + 2.1); } // padlock
+HOVER = null;
+
+// the rest of the plant: buildings we never go into, every door locked
+function lockedBuilding(name, x, z, w, h, d, doorSide = 'z+') {
+  HOVER = 'Locked: ' + name;
+  add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(0x5c6166)), x, h / 2, z);
+  add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, 0.4, d + 0.4), mat(0x3a3c42)), x, h + 0.2, z);
+  const dz = doorSide === 'z+' ? d / 2 + 0.06 : doorSide === 'z-' ? -d / 2 - 0.06 : 0, dx = doorSide === 'x+' ? w / 2 + 0.06 : doorSide === 'x-' ? -w / 2 - 0.06 : 0;
+  const door = add(new THREE.Mesh(new THREE.BoxGeometry(dx ? 0.12 : 2.4, 3.2, dx ? 2.4 : 0.12), mat(0x2b2d31)), x + dx, 1.6, z + dz);
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), glow(0xff3b3b)), x + dx * 1.02, 3.6, z + dz * 1.02); // red "locked" light
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), mat(0xd9b030)), x + dx * 1.04 + (dx ? 0 : 0.8), 1.4, z + dz * 1.04 + (dx ? 0.8 : 0)); // padlock
+  HOVER = null;
+}
+lockedBuilding('Auxiliary building (safety systems, waste treatment)', 166, 46, 44, 22, 22, 'z-');
+lockedBuilding('Diesel generator building', 120, -52, 26, 10, 14, 'z+');
+for (const x of [112, 120, 128]) rod(V(x, 10, -52), V(x, 15, -52), 0.6, mat(0x3a3c42)); // diesel exhausts
+lockedBuilding('Plant control room and offices', 96, 44, 30, 14, 16, 'z+');
+lockedBuilding('Security building', -96, 26, 12, 6, 10, 'x-');
+lockedBuilding('Warehouse and maintenance shop', 20, 100, 40, 12, 22, 'z-');
+lockedBuilding('Circulating water pump house (river intake)', 20, 142, 22, 9, 12, 'z+');
+// switchyard: transformers behind a fence, power lines marching off over the mountains
+HOVER = 'Switchyard and main transformers (fenced off)';
+for (const x of [86, 98, 110]) { add(new THREE.Mesh(new THREE.BoxGeometry(6, 6, 5), mat(0x6f7570)), x, 3, -34); for (const k of [-1.8, 0, 1.8]) rod(V(x + k, 6, -34), V(x + k, 9, -34), 0.3, mat(0x9a7a50)); }
+for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2, r = 16; rod(V(98 + Math.cos(a) * r, 0, -36 + Math.sin(a) * r * 0.5), V(98 + Math.cos(a) * r, 2.6, -36 + Math.sin(a) * r * 0.5), 0.06, mat(0x6c6f75)); }
+HOVER = 'High-voltage lines to the grid';
+{ let prev = null; for (let i = 0; i < 7; i++) { const x = 130 + i * 70, z = -40 - i * 55, y = hillH(x, z) - 0.3;
+  rod(V(x, y, z), V(x, y + 26, z), 0.5, mat(0x7a7f86)); rod(V(x - 7, y + 24, z), V(x + 7, y + 24, z), 0.3, mat(0x7a7f86));
+  if (prev) for (const k of [-6, 0, 6]) scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(prev.x + k, prev.y + 24, prev.z), V((prev.x + x) / 2 + k, (prev.y + y) / 2 + 19, (prev.z + z) / 2), V(x + k, y + 24, z)]), new THREE.LineBasicMaterial({ color: 0x6c7380 })));
+  prev = { x, y, z }; } }
+// the parking lot by the offices, a handful of the night crew's cars
+HOVER = 'Parking lot';
+add(new THREE.Mesh(new THREE.PlaneGeometry(60, 30), mat(0x24262a)), 96, 0.03, 72).rotation.x = -Math.PI / 2;
+for (let r = 0; r < 3; r++) for (let c = 0; c < 9; c++) { if (Math.random() < 0.55) continue; add(new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.4, 1.9), mat([0x3a4a5c, 0x7a2e2e, 0x9a9a94, 0x1f2124][(r + c) % 4])), 72 + c * 6, 0.7, 62 + r * 10); }
+HOVER = null;
+
+// ---------- the night sky: a dark blue-black dome of white star pixels that turns slowly round the pole ----------
+const sky = new THREE.Group(), starDome = new THREE.Group(); sky.add(starDome); scene.add(sky);
+sky.rotation.x = -(90 - 40) * Math.PI / 180; // the pole star sits 40° up in the north, as from a mid-latitude valley
+const SKY_R = 2400;
+const radec = (raH, decD) => { const ra = raH / 24 * Math.PI * 2, dec = decD * Math.PI / 180; return V(Math.cos(dec) * Math.cos(ra) * SKY_R, Math.sin(dec) * SKY_R, -Math.cos(dec) * Math.sin(ra) * SKY_R); };
+{ const n = 5200, p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2, s = Math.sqrt(1 - u * u); p[i * 3] = s * Math.cos(t) * SKY_R; p[i * 3 + 1] = u * SKY_R; p[i * 3 + 2] = s * Math.sin(t) * SKY_R; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  starDome.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.85 })));
+  const n2 = 500, p2 = new Float32Array(n2 * 3); for (let i = 0; i < n2; i++) { const u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2, s = Math.sqrt(1 - u * u); p2[i * 3] = s * Math.cos(t) * SKY_R; p2[i * 3 + 1] = u * SKY_R; p2[i * 3 + 2] = s * Math.sin(t) * SKY_R; }
+  const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.BufferAttribute(p2, 3));
+  starDome.add(new THREE.Points(g2, new THREE.PointsMaterial({ color: 0xffffff, size: 2.4, sizeAttenuation: false, fog: false }))); }
+// constellations everyone knows, from their real positions: the Big Dipper, Cassiopeia, Orion, and the pole star
+const CONSTELLATIONS = {
+  'The Big Dipper': { stars: [[11.062, 61.75], [11.031, 56.38], [11.897, 53.69], [12.257, 57.03], [12.900, 55.96], [13.399, 54.93], [13.792, 49.31]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]] },
+  'Cassiopeia': { stars: [[0.153, 59.15], [0.675, 56.54], [0.945, 60.72], [1.430, 60.24], [1.907, 63.67]], lines: [[0, 1], [1, 2], [2, 3], [3, 4]] },
+  'Orion': { stars: [[5.919, 7.41], [5.419, 6.35], [5.679, -1.94], [5.603, -1.20], [5.533, -0.30], [5.796, -9.67], [5.242, -8.20]], lines: [[0, 1], [0, 2], [1, 4], [2, 3], [3, 4], [2, 5], [4, 6]] },
+  'Polaris, the pole star': { stars: [[2.530, 89.26]], lines: [] },
+};
+for (const c of Object.values(CONSTELLATIONS)) {
+  const pts = c.stars.map(([ra, dec]) => radec(ra, dec));
+  const g = new THREE.BufferGeometry().setFromPoints(pts);
+  starDome.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 4.2, sizeAttenuation: false, fog: false })));
+  if (c.lines.length) { const seg = []; c.lines.forEach(([a, b]) => seg.push(pts[a], pts[b])); starDome.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(seg), new THREE.LineBasicMaterial({ color: 0x9fc3ff, transparent: true, opacity: 0.45, fog: false }))); }
+}
+
 // Pads
 add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), RC - 4, FL + 0.2, -19);
 add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), 14, D + 0.4, -14);
@@ -733,7 +838,8 @@ function frame() {
     annunciators.forEach((w, i) => { w.visible = beat > 0.75 ? ((i * 7 + Math.floor(t * 4)) % 5) !== 0 : (i % 3) === 0; });
     coreGlow.intensity = 2 + beat * 2.2; water.material.opacity = 0.45 + 0.3 * beat;
     puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.09) % 170; const spread = u.y > TOP - D ? 1 + (u.y - (TOP - D)) / 25 : 1; // the plume widens once it leaves the top
-      p.position.set(Math.cos(u.a + t * 0.1) * u.r * spread, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r * spread);
+      const above = Math.max(0, u.y - (TOP - D)), drift = Math.pow(above, 1.35) * 0.32; // the wind carries the plume off to the east
+      p.position.set(Math.cos(u.a + t * 0.1) * u.r * spread + drift, u.y + D + 2 - drift * 0.15, Math.sin(u.a + t * 0.1) * u.r * spread + drift * 0.25);
       p.material.color.setHSL((u.hue + t * 0.05) % 1, 0.9, 0.62); p.scale.setScalar(spread); }); // LED-lit haze
     const storm = t < stormUntil, rate = storm ? 0.35 : 0.012;
     let lit = 0;
@@ -749,6 +855,7 @@ function frame() {
   }
   const dt = Math.min(clock.getDelta(), 0.05); move(dt);
   if (spinning) { const off = camera.position.clone().sub(controls.target).applyAxisAngle(V(0, 1, 0), 0.0012); camera.position.copy(controls.target).add(off); }
+  starDome.rotation.y += reduce ? 0 : 0.00025; // the sky wheels slowly round the pole star
   if (glide) { const k = Math.min(1, (performance.now() - glide.t0) / 700), e = k * k * (3 - 2 * k);
     controls.target.lerpVectors(glide.fromT, glide.toT, e); camera.position.lerpVectors(glide.fromC, glide.toC, e); if (k >= 1) glide = null; }
   marker.lookAt(camera.position);
