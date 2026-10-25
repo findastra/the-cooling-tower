@@ -28,11 +28,21 @@ Edit the files in the repo directly. On the desktop they were built from a scrat
   - the rest of the plant as buildings with locked doors: auxiliary building, diesel generators, control room and offices, security, warehouse, river pump house, switchyard with transformers, power lines over the mountains, a parking lot;
   - the plume drifting east on the wind once it leaves the top.
 
+## Checked in a browser on the laptop (2026-10-25)
+
+No console errors. Stars, the Big Dipper, Cassiopeia, Orion and Polaris show; the plume drifts east. Fixed in the next commit:
+
+- **Gate:** both leaves were drawn far from the gate (one by the switchyard, one 20 m up) because the frame rods were re-parented with `attach` and then offset again. They now hang at the posts, swing outward clear of the pipes, and the hanging leaf drags on the ground. The DANGER sign moved off the gate post onto the fence.
+- **Sky:** the dome turned clockwise round Polaris; it now turns anticlockwise, as the real sky does looking north. A faint glow low round the horizon lets the ridgelines show against the sky.
+- **Valley:** the mountains were almost black against the sky, and the plant pad showed as a hard grey rectangle. The terrain is now coloured by height: the valley floor matches the pad, the slopes are forest green, the ridges are slate. Starlight is a little brighter (hemisphere 0.55 → 0.7). The terrain also dips under the pad round the reactor, so it no longer covers the open pit.
+- **Hover and click:** the flat ground under the plant no longer says "Rolling forested mountains".
+- **Trees:** none in the yard, the security building, the warehouse, the pump house, the offices, the parking lot, the diesel building, the switchyard or the gate's swing; the band along the pipes starts 10 m out.
+
+On the laptop there is no Python or Node, and git is GitHub Desktop's (`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`). The page was served with a small PowerShell `HttpListener` script for the browser check.
+
 ## Next steps
 
-1. Open the PR #3 Mini Model in a browser and check the last commit: no console errors, the stars and constellations show and turn, the hills don't cover the plant, the trees don't block the pipes or the gate, the plume drifts, and the scene isn't too dark to read.
-2. Fix what is off, push to `claude/level-orbit-20261024`.
-3. Ask Astra before merging PR #3 (and hub PR #245). Name each PR; her OK is per PR.
+1. Ask Astra before merging PR #3 (and hub PR #245). Name each PR; her OK is per PR.
 
 ## Astra's answers so far
 

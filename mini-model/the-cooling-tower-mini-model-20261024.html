@@ -141,7 +141,7 @@ controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIG
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 let spinning = true;
 
-scene.add(new THREE.HemisphereLight(0x6f86b0, 0x101418, 0.55)); // starlight, dim and blue
+scene.add(new THREE.HemisphereLight(0x6f86b0, 0x101418, 0.7)); // starlight, dim and blue
 const sun = new THREE.DirectionalLight(0xaabfe0, 0.32); sun.position.set(-100, 220, 80); scene.add(sun); // a faint sky glow, no moon
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -262,7 +262,7 @@ for (const a of [2.4, 3.9, 0.8, 5.5]) { const x = Math.cos(a) * (FR + 4), z = Ma
 HOVER = 'Security camera (looking the other way)';
 rod(V(-62, 0, -8), V(-62, 7, -8), 0.15, mat(0x6c6f75)); add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.6), mat(0xe8e8e4)), -61.6, 7.2, -7.4);
 HOVER = 'DANGER · Authorized personnel only';
-add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 2.6), glow(0xd03030)), -FR - 0.2, 2.2, 6);
+{ const sz = 11, sx = -Math.sqrt(FR * FR - sz * sz) - 0.2; add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 2.6), glow(0xd03030)), sx, 2.2, sz).rotation.y = -Math.atan2(sz, sx); } // on the fence beside the gate, clear of the pipes
 HOVER = 'Crate of hard hats and clipboards';
 add(new THREE.Mesh(new THREE.BoxGeometry(3, 1.6, 3), mat(0x7a5a32)), -78, 0.8, 9);
 HOVER = null;
@@ -598,23 +598,31 @@ function hillH(x, z) {
   const river = Math.min(1, Math.abs(z - RIVER_Z) / 70);
   return (k * k * (70 + 55 * n) + k * 25) * river;
 }
+let terrain;
 { const g = new THREE.PlaneGeometry(3200, 3200, 160, 160); g.rotateX(-Math.PI / 2);
-  const pos = g.attributes.position;
-  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + 60, z = pos.getZ(i); pos.setY(i, hillH(x, z) - 0.3); }
+  const pos = g.attributes.position, cols = [];
+  const cFloor = new THREE.Color(0x2b2d2a), cForest = new THREE.Color(0x163020), cRidge = new THREE.Color(0x34445a); // the valley floor matches the plant pad; starlight catches the ridges
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + 60, z = pos.getZ(i), h = hillH(x, z);
+    pos.setY(i, Math.hypot(x - RC, z) < 50 ? -12 : h - 0.3); // dips under the pad round the reactor pit so the pit stays open
+    const c = cFloor.clone().lerp(cForest, Math.min(1, h / 12)); if (h > 80) c.lerp(cRidge, Math.min(1, (h - 80) / 70)); cols.push(c.r, c.g, c.b); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
   g.computeVertexNormals();
   HOVER = 'Rolling forested mountains';
-  add(new THREE.Mesh(g, mat(0x0d1712, { flatShading: true })), 60, 0, 0);
+  terrain = add(new THREE.Mesh(g, mat(0xffffff, { flatShading: true, vertexColors: true })), 60, 0, 0);
   HOVER = 'The river: the plant draws its cooling water from it';
   const rv = add(new THREE.Mesh(new THREE.PlaneGeometry(2600, 34, 1, 1), mat(0x0a1a2c, { roughness: 0.15, metalness: 0.6 })), 60, 0.05, RIVER_Z); rv.rotation.x = -Math.PI / 2;
   HOVER = null; }
 // trees: dark cones on the mountains, a band along the break-in pipes and round the fence
 { const cone = new THREE.ConeGeometry(2.6, 9, 6); cone.translate(0, 4.5, 0);
   const spots = [];
+  // keep the yard, the buildings, the parking lot and the gate's swing clear of trees
+  const clear = [[-115, -61, -22, 22], [-104, -88, 19, 33], [-2, 42, 87, 113], [7, 33, 134, 150], [64, 128, 55, 89], [79, 113, 34, 54], [92, 148, -61, -43], [80, 116, -56, -16]];
+  const free = (x, z) => Math.hypot(x + FR, z) > 12 && !clear.some(([x0, x1, z0, z1]) => x > x0 && x < x1 && z > z0 && z < z1);
   for (let i = 0; i < 2600; i++) { const a = Math.random() * Math.PI * 2, d = 250 + Math.random() * 900, x = 60 + Math.cos(a) * d, z = Math.sin(a) * d; if (Math.abs(z - RIVER_Z) < 32) continue; spots.push([x, hillH(x, z) - 0.5, z, 0.8 + Math.random() * 0.8]); }
-  for (let i = 0; i < 260; i++) { const x = -150 + Math.random() * 100, side = Math.random() < 0.5 ? -1 : 1, z = side * (8 + Math.random() * 24); if (Math.hypot(x, z) < FR + 4) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // along the pipes
+  for (let i = 0; i < 260; i++) { const x = -150 + Math.random() * 100, side = Math.random() < 0.5 ? -1 : 1, z = side * (10 + Math.random() * 22); if (Math.hypot(x, z) < FR + 4 || !free(x, z)) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // along the pipes
   for (let i = 0; i < 260; i++) { const a = Math.random() * Math.PI * 2, d = FR + 6 + Math.random() * 40, x = Math.cos(a) * d, z = Math.sin(a) * d;
-    if (x > 20 && Math.abs(z) < 60) continue; if (x < -40 && Math.abs(z) < 10) continue; if (Math.abs(z - RIVER_Z) < 32) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // round the fence
-  const trees = new THREE.InstancedMesh(cone, mat(0x10251a, { flatShading: true }), spots.length);
+    if (x > 20 && Math.abs(z) < 60) continue; if (x < -40 && Math.abs(z) < 10) continue; if (Math.abs(z - RIVER_Z) < 32 || !free(x, z)) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // round the fence
+  const trees = new THREE.InstancedMesh(cone, mat(0x173524, { flatShading: true }), spots.length);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
   spots.forEach(([x, y, z, s], i) => { m4.compose(V(x, y, z), q, V(s, s * (0.9 + Math.random() * 0.4), s)); trees.setMatrixAt(i, m4); });
   scene.add(trees); trees.userData.name = 'Trees'; }
@@ -623,15 +631,15 @@ function hillH(x, z) {
 HOVER = 'The gate: chain cut, one leaf forced open, the other hanging off its hinge';
 { const g0 = 3.04, g1 = 3.24, p0 = V(Math.cos(g0) * FR, 0, Math.sin(g0) * FR), p1 = V(Math.cos(g1) * FR, 0, Math.sin(g1) * FR);
   for (const p of [p0, p1]) { rod(p, p.clone().setY(4.2), 0.3, mat(0x55585e)); add(new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), mat(0x55585e)), p.x, 4.3, p.z); }
-  const leaf = (hinge, yaw, tilt) => { const g = new THREE.Group(); g.position.copy(hinge); g.rotation.set(0, yaw, tilt); scene.add(g);
+  const leaf = (hinge, yaw, tilt, lift = 0) => { const g = new THREE.Group(); g.position.copy(hinge).setY(lift); g.rotation.set(0, yaw, tilt); scene.add(g);
     const w = 5.6, frameMat = mat(0x6c6f75);
-    for (const [a, b] of [[[0, 0.2, 0], [w, 0.2, 0]], [[0, 3.6, 0], [w, 3.6, 0]], [[0, 0.2, 0], [0, 3.6, 0]], [[w, 0.2, 0], [w, 3.6, 0]], [[0, 0.2, 0], [w, 3.6, 0]]]) { const c = rod(V(...a), V(...b), 0.07, frameMat); g.attach(c); c.position.sub(hinge); }
+    for (const [a, b] of [[[0, 0.2, 0], [w, 0.2, 0]], [[0, 3.6, 0], [w, 3.6, 0]], [[0, 0.2, 0], [0, 3.6, 0]], [[w, 0.2, 0], [w, 3.6, 0]], [[0, 0.2, 0], [w, 3.6, 0]]]) rod(V(...a), V(...b), 0.07, frameMat, g); // built in the leaf's own frame
     const netting = new THREE.Mesh(new THREE.PlaneGeometry(w, 3.4), mat(0x8a8d93, { transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false })); netting.position.set(w / 2, 1.9, 0); g.add(netting); tagIt(netting); };
-  const dir = Math.atan2(p1.z - p0.z, p1.x - p0.x);
-  leaf(p0, -dir - 1.25, 0);               // forced wide open, outward
-  leaf(p1, -dir + Math.PI + 0.5, 0.35);   // hanging off its bottom hinge, sagging
-  const ch = add(new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 6, 14), mat(0xb0b6ba, { metalness: 0.6 })), (p0.x + p1.x) / 2 - 2, 0.1, (p0.z + p1.z) / 2 + 1.5); ch.rotation.x = Math.PI / 2; // cut chain
-  add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.25), mat(0xd9b030)), (p0.x + p1.x) / 2 - 1.4, 0.25, (p0.z + p1.z) / 2 + 2.1); } // padlock
+  const shut = -Math.atan2(p1.z - p0.z, p1.x - p0.x); // a leaf's yaw when the gate is closed
+  leaf(p0, shut + 2.5, 0);                 // forced wide open, outward, clear of the pipes
+  leaf(p1, shut + Math.PI - 2.2, -0.12, 0.5); // hanging off its bottom hinge, the free end dragging on the ground
+  const ch = add(new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 6, 14), mat(0xb0b6ba, { metalness: 0.6 })), p0.x - 1.8, 0.1, p0.z + 1.6); ch.rotation.x = Math.PI / 2; // cut chain, dropped outside the gate
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.25), mat(0xd9b030)), p0.x - 2.6, 0.25, p0.z + 2.2); } // padlock
 HOVER = null;
 
 // the rest of the plant: buildings we never go into, every door locked
@@ -671,6 +679,12 @@ HOVER = null;
 const sky = new THREE.Group(), starDome = new THREE.Group(); sky.add(starDome); scene.add(sky);
 sky.rotation.x = -(90 - 40) * Math.PI / 180; // the pole star sits 40° up in the north, as from a mid-latitude valley
 const SKY_R = 2400;
+// a faint glow low round the horizon, so the ridgelines stand out dark against it
+{ const R = SKY_R + 40, g = new THREE.SphereGeometry(R, 32, 16), p = g.attributes.position, cols = [], lo = new THREE.Color(0x13203a), hi = new THREE.Color(0x03050c);
+  for (let i = 0; i < p.count; i++) { const k = Math.min(1, Math.max(0, p.getY(i) / R / 0.35)), c = lo.clone().lerp(hi, Math.sqrt(k)); cols.push(c.r, c.g, c.b); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  const skyGlow = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  skyGlow.renderOrder = -1; skyGlow.raycast = () => {}; scene.add(skyGlow); } // never caught by clicks
 const radec = (raH, decD) => { const ra = raH / 24 * Math.PI * 2, dec = decD * Math.PI / 180; return V(Math.cos(dec) * Math.cos(ra) * SKY_R, Math.sin(dec) * SKY_R, -Math.cos(dec) * Math.sin(ra) * SKY_R); };
 { const n = 5200, p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2, s = Math.sqrt(1 - u * u); p[i * 3] = s * Math.cos(t) * SKY_R; p[i * 3 + 1] = u * SKY_R; p[i * 3 + 2] = s * Math.sin(t) * SKY_R; }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
@@ -758,6 +772,7 @@ function pickVenue(i) {
 }
 venueBtns.forEach(b => b.addEventListener('click', () => pickVenue(+b.dataset.v)));
 const pickRay = new THREE.Raycaster(), pickPtr = new THREE.Vector2();
+const onPad = (h) => h.object === terrain && h.point.y < 3; // the flat ground under the plant is not "the mountains"
 renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, b: e.button }; });
 renderer.domElement.addEventListener('pointerup', e => {
   if (!downAt || downAt.b !== 0 || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 5) return;
@@ -766,7 +781,7 @@ renderer.domElement.addEventListener('pointerup', e => {
   pickRay.setFromCamera(pickPtr, camera);
   const solid = (o) => !(o.material && o.material.transparent && o.material.opacity < 0.6); // clicks pass through glass, netting and see-through walls
   const frame = /Roof arch|Crane girders|X-legs|Fill supports|Outage barrier|Basin wall|Steam generator compartment|Operating floor|Dance floor|Turbine pedestal|Perimeter fence/; // the building's frame
-  const hits = pickRay.intersectObjects(hoverables, false).filter(h => h.object.visible && solid(h.object));
+  const hits = pickRay.intersectObjects(hoverables, false).filter(h => h.object.visible && solid(h.object) && !onPad(h));
   const named = hits.find(h => !frame.test(h.object.userData.name)) || hits[0]; // prefer the equipment behind the frame
   if (named) { orbitAround(named.point, named.object.userData.name); return; }
   const any = pickRay.intersectObjects(scene.children, true).find(h => h.object.visible && h.object.isMesh && !(h.object.material && h.object.material.transparent && h.object.material.opacity < 0.5));
@@ -814,7 +829,7 @@ function showTip(e) {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects(hoverables, false).find(h => h.object.visible);
+  const hit = ray.intersectObjects(hoverables, false).find(h => h.object.visible && !onPad(h));
   if (!hit) { tip.hidden = true; renderer.domElement.style.cursor = ''; return; }
   tip.textContent = hit.object.userData.name; tip.hidden = false; renderer.domElement.style.cursor = 'help';
   tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
@@ -855,7 +870,7 @@ function frame() {
   }
   const dt = Math.min(clock.getDelta(), 0.05); move(dt);
   if (spinning) { const off = camera.position.clone().sub(controls.target).applyAxisAngle(V(0, 1, 0), 0.0012); camera.position.copy(controls.target).add(off); }
-  starDome.rotation.y += reduce ? 0 : 0.00025; // the sky wheels slowly round the pole star
+  starDome.rotation.y -= reduce ? 0 : 0.00025; // the sky wheels slowly round the pole star, anticlockwise as seen looking north
   if (glide) { const k = Math.min(1, (performance.now() - glide.t0) / 700), e = k * k * (3 - 2 * k);
     controls.target.lerpVectors(glide.fromT, glide.toT, e); camera.position.lerpVectors(glide.fromC, glide.toC, e); if (k >= 1) glide = null; }
   marker.lookAt(camera.position);
