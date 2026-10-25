@@ -96,7 +96,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     <button id="tRoute" aria-pressed="true">Route</button>
     <button id="tShell" aria-pressed="false">Solid walls</button>
   </div>
-  <p class="hint">Moving around: <b>click any part</b> and the view glides to it and turns around it (the pink ring marks it). Drag to turn, scroll to zoom, right-drag to slide along the ground. The ground always stays level. W A S D or the arrow keys move you, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag to turn and pinch to zoom. Tap the title to fold this key away.</p>
+  <p class="hint">Moving around: <b>click any part</b> and the view glides to it and turns around it (the pink ring marks it). Drag to turn, scroll to zoom, scroll-click drag (or right-drag) to drag the model along the ground. The ground always stays level. W A S D or the arrow keys move you, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag to turn and pinch to zoom. Tap the title to fold this key away.</p>
 </details>
 </aside>
 <button id="tSpin" class="spin" aria-pressed="true">Stop spinning</button>
@@ -125,7 +125,7 @@ controls.screenSpacePanning = false;           // pans slide along the ground, n
 controls.maxPolarAngle = Math.PI * 0.49;       // never looks up from under the ground
 controls.minDistance = 3; controls.maxDistance = 700;
 controls.zoomSpeed = 1.2; controls.rotateSpeed = 0.7;
-controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.ROTATE, RIGHT: THREE.MOUSE.PAN };
+controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN }; // scroll-click drag drags the model
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 let spinning = true;
 
@@ -326,33 +326,34 @@ HOVER = 'Caged ladder to the rim: climb up and watch the show from the top';
   for (let y = CURB + 2.5; y < TOP; y += 2) { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.05, 4, 14, Math.PI), steel); hoop.position.copy(at(y, 0, 1.2)); hoop.lookAt(at(y, 0, 3)); hoop.rotateX(Math.PI / 2); scene.add(hoop); tagIt(hoop); }
   for (const y of [40, 80]) { const q = at(y, 0, 2.2); const pl = add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 2.6), mat(0x6f7c82)), q.x, y, q.z); pl.rotation.y = -LA; } // rest platforms
 }
-// a couple at the top of the ladder, sitting on the rim, feet over the inside edge, holding hands
 // people sitting on the rim, legs over the inside edge
 const sitLines = (() => { const p = [], seg = (a, b) => p.push(...a, ...b);
   seg([0, 0.45, 0], [0, 1.0, 0]); seg([0, 0.45, 0], [0, 0.45, 0.45]); seg([0, 0.45, 0.45], [0, 0, 0.55]); seg([0.12, 0.45, 0], [0.12, 0.45, 0.45]); seg([0.12, 0.45, 0.45], [0.12, 0, 0.55]);
   seg([0, 0.85, 0], [-0.3, 0.5, 0.1]); seg([0, 0.85, 0], [0.3, 0.5, 0.1]);
   for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = (i + 1) / 10 * Math.PI * 2; seg([Math.cos(a) * 0.17, 1.17 + Math.sin(a) * 0.17, 0], [Math.cos(b) * 0.17, 1.17 + Math.sin(b) * 0.17, 0]); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g; })();
-{ const LA = Math.PI - 0.32, r = rAt(TOP) - 0.4, pair = [];
-  for (const da of [-0.016, 0.016]) { const g = new THREE.Group(); g.add(new THREE.LineSegments(sitLines, new THREE.LineBasicMaterial({ color: 0xff9ad8 })));
-    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat); g.scale.setScalar(1.7);
-    g.position.set(Math.cos(LA + da) * r, TOP + 0.35, Math.sin(LA + da) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); pair.push(g);
-    g.traverse(o => { o.userData.name = 'A couple at the top of the ladder, feet over the edge, watching the stack show'; }); hoverables.push(g.children[0], hat); }
-  const hand = (g, side) => V(side * 0.3 * 1.7, 0.5 * 1.7, 0.1 * 1.7).applyQuaternion(g.quaternion).add(g.position);
-  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([hand(pair[0], 1), hand(pair[1], -1)]), new THREE.LineBasicMaterial({ color: 0xff9ad8 }))); }
-for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, r = rAt(TOP) - 0.3, g = new THREE.Group();
-  g.add(new THREE.LineSegments(sitLines, figMat)); const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat);
+for (let i = 0; i < 35; i++) { // about half sit with their feet over the inside edge, the rest stand on the lip; all face in
+  const sit = i % 2 === 0, a = Math.random() * Math.PI * 2, r = rAt(TOP) + (sit ? -0.3 : 0.2), g = new THREE.Group();
+  g.add(new THREE.LineSegments(sit ? sitLines : figLines, figMat)); const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = sit ? 1.3 : 1.74; g.add(hat);
   g.scale.setScalar(1.5); g.position.set(Math.cos(a) * r, TOP + 0.35, Math.sin(a) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); kinds.crowd.push(g); }
 HOVER = 'Hot water riser';
 rod(V(0, 0, 0), V(0, D + 0.5, 0), 2.2, steel);
 HOVER = 'Booth 1 · lighting panel (runs venue 1)';
 add(new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.8, 28), mat(0x26272b)), 0, D + 0.4, 0);
 const ring1 = add(new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.2, 6, 36), glow(0xffa43d)), 0, D + 0.85, 0); ring1.rotation.x = Math.PI / 2;
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 1), mat(0x3a3c42)), 0, D + 1.25, -1);
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 1), glow(0x4fc3ff)), 0, D + 1.8, -1);
-const panel1 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.9), glow(0xffa43d)), 0, D + 1.8, 0.1); panel1.rotation.x = -0.4;
+// a round counter on the round stage: the DJ stands inside it, the rectangular deck sits on the front, a lighting panel either side
+add(new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.7, 1.0, 48, 1, true), mat(0x2b2d31, { side: THREE.DoubleSide })), 0, D + 1.3, 0); // counter skirt
+add(new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.0, 40, 1, true), mat(0x2b2d31, { side: THREE.DoubleSide })), 0, D + 1.3, 0);
+add(new THREE.Mesh(new THREE.RingGeometry(1.5, 2.8, 48, 1, 0.35, Math.PI * 2 - 0.7), mat(0x3a3c42, { side: THREE.DoubleSide })), 0, D + 1.82, 0).rotation.x = -Math.PI / 2; // counter top, a gap at the back to step in
+add(new THREE.Mesh(new THREE.TorusGeometry(2.8, 0.06, 4, 48), glow(0xffa43d)), 0, D + 1.84, 0).rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 0.9), mat(0x1c1d20)), 0, D + 1.95, 2.1); // the DJ deck
+add(new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.04, 0.7), glow(0x4fc3ff)), 0, D + 2.08, 2.1);
+for (const x of [-0.55, 0.55]) add(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.05, 20), mat(0x55585e)), x, D + 2.11, 2.1); // platters
+const panelMat1 = glow(0xffa43d);
+const panels1 = [-0.85, 0.85].map(a => { const r = 2.15, m = add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.14, 0.7), panelMat1), Math.sin(a) * r, D + 1.95, Math.cos(a) * r); m.rotation.y = a; m.rotateX(-0.35); return m; }); // lighting panels either side
+const panel1 = panels1[0];
 HOVER = null;
-djFigure(0, D + 0.8, -2.2, 0);
+djFigure(0, D + 0.8, 0.6, 0);
 // rain falls in the rain zone under the deck, on and off
 const RAIN = 2600, rainPos = new Float32Array(RAIN * 3);
 for (let i = 0; i < RAIN; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.sqrt(Math.random()) * 31; rainPos[i * 3] = Math.cos(a) * r; rainPos[i * 3 + 1] = 0.6 + Math.random() * (D - 1); rainPos[i * 3 + 2] = Math.sin(a) * r; }
