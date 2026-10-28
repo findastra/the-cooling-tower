@@ -60,6 +60,10 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .hint { color: var(--soft); font-size: 12px; margin: 10px 0 0; }
 @media (max-width: 520px) { .panel { max-height: 46%; } }
 .tip { position: fixed; pointer-events: none; max-width: 260px; background: rgba(20,22,26,.94); border: 1px solid var(--blue); color: var(--ink); font-size: 13px; padding: 6px 9px; border-radius: 5px; }
+.venues { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(52px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 200px); }
+.venues button { border-color: var(--c); color: var(--c); background: rgba(29,30,34,.9); }
+.venues button[aria-pressed="true"] { background: var(--c); color: #1d1e22; }
+.orbit { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); margin: 0; max-width: calc(100% - 200px); font-size: 13px; color: var(--ink); background: rgba(29,30,34,.88); border: 1px solid #ff4fa3; border-radius: 6px; padding: 8px 12px; }
 .spin { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 10px 16px; background: rgba(29,30,34,.92); border-color: var(--amber); color: var(--amber); }
 </style>
 
@@ -70,13 +74,15 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <p class="sub">A pocket-sized look at the world, no VR needed · 3 connected venues · tower 110 m tall</p>
   <h2>The night, in order <span style="text-transform:none;letter-spacing:0">(click a line to show or hide its title)</span></h2>
   <ol class="route">
-    <li class="tgl" data-t="in" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops through the cut in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
+    <li class="tgl" data-t="in" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:var(--amber)">IN</span><span><b>Break in.</b> Spawn in the yard, grab a hard hat and clipboard from the crate, climb onto the three giant pipes and run along their tops between the trees, through the broken gate in the barbed-wire fence, to the one panel of inlet netting that has been cut, then down the scaffold stair into the dry basin. The concrete X-legs can’t be broken; you go between them.</span></li>
     <li class="tgl" data-t="1" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--green)">1</span><span><b>The Stack.</b> Up the stairs to the grating deck above the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; rain falls in the rain zone underneath now and then. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></li>
     <li class="tgl" data-t="2" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--magenta)">2</span><span><b>Turbine Hall.</b> Walk through the giant water pipe into the hall. An arched high bay with a crane; the floor runs alongside the turbine train on its pedestal, with booth 2 in a glass-fronted control room on the floor: panel wall, alarm windows flashing on the beat, the DJ at the decks facing the crowd.</span></li>
     <li class="tgl" data-t="3" role="button" tabindex="0" aria-pressed="true" title="Show or hide this title in the model"><span class="n" style="background:var(--blue)">3</span><span><b>Reactor Hall.</b> Through the equipment hatch into the dome. Booth on the refuelling bridge over the glowing pool, crowd ringing it.</span></li>
     <li class="tgl" data-t="back" role="button" tabindex="0" aria-pressed="false" title="Show or hide this title in the model"><span class="n" style="background:#93a3ad">↺</span><span><b>Pad back to 1</b> whenever you want.</span></li>
   </ol>
   <p class="hint">All three are joined: the pipe runs straight from the stack into the turbine hall, and the hatch opens from the hall into the dome.</p>
+  <h2>The setting</h2>
+  <p class="text">A river valley ringed by forested rolling mountains, always at night under a blue-black sky full of stars that turn slowly round the pole star. Look for the Big Dipper, Cassiopeia and Orion. The rest of the plant (auxiliary building, offices, diesel generators, warehouse, pump house, switchyard) is there with every door locked. The plume drifts off on the wind.</p>
   <h2>Inside the reactor hall</h2>
   <p class="text">The <b style="color:var(--blue)">reactor</b> is the steel vessel under the pool, beneath the bridge: lid off, core glowing blue at the bottom, 8 m of water above it. Hover over or tap any part to see its name.</p>
   <h2>Who runs the lights</h2>
@@ -94,38 +100,49 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     <button id="tCycle" aria-pressed="true">Move the set</button>
     <button id="tRoute" aria-pressed="true">Route</button>
     <button id="tShell" aria-pressed="false">Solid walls</button>
+    <button id="tEquip" aria-pressed="false">Equipment labels</button>
   </div>
-  <p class="hint">Mouse like the System Map: drag to turn, scroll to zoom, scroll-click drag to turn (with Shift to pan), hold right mouse to look and fly with W A S D, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag and pinch. Tap the title to fold this key away.</p>
+  <p class="hint">Moving around: pick a venue with the buttons at the bottom (or keys 1, 2, 3) and the view glides there and spins round it; <b>click any part</b> and it turns around that part instead (the pink ring marks it). Drag to turn, scroll to zoom, scroll-click drag (or right-drag) to drag the model along the ground. The ground always stays level. W A S D or the arrow keys move you, Q / E down and up, Shift faster, F back to the whole plant. On a phone, drag to turn and pinch to zoom. Tap the title to fold this key away.</p>
 </details>
 </aside>
 <button id="tSpin" class="spin" aria-pressed="true">Stop spinning</button>
+<nav class="venues" aria-label="Spin around a venue">
+  <button data-v="0" style="--c:#8dff5a">1 · The Stack</button>
+  <button data-v="1" style="--c:#ff5ad8">2 · Turbine Hall</button>
+  <button data-v="2" style="--c:#4fc3ff">3 · Reactor Hall</button>
+  <button data-v="3" style="--c:#c8d0d8" aria-pressed="true">Whole plant</button>
+</nav>
+<p id="orbitLine" class="orbit" aria-live="polite">Turning around: the whole plant</p>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 const view = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 view.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x14161a);
-scene.fog = new THREE.Fog(0x14161a, 360, 900);
+scene.background = new THREE.Color(0x03050c); // always night: blue-black
+scene.fog = new THREE.Fog(0x050812, 520, 1500);
 const clock = new THREE.Clock(); // made early: setLive() reads it when the page starts
-const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 3200);
 camera.position.set(-170, 140, 190);
-// Same navigation as Astra's PetOS System Map: trackball turning, scroll zoom, scroll-click drag, right-hold to fly.
+// Orbit navigation: the ground always stays level; it turns around whatever you clicked last.
 const HOME_T = new THREE.Vector3(55, 20, 0), HOME_C = new THREE.Vector3(-170, 140, 190);
-const controls = new THREE.TrackballControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.target.copy(HOME_T);
-controls.rotateSpeed = 1.2; controls.zoomSpeed = 1.4; controls.panSpeed = .6; controls.dynamicDampingFactor = .2;
-controls.minDistance = 4; controls.maxDistance = 900;
-controls.mouseButtons = { LEFT: 0, MIDDLE: -9, RIGHT: -8 }; controls.noZoom = true; // scroll and scroll-click drag are handled below
-controls.keys = ['NoKeyA', 'NoKeyS', 'NoKeyD'];
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.screenSpacePanning = false;           // pans slide along the ground, never tilt it
+controls.maxPolarAngle = Math.PI * 0.49;       // never looks up from under the ground
+controls.minDistance = 3; controls.maxDistance = 700;
+controls.zoomSpeed = 1.2; controls.rotateSpeed = 0.7;
+controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN }; // scroll-click drag drags the model
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 let spinning = true;
 
-scene.add(new THREE.HemisphereLight(0x9fb4c8, 0x202020, 0.8));
-const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(-100, 220, 80); scene.add(sun);
+scene.add(new THREE.HemisphereLight(0x6f86b0, 0x101418, 0.7)); // starlight, dim and blue
+const sun = new THREE.DirectionalLight(0xaabfe0, 0.32); sun.position.set(-100, 220, 80); scene.add(sun); // a faint sky glow, no moon
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const mat = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, o));
@@ -245,7 +262,7 @@ for (const a of [2.4, 3.9, 0.8, 5.5]) { const x = Math.cos(a) * (FR + 4), z = Ma
 HOVER = 'Security camera (looking the other way)';
 rod(V(-62, 0, -8), V(-62, 7, -8), 0.15, mat(0x6c6f75)); add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.6), mat(0xe8e8e4)), -61.6, 7.2, -7.4);
 HOVER = 'DANGER · Authorized personnel only';
-add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 2.6), glow(0xd03030)), -FR - 0.2, 2.2, 6);
+{ const sz = 11, sx = -Math.sqrt(FR * FR - sz * sz) - 0.2; add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 2.6), glow(0xd03030)), sx, 2.2, sz).rotation.y = -Math.atan2(sz, sx); } // on the fence beside the gate, clear of the pipes
 HOVER = 'Crate of hard hats and clipboards';
 add(new THREE.Mesh(new THREE.BoxGeometry(3, 1.6, 3), mat(0x7a5a32)), -78, 0.8, 9);
 HOVER = null;
@@ -321,39 +338,40 @@ HOVER = 'Caged ladder to the rim: climb up and watch the show from the top';
   for (let y = CURB + 2.5; y < TOP; y += 2) { const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.05, 4, 14, Math.PI), steel); hoop.position.copy(at(y, 0, 1.2)); hoop.lookAt(at(y, 0, 3)); hoop.rotateX(Math.PI / 2); scene.add(hoop); tagIt(hoop); }
   for (const y of [40, 80]) { const q = at(y, 0, 2.2); const pl = add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 2.6), mat(0x6f7c82)), q.x, y, q.z); pl.rotation.y = -LA; } // rest platforms
 }
-// a couple at the top of the ladder, sitting on the rim, feet over the inside edge, holding hands
 // people sitting on the rim, legs over the inside edge
 const sitLines = (() => { const p = [], seg = (a, b) => p.push(...a, ...b);
   seg([0, 0.45, 0], [0, 1.0, 0]); seg([0, 0.45, 0], [0, 0.45, 0.45]); seg([0, 0.45, 0.45], [0, 0, 0.55]); seg([0.12, 0.45, 0], [0.12, 0.45, 0.45]); seg([0.12, 0.45, 0.45], [0.12, 0, 0.55]);
   seg([0, 0.85, 0], [-0.3, 0.5, 0.1]); seg([0, 0.85, 0], [0.3, 0.5, 0.1]);
   for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = (i + 1) / 10 * Math.PI * 2; seg([Math.cos(a) * 0.17, 1.17 + Math.sin(a) * 0.17, 0], [Math.cos(b) * 0.17, 1.17 + Math.sin(b) * 0.17, 0]); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g; })();
-{ const LA = Math.PI - 0.32, r = rAt(TOP) - 0.4, pair = [];
-  for (const da of [-0.016, 0.016]) { const g = new THREE.Group(); g.add(new THREE.LineSegments(sitLines, new THREE.LineBasicMaterial({ color: 0xff9ad8 })));
-    const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat); g.scale.setScalar(1.7);
-    g.position.set(Math.cos(LA + da) * r, TOP + 0.35, Math.sin(LA + da) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); pair.push(g);
-    g.traverse(o => { o.userData.name = 'A couple at the top of the ladder, feet over the edge, watching the stack show'; }); hoverables.push(g.children[0], hat); }
-  const hand = (g, side) => V(side * 0.3 * 1.7, 0.5 * 1.7, 0.1 * 1.7).applyQuaternion(g.quaternion).add(g.position);
-  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([hand(pair[0], 1), hand(pair[1], -1)]), new THREE.LineBasicMaterial({ color: 0xff9ad8 }))); }
-for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, r = rAt(TOP) - 0.3, g = new THREE.Group();
-  g.add(new THREE.LineSegments(sitLines, figMat)); const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.3; g.add(hat);
+for (let i = 0; i < 35; i++) { // about half sit with their feet over the inside edge, the rest stand on the lip; all face in
+  const sit = i % 2 === 0, a = Math.random() * Math.PI * 2, r = rAt(TOP) + (sit ? -0.3 : 0.2), g = new THREE.Group();
+  g.add(new THREE.LineSegments(sit ? sitLines : figLines, figMat)); const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = sit ? 1.3 : 1.74; g.add(hat);
   g.scale.setScalar(1.5); g.position.set(Math.cos(a) * r, TOP + 0.35, Math.sin(a) * r); g.lookAt(0, TOP + 0.35, 0); scene.add(g); kinds.crowd.push(g); }
 HOVER = 'Hot water riser';
 rod(V(0, 0, 0), V(0, D + 0.5, 0), 2.2, steel);
 HOVER = 'Booth 1 · lighting panel (runs venue 1)';
 add(new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.8, 28), mat(0x26272b)), 0, D + 0.4, 0);
 const ring1 = add(new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.2, 6, 36), glow(0xffa43d)), 0, D + 0.85, 0); ring1.rotation.x = Math.PI / 2;
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 1), mat(0x3a3c42)), 0, D + 1.25, -1);
-add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 1), glow(0x4fc3ff)), 0, D + 1.8, -1);
-const panel1 = add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.9), glow(0xffa43d)), 0, D + 1.8, 0.1); panel1.rotation.x = -0.4;
+// a round counter on the round stage: the DJ stands inside it, the rectangular deck sits on the front, a lighting panel either side
+add(new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.7, 1.0, 48, 1, true), mat(0x2b2d31, { side: THREE.DoubleSide })), 0, D + 1.3, 0); // counter skirt
+add(new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.0, 40, 1, true), mat(0x2b2d31, { side: THREE.DoubleSide })), 0, D + 1.3, 0);
+add(new THREE.Mesh(new THREE.RingGeometry(1.5, 2.8, 48, 1, 0.35, Math.PI * 2 - 0.7), mat(0x3a3c42, { side: THREE.DoubleSide })), 0, D + 1.82, 0).rotation.x = -Math.PI / 2; // counter top, a gap at the back to step in
+add(new THREE.Mesh(new THREE.TorusGeometry(2.8, 0.06, 4, 48), glow(0xffa43d)), 0, D + 1.84, 0).rotation.x = Math.PI / 2;
+add(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 0.9), mat(0x1c1d20)), 0, D + 1.95, 2.1); // the DJ deck
+add(new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.04, 0.7), glow(0x4fc3ff)), 0, D + 2.08, 2.1);
+for (const x of [-0.55, 0.55]) add(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.05, 20), mat(0x55585e)), x, D + 2.11, 2.1); // platters
+const panelMat1 = glow(0xffa43d);
+const panels1 = [-0.85, 0.85].map(a => { const r = 2.15, m = add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.14, 0.7), panelMat1), Math.sin(a) * r, D + 1.95, Math.cos(a) * r); m.rotation.y = a; m.rotateX(-0.35); return m; }); // lighting panels either side
+const panel1 = panels1[0];
 HOVER = null;
-djFigure(0, D + 0.8, -2.2, 0);
+djFigure(0, D + 0.8, 0.6, 0);
 // rain falls in the rain zone under the deck, on and off
 const RAIN = 2600, rainPos = new Float32Array(RAIN * 3);
 for (let i = 0; i < RAIN; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.sqrt(Math.random()) * 31; rainPos[i * 3] = Math.cos(a) * r; rainPos[i * 3 + 1] = 0.6 + Math.random() * (D - 1); rainPos[i * 3 + 2] = Math.sin(a) * r; }
 const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
 const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xbfe6ff, size: 0.35, transparent: true, opacity: 0, depthWrite: false })); scene.add(rain);
-const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(34, 9, 170, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, D + 85, 0, venueLights[0]);
+const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(20, 9, TOP - D, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, (TOP + D) / 2, 0, venueLights[0]);
 const puffs = [];
 for (let i = 0; i < 90; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2.4 + Math.random() * 3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.1, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 170, hue: Math.random() }; puffs.push(p); }
 // lightning: jagged bolts that flash inside the smoke, a storm of them each time a set starts
@@ -571,6 +589,123 @@ titles['3'] = label('3 · Reactor Hall', RC, RH + RR + 6, 0, '#4fc3ff', true, ro
 titles['in'] = label('IN · Break in', -90, 11, 0, '#ffa43d', true, route); titles['in'].visible = false;
 titles['back'] = label('Pad back to 1', 96, 54, -48, '#c8d0d8', false, route); titles['back'].visible = false;
 
+// ---------- The setting: a river valley ringed by forested rolling mountains, always at night ----------
+// hills rise beyond the plant pad; the valley floor stays flat along the river that feeds the plant
+const RIVER_Z = 165;
+function hillH(x, z) {
+  const d = Math.hypot(x - 60, z), k = Math.min(1, Math.max(0, (d - 230) / 280));
+  const n = Math.sin(x * 0.011) * Math.cos(z * 0.014) * 0.5 + Math.sin(x * 0.029 + 1.7) * Math.sin(z * 0.025) * 0.3 + Math.sin((x + z) * 0.006) * 0.6;
+  const river = Math.min(1, Math.abs(z - RIVER_Z) / 70);
+  return (k * k * (70 + 55 * n) + k * 25) * river;
+}
+let terrain;
+{ const g = new THREE.PlaneGeometry(3200, 3200, 160, 160); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position, cols = [];
+  const cFloor = new THREE.Color(0x2b2d2a), cForest = new THREE.Color(0x163020), cRidge = new THREE.Color(0x34445a); // the valley floor matches the plant pad; starlight catches the ridges
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + 60, z = pos.getZ(i), h = hillH(x, z);
+    pos.setY(i, Math.hypot(x - RC, z) < 50 ? -12 : h - 0.3); // dips under the pad round the reactor pit so the pit stays open
+    const c = cFloor.clone().lerp(cForest, Math.min(1, h / 12)); if (h > 80) c.lerp(cRidge, Math.min(1, (h - 80) / 70)); cols.push(c.r, c.g, c.b); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  g.computeVertexNormals();
+  HOVER = 'Rolling forested mountains';
+  terrain = add(new THREE.Mesh(g, mat(0xffffff, { flatShading: true, vertexColors: true })), 60, 0, 0);
+  HOVER = 'The river: the plant draws its cooling water from it';
+  const rv = add(new THREE.Mesh(new THREE.PlaneGeometry(2600, 34, 1, 1), mat(0x0a1a2c, { roughness: 0.15, metalness: 0.6 })), 60, 0.05, RIVER_Z); rv.rotation.x = -Math.PI / 2;
+  HOVER = null; }
+// trees: dark cones on the mountains, a band along the break-in pipes and round the fence
+{ const cone = new THREE.ConeGeometry(2.6, 9, 6); cone.translate(0, 4.5, 0);
+  const spots = [];
+  // keep the yard, the buildings, the parking lot and the gate's swing clear of trees
+  const clear = [[-115, -61, -22, 22], [-104, -88, 19, 33], [-2, 42, 87, 113], [7, 33, 134, 150], [64, 128, 55, 89], [79, 113, 34, 54], [92, 148, -61, -43], [80, 116, -56, -16]];
+  const free = (x, z) => Math.hypot(x + FR, z) > 12 && !clear.some(([x0, x1, z0, z1]) => x > x0 && x < x1 && z > z0 && z < z1);
+  for (let i = 0; i < 2600; i++) { const a = Math.random() * Math.PI * 2, d = 250 + Math.random() * 900, x = 60 + Math.cos(a) * d, z = Math.sin(a) * d; if (Math.abs(z - RIVER_Z) < 32) continue; spots.push([x, hillH(x, z) - 0.5, z, 0.8 + Math.random() * 0.8]); }
+  for (let i = 0; i < 260; i++) { const x = -150 + Math.random() * 100, side = Math.random() < 0.5 ? -1 : 1, z = side * (10 + Math.random() * 22); if (Math.hypot(x, z) < FR + 4 || !free(x, z)) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // along the pipes
+  for (let i = 0; i < 260; i++) { const a = Math.random() * Math.PI * 2, d = FR + 6 + Math.random() * 40, x = Math.cos(a) * d, z = Math.sin(a) * d;
+    if (x > 20 && Math.abs(z) < 60) continue; if (x < -40 && Math.abs(z) < 10) continue; if (Math.abs(z - RIVER_Z) < 32 || !free(x, z)) continue; spots.push([x, 0, z, 0.7 + Math.random() * 0.6]); } // round the fence
+  const trees = new THREE.InstancedMesh(cone, mat(0x173524, { flatShading: true }), spots.length);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
+  spots.forEach(([x, y, z, s], i) => { m4.compose(V(x, y, z), q, V(s, s * (0.9 + Math.random() * 0.4), s)); trees.setMatrixAt(i, m4); });
+  scene.add(trees); trees.userData.name = 'Trees'; }
+
+// the broken-into gate where the pipes cross the fence round the stack
+HOVER = 'The gate: chain cut, one leaf forced open, the other hanging off its hinge';
+{ const g0 = 3.04, g1 = 3.24, p0 = V(Math.cos(g0) * FR, 0, Math.sin(g0) * FR), p1 = V(Math.cos(g1) * FR, 0, Math.sin(g1) * FR);
+  for (const p of [p0, p1]) { rod(p, p.clone().setY(4.2), 0.3, mat(0x55585e)); add(new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), mat(0x55585e)), p.x, 4.3, p.z); }
+  const leaf = (hinge, yaw, tilt, lift = 0) => { const g = new THREE.Group(); g.position.copy(hinge).setY(lift); g.rotation.set(0, yaw, tilt); scene.add(g);
+    const w = 5.6, frameMat = mat(0x6c6f75);
+    for (const [a, b] of [[[0, 0.2, 0], [w, 0.2, 0]], [[0, 3.6, 0], [w, 3.6, 0]], [[0, 0.2, 0], [0, 3.6, 0]], [[w, 0.2, 0], [w, 3.6, 0]], [[0, 0.2, 0], [w, 3.6, 0]]]) rod(V(...a), V(...b), 0.07, frameMat, g); // built in the leaf's own frame
+    const netting = new THREE.Mesh(new THREE.PlaneGeometry(w, 3.4), mat(0x8a8d93, { transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false })); netting.position.set(w / 2, 1.9, 0); g.add(netting); tagIt(netting); };
+  const shut = -Math.atan2(p1.z - p0.z, p1.x - p0.x); // a leaf's yaw when the gate is closed
+  leaf(p0, shut + 2.5, 0);                 // forced wide open, outward, clear of the pipes
+  leaf(p1, shut + Math.PI - 2.2, -0.12, 0.5); // hanging off its bottom hinge, the free end dragging on the ground
+  const ch = add(new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 6, 14), mat(0xb0b6ba, { metalness: 0.6 })), p0.x - 1.8, 0.1, p0.z + 1.6); ch.rotation.x = Math.PI / 2; // cut chain, dropped outside the gate
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.25), mat(0xd9b030)), p0.x - 2.6, 0.25, p0.z + 2.2); } // padlock
+HOVER = null;
+
+// the rest of the plant: buildings we never go into, every door locked
+function lockedBuilding(name, x, z, w, h, d, doorSide = 'z+') {
+  HOVER = 'Locked: ' + name;
+  add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(0x5c6166)), x, h / 2, z);
+  add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, 0.4, d + 0.4), mat(0x3a3c42)), x, h + 0.2, z);
+  const dz = doorSide === 'z+' ? d / 2 + 0.06 : doorSide === 'z-' ? -d / 2 - 0.06 : 0, dx = doorSide === 'x+' ? w / 2 + 0.06 : doorSide === 'x-' ? -w / 2 - 0.06 : 0;
+  const door = add(new THREE.Mesh(new THREE.BoxGeometry(dx ? 0.12 : 2.4, 3.2, dx ? 2.4 : 0.12), mat(0x2b2d31)), x + dx, 1.6, z + dz);
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), glow(0xff3b3b)), x + dx * 1.02, 3.6, z + dz * 1.02); // red "locked" light
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), mat(0xd9b030)), x + dx * 1.04 + (dx ? 0 : 0.8), 1.4, z + dz * 1.04 + (dx ? 0.8 : 0)); // padlock
+  HOVER = null;
+}
+lockedBuilding('Auxiliary building (safety systems, waste treatment)', 166, 46, 44, 22, 22, 'z-');
+lockedBuilding('Diesel generator building', 120, -52, 26, 10, 14, 'z+');
+for (const x of [112, 120, 128]) rod(V(x, 10, -52), V(x, 15, -52), 0.6, mat(0x3a3c42)); // diesel exhausts
+lockedBuilding('Plant control room and offices', 96, 44, 30, 14, 16, 'z+');
+lockedBuilding('Security building', -96, 26, 12, 6, 10, 'x-');
+lockedBuilding('Warehouse and maintenance shop', 20, 100, 40, 12, 22, 'z-');
+lockedBuilding('Circulating water pump house (river intake)', 20, 142, 22, 9, 12, 'z+');
+// switchyard: transformers behind a fence, power lines marching off over the mountains
+HOVER = 'Switchyard and main transformers (fenced off)';
+for (const x of [86, 98, 110]) { add(new THREE.Mesh(new THREE.BoxGeometry(6, 6, 5), mat(0x6f7570)), x, 3, -34); for (const k of [-1.8, 0, 1.8]) rod(V(x + k, 6, -34), V(x + k, 9, -34), 0.3, mat(0x9a7a50)); }
+for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2, r = 16; rod(V(98 + Math.cos(a) * r, 0, -36 + Math.sin(a) * r * 0.5), V(98 + Math.cos(a) * r, 2.6, -36 + Math.sin(a) * r * 0.5), 0.06, mat(0x6c6f75)); }
+HOVER = 'High-voltage lines to the grid';
+{ let prev = null; for (let i = 0; i < 7; i++) { const x = 130 + i * 70, z = -40 - i * 55, y = hillH(x, z) - 0.3;
+  rod(V(x, y, z), V(x, y + 26, z), 0.5, mat(0x7a7f86)); rod(V(x - 7, y + 24, z), V(x + 7, y + 24, z), 0.3, mat(0x7a7f86));
+  if (prev) for (const k of [-6, 0, 6]) scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(prev.x + k, prev.y + 24, prev.z), V((prev.x + x) / 2 + k, (prev.y + y) / 2 + 19, (prev.z + z) / 2), V(x + k, y + 24, z)]), new THREE.LineBasicMaterial({ color: 0x6c7380 })));
+  prev = { x, y, z }; } }
+// the parking lot by the offices, a handful of the night crew's cars
+HOVER = 'Parking lot';
+add(new THREE.Mesh(new THREE.PlaneGeometry(60, 30), mat(0x24262a)), 96, 0.03, 72).rotation.x = -Math.PI / 2;
+for (let r = 0; r < 3; r++) for (let c = 0; c < 9; c++) { if (Math.random() < 0.55) continue; add(new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.4, 1.9), mat([0x3a4a5c, 0x7a2e2e, 0x9a9a94, 0x1f2124][(r + c) % 4])), 72 + c * 6, 0.7, 62 + r * 10); }
+HOVER = null;
+
+// ---------- the night sky: a dark blue-black dome of white star pixels that turns slowly round the pole ----------
+const sky = new THREE.Group(), starDome = new THREE.Group(); sky.add(starDome); scene.add(sky);
+sky.rotation.x = -(90 - 40) * Math.PI / 180; // the pole star sits 40° up in the north, as from a mid-latitude valley
+const SKY_R = 2400;
+// a faint glow low round the horizon, so the ridgelines stand out dark against it
+{ const R = SKY_R + 40, g = new THREE.SphereGeometry(R, 32, 16), p = g.attributes.position, cols = [], lo = new THREE.Color(0x13203a), hi = new THREE.Color(0x03050c);
+  for (let i = 0; i < p.count; i++) { const k = Math.min(1, Math.max(0, p.getY(i) / R / 0.35)), c = lo.clone().lerp(hi, Math.sqrt(k)); cols.push(c.r, c.g, c.b); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  const skyGlow = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  skyGlow.renderOrder = -1; skyGlow.raycast = () => {}; scene.add(skyGlow); } // never caught by clicks
+const radec = (raH, decD) => { const ra = raH / 24 * Math.PI * 2, dec = decD * Math.PI / 180; return V(Math.cos(dec) * Math.cos(ra) * SKY_R, Math.sin(dec) * SKY_R, -Math.cos(dec) * Math.sin(ra) * SKY_R); };
+{ const n = 5200, p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2, s = Math.sqrt(1 - u * u); p[i * 3] = s * Math.cos(t) * SKY_R; p[i * 3 + 1] = u * SKY_R; p[i * 3 + 2] = s * Math.sin(t) * SKY_R; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  starDome.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.85 })));
+  const n2 = 500, p2 = new Float32Array(n2 * 3); for (let i = 0; i < n2; i++) { const u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2, s = Math.sqrt(1 - u * u); p2[i * 3] = s * Math.cos(t) * SKY_R; p2[i * 3 + 1] = u * SKY_R; p2[i * 3 + 2] = s * Math.sin(t) * SKY_R; }
+  const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.BufferAttribute(p2, 3));
+  starDome.add(new THREE.Points(g2, new THREE.PointsMaterial({ color: 0xffffff, size: 2.4, sizeAttenuation: false, fog: false }))); }
+// constellations everyone knows, from their real positions: the Big Dipper, Cassiopeia, Orion, and the pole star
+const CONSTELLATIONS = {
+  'The Big Dipper': { stars: [[11.062, 61.75], [11.031, 56.38], [11.897, 53.69], [12.257, 57.03], [12.900, 55.96], [13.399, 54.93], [13.792, 49.31]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]] },
+  'Cassiopeia': { stars: [[0.153, 59.15], [0.675, 56.54], [0.945, 60.72], [1.430, 60.24], [1.907, 63.67]], lines: [[0, 1], [1, 2], [2, 3], [3, 4]] },
+  'Orion': { stars: [[5.919, 7.41], [5.419, 6.35], [5.679, -1.94], [5.603, -1.20], [5.533, -0.30], [5.796, -9.67], [5.242, -8.20]], lines: [[0, 1], [0, 2], [1, 4], [2, 3], [3, 4], [2, 5], [4, 6]] },
+  'Polaris, the pole star': { stars: [[2.530, 89.26]], lines: [] },
+};
+for (const c of Object.values(CONSTELLATIONS)) {
+  const pts = c.stars.map(([ra, dec]) => radec(ra, dec));
+  const g = new THREE.BufferGeometry().setFromPoints(pts);
+  starDome.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 4.2, sizeAttenuation: false, fog: false })));
+  if (c.lines.length) { const seg = []; c.lines.forEach(([a, b]) => seg.push(pts[a], pts[b])); starDome.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(seg), new THREE.LineBasicMaterial({ color: 0x9fc3ff, transparent: true, opacity: 0.45, fog: false }))); }
+}
+
 // Pads
 add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), RC - 4, FL + 0.2, -19);
 add(new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.2, 24), glow(0xc8d0d8)), 14, D + 0.4, -14);
@@ -609,46 +744,82 @@ function setSpin(on) { spinning = on; spinBtn.setAttribute('aria-pressed', Strin
 if (reduce) setSpin(false);
 spinBtn.addEventListener('click', () => setSpin(!spinning));
 renderer.domElement.addEventListener('pointerdown', () => setSpin(false));
-// hold right mouse to look, W A S D to fly, Q / E down and up, Shift faster, F back to the whole plant
-const keys = new Set(); let looking = false; const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
-renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 2) return; looking = true; controls.enabled = false; euler.setFromQuaternion(camera.quaternion); renderer.domElement.setPointerCapture(e.pointerId); });
-addEventListener('pointerup', e => { if (e.button !== 2 || !looking) return; looking = false;
-  const dist = Math.min(Math.max(camera.position.distanceTo(controls.target), 8), 60);
-  controls.target.copy(camera.position).add(V(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(dist)); controls.enabled = true; });
-addEventListener('pointermove', e => { if (!looking) return; euler.y -= e.movementX * .0035; euler.x = Math.max(-1.5, Math.min(1.5, euler.x - e.movementY * .0035)); camera.quaternion.setFromEuler(euler); });
+// click a part (without dragging) and the view glides over to turn around it
+const marker = add(new THREE.Mesh(new THREE.RingGeometry(1.6, 2.1, 32), new THREE.MeshBasicMaterial({ color: 0xff4fa3, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthTest: false })), HOME_T.x, HOME_T.y, HOME_T.z);
+marker.renderOrder = 11; marker.visible = false;
+const orbitLine = document.getElementById('orbitLine');
+let glide = null, downAt = null;
+function orbitAround(point, name) {
+  const off = camera.position.clone().sub(controls.target);
+  const dist = Math.min(off.length(), 90); off.setLength(dist);
+  glide = { t0: performance.now(), fromT: controls.target.clone(), toT: point.clone(), fromC: camera.position.clone(), toC: point.clone().add(off) };
+  marker.position.copy(point); marker.visible = true; orbitLine.textContent = 'Turning around: ' + name; setSpin(false);
+  document.querySelectorAll('.venues button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+}
+// the three venues (and the whole plant): pick one and the view glides there and spins round it
+const VENUES = [
+  { name: '1 · The Stack', t: V(0, 30, 0), c: V(-95, 85, 110) },
+  { name: '2 · Turbine Hall', t: V(107, 8, 0), c: V(70, 45, 75) },
+  { name: '3 · Reactor Hall', t: V(166, 10, 0), c: V(130, 50, 70) },
+  { name: 'the whole plant', t: HOME_T.clone(), c: HOME_C.clone() },
+];
+const venueBtns = [...document.querySelectorAll('.venues button')];
+function pickVenue(i) {
+  const v = VENUES[i];
+  glide = { t0: performance.now(), fromT: controls.target.clone(), toT: v.t.clone(), fromC: camera.position.clone(), toC: v.c.clone() };
+  marker.visible = false; orbitLine.textContent = 'Turning around: ' + v.name;
+  venueBtns.forEach((b, k) => b.setAttribute('aria-pressed', String(k === i))); setSpin(true);
+}
+venueBtns.forEach(b => b.addEventListener('click', () => pickVenue(+b.dataset.v)));
+const pickRay = new THREE.Raycaster(), pickPtr = new THREE.Vector2();
+const onPad = (h) => h.object === terrain && h.point.y < 3; // the flat ground under the plant is not "the mountains"
+renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, b: e.button }; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || downAt.b !== 0 || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  pickPtr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  pickRay.setFromCamera(pickPtr, camera);
+  const solid = (o) => !(o.material && o.material.transparent && o.material.opacity < 0.6); // clicks pass through glass, netting and see-through walls
+  const frame = /Roof arch|Crane girders|X-legs|Fill supports|Outage barrier|Basin wall|Steam generator compartment|Operating floor|Dance floor|Turbine pedestal|Perimeter fence/; // the building's frame
+  const hits = pickRay.intersectObjects(hoverables, false).filter(h => h.object.visible && solid(h.object) && !onPad(h));
+  const named = hits.find(h => !frame.test(h.object.userData.name)) || hits[0]; // prefer the equipment behind the frame
+  if (named) { orbitAround(named.point, named.object.userData.name); return; }
+  const any = pickRay.intersectObjects(scene.children, true).find(h => h.object.visible && h.object.isMesh && !(h.object.material && h.object.material.transparent && h.object.material.opacity < 0.5));
+  if (any) orbitAround(any.point, 'this spot');
+});
+// W A S D (or the arrow keys) slide along the ground, Q / E down and up, Shift faster, F back to the whole plant
+const keys = new Set();
 addEventListener('keydown', e => { const k = e.key.toLowerCase();
   if (('wasdqe'.includes(k) && k.length === 1) || e.key.startsWith('Arrow') || k === 'shift') { keys.add(k); setSpin(false); }
-  if (k === 'f') { camera.position.copy(HOME_C); camera.up.set(0, 1, 0); controls.target.copy(HOME_T); } });
+  if (k === 'f') pickVenue(3);
+  if (k === '1' || k === '2' || k === '3') pickVenue(+k - 1); });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 function move(dt) { if (!keys.size) return;
-  const f = V(0, 0, -1).applyQuaternion(camera.quaternion), r = V(1, 0, 0).applyQuaternion(camera.quaternion), v = V(0, 0, 0);
+  const f = V(0, 0, -1).applyQuaternion(camera.quaternion).setY(0).normalize(), r = V(1, 0, 0).applyQuaternion(camera.quaternion).setY(0).normalize(), v = V(0, 0, 0);
   if (keys.has('w') || keys.has('arrowup')) v.add(f); if (keys.has('s') || keys.has('arrowdown')) v.sub(f);
   if (keys.has('d') || keys.has('arrowright')) v.add(r); if (keys.has('a') || keys.has('arrowleft')) v.sub(r);
   if (keys.has('e')) v.y += 1; if (keys.has('q')) v.y -= 1;
   if (!v.lengthSq()) return; v.normalize().multiplyScalar((keys.has('shift') ? 90 : 30) * dt);
-  camera.position.add(v); if (!looking) controls.target.add(v); }
-// scroll zooms toward the middle of the view; scroll-click drag turns freely, with Shift it pans
-renderer.domElement.addEventListener('wheel', e => { e.preventDefault(); setSpin(false);
-  const off = camera.position.clone().sub(controls.target);
-  const len = Math.min(Math.max(off.length() * Math.pow(1.0015, e.deltaY), controls.minDistance), controls.maxDistance);
-  camera.position.copy(controls.target).add(off.setLength(len)); }, { passive: false });
-let midDrag = null;
-renderer.domElement.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
-renderer.domElement.addEventListener('pointerdown', e => { if (e.button !== 1) return; e.preventDefault(); midDrag = { x: e.clientX, y: e.clientY, pan: e.shiftKey }; try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} });
-addEventListener('pointermove', e => { if (!midDrag) return; const dx = e.clientX - midDrag.x, dy = e.clientY - midDrag.y; midDrag.x = e.clientX; midDrag.y = e.clientY;
-  const off = camera.position.clone().sub(controls.target);
-  if (midDrag.pan || e.shiftKey) { const k = off.length() * .0016, right = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 0), up = V(0, 0, 0).setFromMatrixColumn(camera.matrix, 1);
-    const mv = right.multiplyScalar(-dx * k).add(up.multiplyScalar(dy * k)); camera.position.add(mv); controls.target.add(mv); return; }
-  const up = camera.up.clone().normalize(), right = V(0, 0, 0).crossVectors(up, off).normalize();
-  const qq = new THREE.Quaternion().setFromAxisAngle(up, -dx * .006).multiply(new THREE.Quaternion().setFromAxisAngle(right, -dy * .006));
-  off.applyQuaternion(qq); camera.up.applyQuaternion(qq).normalize(); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target); });
-addEventListener('pointerup', e => { if (e.button === 1) midDrag = null; });
+  camera.position.add(v); controls.target.add(v); marker.position.add(v); }
 const kindOn = { lasers: true, heads: true, wash: true, beacons: true, crowd: true };
 document.querySelectorAll('.kind').forEach(li => { const flip = () => { const k = li.dataset.k, on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); kindOn[k] = on;
     const list = k === 'lasers' ? lasers : kinds[k]; list.forEach(o => { o.visible = on; }); if (k === 'wash') { bolts.forEach(b => { b.visible = on; }); strobes.forEach(x => { x.userData.off = !on; }); } };
   li.addEventListener('click', flip); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }); });
+// Equipment labels: one small label per named piece of equipment, made the first time the switch is turned on
+let equipLabels = null;
+function buildEquipLabels() {
+  equipLabels = new THREE.Group(); scene.add(equipLabels);
+  const skip = /Roof arch|Crane girders|X-legs|Fill supports|Outage barrier|Basin wall|compartment|Operating floor|Dance floor|Turbine pedestal|Perimeter fence|Graffiti|The DJ|crowd|couple|Clerestory|Stairs|Scaffold stairs|rim/i;
+  const seen = new Map();
+  for (const o of hoverables) { const n = o.userData.name; if (!n || skip.test(n)) continue; const w = new THREE.Vector3(); o.getWorldPosition(w); if (!seen.has(n)) seen.set(n, []); seen.get(n).push(w); }
+  for (const [n, pts] of seen) {
+    const c = pts.reduce((a, b) => a.add(b), V(0, 0, 0)).multiplyScalar(1 / pts.length); // the middle of all the parts with that name
+    const short = n.split(':')[0].split(' (')[0];
+    const lb = label(short, c.x, c.y + 3, c.z, '#d7dde3', false, equipLabels); lb.scale.multiplyScalar(0.8);
+  }
+}
+toggle(document.getElementById('tEquip'), on => { if (on && !equipLabels) buildEquipLabels(); if (equipLabels) equipLabels.visible = on; });
 // clicking a line in the key shows or hides that title in the model
 document.querySelectorAll('.tgl').forEach(li => { const flip = () => { const on = li.getAttribute('aria-pressed') !== 'true'; li.setAttribute('aria-pressed', String(on)); titles[li.dataset.t].visible = on; };
   li.addEventListener('click', flip); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }); });
@@ -658,7 +829,7 @@ function showTip(e) {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects(hoverables, false).find(h => h.object.visible);
+  const hit = ray.intersectObjects(hoverables, false).find(h => h.object.visible && !onPad(h));
   if (!hit) { tip.hidden = true; renderer.domElement.style.cursor = ''; return; }
   tip.textContent = hit.object.userData.name; tip.hidden = false; renderer.domElement.style.cursor = 'help';
   tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
@@ -668,7 +839,7 @@ renderer.domElement.addEventListener('pointerup', (e) => { if (e.pointerType !==
 renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; });
 if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('key').open = false;
 
-function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); controls.handleResize(); }
+function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 window.addEventListener('resize', resize); resize();
 
 function frame() {
@@ -682,7 +853,8 @@ function frame() {
     annunciators.forEach((w, i) => { w.visible = beat > 0.75 ? ((i * 7 + Math.floor(t * 4)) % 5) !== 0 : (i % 3) === 0; });
     coreGlow.intensity = 2 + beat * 2.2; water.material.opacity = 0.45 + 0.3 * beat;
     puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.09) % 170; const spread = u.y > TOP - D ? 1 + (u.y - (TOP - D)) / 25 : 1; // the plume widens once it leaves the top
-      p.position.set(Math.cos(u.a + t * 0.1) * u.r * spread, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r * spread);
+      const above = Math.max(0, u.y - (TOP - D)), drift = Math.pow(above, 1.35) * 0.32; // the wind carries the plume off to the east
+      p.position.set(Math.cos(u.a + t * 0.1) * u.r * spread + drift, u.y + D + 2 - drift * 0.15, Math.sin(u.a + t * 0.1) * u.r * spread + drift * 0.25);
       p.material.color.setHSL((u.hue + t * 0.05) % 1, 0.9, 0.62); p.scale.setScalar(spread); }); // LED-lit haze
     const storm = t < stormUntil, rate = storm ? 0.35 : 0.012;
     let lit = 0;
@@ -698,7 +870,11 @@ function frame() {
   }
   const dt = Math.min(clock.getDelta(), 0.05); move(dt);
   if (spinning) { const off = camera.position.clone().sub(controls.target).applyAxisAngle(V(0, 1, 0), 0.0012); camera.position.copy(controls.target).add(off); }
-  if (!looking) controls.update();
+  starDome.rotation.y -= reduce ? 0 : 0.00025; // the sky wheels slowly round the pole star, anticlockwise as seen looking north
+  if (glide) { const k = Math.min(1, (performance.now() - glide.t0) / 700), e = k * k * (3 - 2 * k);
+    controls.target.lerpVectors(glide.fromT, glide.toT, e); camera.position.lerpVectors(glide.fromC, glide.toC, e); if (k >= 1) glide = null; }
+  marker.lookAt(camera.position);
+  controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
