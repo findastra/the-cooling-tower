@@ -46,3 +46,7 @@ Light Show Generator.
 1. The photos are from Wikimedia Commons, each credited on the website.
 2. The design, the website and the Mini Model: built with Claude Opus 5.5, from 2026-10-24.
 3. The picture above is a screenshot of the live Mini Model, 2026-10-29.
+
+## License
+
+No general source license is granted yet. Third-party assets keep their own licenses: the photos are credited on the website.
