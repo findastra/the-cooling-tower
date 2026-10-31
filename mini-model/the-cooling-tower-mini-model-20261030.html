@@ -102,10 +102,39 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .controls-panel .orbit{position:static;max-width:none;margin:8px 0 0;font-size:11px;padding:6px 8px;border-color:var(--line);color:var(--soft)}
 .controls-panel .site-guide{position:static;inset:auto;width:100%;max-height:none;margin:8px 0 0;padding:10px;border-radius:5px;font-size:12px}.controls-panel .site-guide h2{font-size:14px}.controls-panel .site-guide small{font-size:11px}
 @media(max-width:700px){.sidebar{inset:8px 8px 8px auto;width:min(390px,calc(100% - 16px))}.sidebar>.key-panel{max-height:32%}.sidebar>.panel{padding:8px 10px}.control-grid,.controls-panel .venues{gap:4px}}
+
+.mobile-tools{display:none}#view canvas{touch-action:none;display:block}
+@media(max-width:760px),(max-height:560px) and (pointer:coarse){
+ .sidebar{display:none;inset:auto max(8px,env(safe-area-inset-right)) calc(88px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));width:auto;max-height:calc(100dvh - 150px - env(safe-area-inset-bottom));gap:6px}
+ body.mobile-controls-open .sidebar{display:flex}
+ .sidebar>.panel{background:rgba(24,29,35,.98);padding:10px 12px}
+ .sidebar>.key-panel{max-height:24dvh;flex:0 0 auto;overflow:auto}
+ .sidebar>.controls-panel{min-height:100px;flex:1 1 auto;overflow:auto}
+ #key>summary,#mapControls>summary{min-height:38px}
+ .control-grid,.controls-panel .venues{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .controls-panel button,#key button,#key .kind{min-height:44px;font-size:13px;padding:8px 10px}
+ .control-section>summary,#key .key-description>summary,#key>.refs>summary{min-height:44px;font-size:13px}
+ #key .route .tgl{padding:0;min-width:28px}#key .route .n{padding:7px 0}
+ #key .route li{align-items:center}#key .legend{grid-template-columns:1fr 1fr}
+ .layer-controls button{flex-direction:row;align-items:center;justify-content:space-between;gap:6px}
+ .layer-controls button::after,#tSpin::after{flex:none}
+ .extra-controls{grid-template-columns:1fr 1fr}.controls-panel .site-guide button{font-size:13px}
+ .mobile-tools{display:block;position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:8;padding:8px;background:rgba(21,28,35,.96);border:1px solid #586774;border-radius:10px;box-shadow:0 2px 18px #0006}
+ .mobile-tools p{font-size:11px;line-height:1.35;text-align:center;color:#c9d5df;margin:0 0 6px}
+ .mobile-tool-row{display:grid;grid-template-columns:1fr 1.2fr 44px 44px;gap:6px}
+ .mobile-tool-row button{min-height:44px;font-size:13px;padding:6px;text-align:center}
+ #mobilePanelButton{border-color:var(--green);color:var(--green)}#mobileZoomIn,#mobileZoomOut{font-size:24px;line-height:1}
+ .tip{max-width:calc(100vw - 36px);font-size:12px}
+}
+@media(max-height:560px) and (pointer:coarse){
+ .sidebar{left:auto;width:min(430px,calc(100vw - 16px));max-height:calc(100dvh - 110px - env(safe-area-inset-bottom))}
+ .mobile-tools{left:auto;width:min(414px,calc(100vw - 34px))}.mobile-tools p{display:none}
+ .sidebar{bottom:calc(74px + env(safe-area-inset-bottom))}.sidebar>.key-panel{max-height:26dvh}
+}
 </style>
 
 <div id="view" aria-label="Mini Model of The Cooling Tower: three connected venues and the night's route"></div>
-<div class="sidebar" aria-label="Model key and controls">
+<div id="modelSidebar" class="sidebar" aria-label="Model key and controls">
 <aside class="panel key-panel">
 <details id="key" open="">
   <summary><b class="title">The Cooling Tower <span class="mm">Detail Draft</span></b> <span class="toggle-hint">key</span></summary>
@@ -186,6 +215,10 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 
 <div id="tip" class="tip" role="tooltip" hidden></div>
+<nav class="mobile-tools" aria-label="Touch navigation">
+ <p>Drag to turn · pinch to zoom · two fingers to move</p>
+ <div class="mobile-tool-row"><button id="mobilePanelButton" aria-expanded="false" aria-controls="modelSidebar">Controls</button><button id="mobileWholePlant">Whole plant</button><button id="mobileZoomOut" aria-label="Zoom out">−</button><button id="mobileZoomIn" aria-label="Zoom in">+</button></div>
+</nav>
 
 <script>
 /**
@@ -1245,9 +1278,10 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 </script>
 <script>
+const mobileLayout=window.matchMedia('(max-width:760px), (max-height:560px) and (pointer:coarse)');
 const view = document.getElementById('view');
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({ antialias: !mobileLayout.matches });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobileLayout.matches ? 1.25 : 2));
 view.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x03050c); // always night: blue-black
@@ -1262,7 +1296,7 @@ controls.target.copy(HOME_T);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.screenSpacePanning = true;            // right-drag can move the view vertically into the lower rain zone
 controls.maxPolarAngle = Math.PI * 0.95;       // allow eye-level and upward views beneath the grate
-controls.minDistance = .4; controls.maxDistance = 700;
+controls.minDistance = .4; controls.maxDistance = mobileLayout.matches ? 1800 : 700;
 controls.zoomSpeed = 1.2; controls.rotateSpeed = 0.7;
 controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN }; // scroll-click drag drags the model
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
@@ -2791,6 +2825,17 @@ deckRibbon([V(0,HUMAN_RACEWAY_Y,36.5),V(0,D+.04,33.5)],2.4,racewayDeckMat,humanR
 HOVER=null;
 
 
+// Static phone handrails share one draw call; instance transforms retain every rail and gap.
+const mobileRailBatch={count:0,instances:null};
+if(mobileLayout.matches){
+ const rails=humanRaceway.children.filter(o=>o.isMesh&&!o.isInstancedMesh&&o.material===racewayYellow&&o.geometry.type==='CylinderGeometry');
+ if(rails.length){
+  const instances=new THREE.InstancedMesh(new THREE.CylinderGeometry(1,1,1,6),racewayYellow,rails.length),matrix=new THREE.Matrix4(),scale=new THREE.Matrix4();
+  rails.forEach((mesh,i)=>{mesh.updateMatrix();const p=mesh.geometry.parameters;matrix.copy(mesh.matrix).multiply(scale.makeScale(p.radiusTop,p.height,p.radiusTop));instances.setMatrixAt(i,matrix);humanRaceway.remove(mesh);const hi=hoverables.indexOf(mesh);if(hi>=0)hoverables.splice(hi,1);mesh.geometry.dispose();});
+  instances.instanceMatrix.needsUpdate=true;instances.userData.name='Human Raceway handrails';humanRaceway.add(instances);hoverables.push(instances);mobileRailBatch.count=rails.length;mobileRailBatch.instances=instances;
+ }
+}
+
 // Continuous internal perimeter road plus a separate cart-only patrol lane between the fences.
 const perimeterRoadGroup=new THREE.Group();scene.add(perimeterRoadGroup);
 function perimeterRoadHeight(){return .28;}
@@ -2897,10 +2942,11 @@ const VENUES = [
 const venueBtns = [...document.querySelectorAll('.venues button')];
 function pickVenue(i) {
   undergroundMode=false;swimTour=null;
-  const v = VENUES[i];
+  const v = {t:VENUES[i].t.clone(),c:VENUES[i].c.clone(),name:VENUES[i].name};
+  if(mobileLayout.matches){if(i===0){v.t.set(0,40,0);v.c.set(-115,88,130);}else{const scale=Math.max(1,(i===3?1.08:.7)/camera.aspect);v.c.sub(v.t).multiplyScalar(scale).add(v.t);}}
   glide = { t0: performance.now(), fromT: controls.target.clone(), toT: v.t.clone(), fromC: camera.position.clone(), toC: v.c.clone() };
   marker.visible = false; orbitLine.textContent = 'Turning around: ' + v.name;
-  venueBtns.forEach((b, k) => b.setAttribute('aria-pressed', String(+b.dataset.v === i))); setSpin(true);
+  venueBtns.forEach((b, k) => b.setAttribute('aria-pressed', String(+b.dataset.v === i))); setSpin(!mobileLayout.matches);
 }
 venueBtns.forEach(b => b.addEventListener('click', () => pickVenue(+b.dataset.v)));
 function inspectView(name,target,position){undergroundMode=position.y<0||(!detectorGroundCover.visible&&target.x>130&&target.x<240&&target.z>55&&target.z<165);swimTour=null;glide={t0:performance.now(),fromT:controls.target.clone(),toT:target,fromC:camera.position.clone(),toC:position};marker.visible=false;orbitLine.textContent='Inspecting: '+name;setSpin(false);venueBtns.forEach(b=>b.setAttribute('aria-pressed','false'));}
@@ -2937,9 +2983,14 @@ toggle(document.getElementById('tBuildings'),on=>siteLabels.visible=on);
 const pickRay = new THREE.Raycaster(), pickPtr = new THREE.Vector2();
 function isVisible(o) { for(let p=o;p;p=p.parent) if(!p.visible)return false;return true; }
 const onPad = (h) => h.object === terrain && h.point.y < 3; // the flat ground under the plant is not "the mountains"
-renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, b: e.button }; });
+const scenePointers=new Set();
+renderer.domElement.addEventListener('pointerdown',e=>{scenePointers.add(e.pointerId);tip.hidden=true;if(scenePointers.size===1)downAt={id:e.pointerId,x:e.clientX,y:e.clientY,b:e.button,multi:false,travel:0};else if(downAt)downAt.multi=true;});
+renderer.domElement.addEventListener('pointermove',e=>{if(downAt&&downAt.id===e.pointerId)downAt.travel=Math.max(downAt.travel,Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y));});
+renderer.domElement.addEventListener('pointercancel',e=>{scenePointers.delete(e.pointerId);downAt=null;});
 renderer.domElement.addEventListener('pointerup', e => {
-  if (!downAt || downAt.b !== 0 || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 5) return;
+  scenePointers.delete(e.pointerId);
+  if (!downAt || downAt.id!==e.pointerId || downAt.multi || downAt.b !== 0 || downAt.travel>6 || Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y)>6) return;
+  downAt=null;if(e.pointerType!=='mouse')showTip(e);
   const r = renderer.domElement.getBoundingClientRect();
   pickPtr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   pickRay.setFromCamera(pickPtr, camera);
@@ -2957,7 +3008,7 @@ renderer.domElement.addEventListener('dblclick',e=>{
  const hit=pickRay.intersectObjects(scene.children,true).find(h=>isVisible(h.object)&&h.object.isMesh&&h.object!==marker&&!(h.object.material?.transparent&&h.object.material.opacity<.6));
  if(hit){swimTour=null;orbitAround(hit.point,hit.object.userData.name||'this surface',3);}
 });
-controls.addEventListener('start',()=>{glide=null;swimTour=null;setSpin(false);});
+controls.addEventListener('start',()=>{glide=null;swimTour=null;setSpin(false);tip.hidden=true;});
 // W A S D (or the arrow keys) slide along the ground, Q / E down and up, Shift faster, F back to the whole plant
 const keys = new Set();
 addEventListener('keydown', e => { const k = e.key.toLowerCase();
@@ -3014,12 +3065,25 @@ function showTip(e) {
   const hit = ray.intersectObjects(hoverables, false).find(h => isVisible(h.object) && !onPad(h));
   if (!hit) { tip.hidden = true; renderer.domElement.style.cursor = ''; return; }
   tip.textContent = hit.object.userData.name; tip.hidden = false; renderer.domElement.style.cursor = 'help';
-  tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+  tip.style.left=Math.max(8,Math.min(e.clientX+14,window.innerWidth-tip.offsetWidth-8))+'px';tip.style.top=Math.max(8,Math.min(e.clientY+14,window.innerHeight-tip.offsetHeight-(mobileLayout.matches?90:8)))+'px';
 }
-renderer.domElement.addEventListener('pointermove', showTip);
-renderer.domElement.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') showTip(e); });
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&scenePointers.size===0)showTip(e);});
 renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; });
-if (window.matchMedia('(max-width: 640px)').matches) document.getElementById('key').open = false;
+const mobilePanelButton=document.getElementById('mobilePanelButton');
+function setMobilePanel(open){const on=!!open&&mobileLayout.matches;document.body.classList.toggle('mobile-controls-open',on);mobilePanelButton.setAttribute('aria-expanded',String(on));mobilePanelButton.textContent=on?'Done':'Controls';if(on)tip.hidden=true;}
+mobilePanelButton.onclick=()=>setMobilePanel(!document.body.classList.contains('mobile-controls-open'));
+document.getElementById('mobileWholePlant').onclick=()=>{setMobilePanel(false);pickVenue(3);};
+function mobileZoom(factor){glide=null;swimTour=null;setSpin(false);const offset=camera.position.clone().sub(controls.target);offset.setLength(THREE.MathUtils.clamp(offset.length()*factor,controls.minDistance,controls.maxDistance));camera.position.copy(controls.target).add(offset);controls.update();tip.hidden=true;}
+document.getElementById('mobileZoomIn').onclick=()=>mobileZoom(.72);document.getElementById('mobileZoomOut').onclick=()=>mobileZoom(1/.72);
+document.getElementById('modelSidebar').addEventListener('click',e=>{if(e.target.closest('.venues button,.view-controls button,[data-site]')){setMobilePanel(false);if(mobileLayout.matches)mobilePanelButton.focus({preventScroll:true});}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')setMobilePanel(false);});
+if(mobileLayout.matches){
+ document.getElementById('key').open=false;setMobilePanel(false);
+ document.getElementById('tBuildings').click();document.getElementById('tWaterLoops').click();
+ camera.position.set(-115,88,130);controls.target.set(0,40,0);orbitLine.textContent='The Stack · drag to explore';
+ venueBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v==='0')));
+}
+mobileLayout.addEventListener('change',()=>{setMobilePanel(false);if(mobileLayout.matches)document.getElementById('key').open=false;controls.maxDistance=mobileLayout.matches?1800:700;resize();});
 
 document.querySelectorAll('.layer-controls button, #tSpin').forEach(button=>{
  const name=button.textContent.trim();
@@ -3027,7 +3091,7 @@ document.querySelectorAll('.layer-controls button, #tSpin').forEach(button=>{
  sync();new MutationObserver(sync).observe(button,{attributes:true,attributeFilter:['aria-pressed']});
 });
 document.querySelectorAll('.venues button, .view-controls button').forEach(button=>{button.title='Go to '+button.textContent.trim();});
-function resize() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(Math.PI / 8) * Math.max(1, 1.25 / camera.aspect))); camera.updateProjectionMatrix(); }
+function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setPixelRatio(Math.min(window.devicePixelRatio,mobileLayout.matches?1.25:2));renderer.setSize(w,h);camera.aspect=w/h;camera.fov=mobileLayout.matches?55:THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(Math.PI/8)*Math.max(1,1.25/camera.aspect)));camera.updateProjectionMatrix();}
 window.addEventListener('resize', resize); resize();
 
 function frame() {
