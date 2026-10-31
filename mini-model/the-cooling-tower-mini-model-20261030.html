@@ -144,7 +144,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <h2>The night, in order </h2>
   <ol class="route">
      <li><button class="tgl" data-t="in" aria-pressed="false" aria-label="Show or hide Meet up and head in label" title="Show or hide label"><span class="n" style="background:var(--amber)">IN</span></button><details class="key-description"><summary>Meet up and head in</summary><span> Gather at the mountain-lake intake, pick up hard hats and follow the twin pipes for a 20–30 second approach to the broken west gate. Cross the yard, enter through the west-side gap onto the lower waffle grid, walk through the rain zone, then climb the original scaffolding to the main deck.</span></details></li>
-    <li><button class="tgl" data-t="1" aria-pressed="true" aria-label="Show or hide The Stack label" title="Show or hide label"><span class="n" style="background:var(--green)">1</span></button><details class="key-description"><summary>The Stack</summary><span> Up the stairs to the grating deck at the tops of the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit smoke pour out of the top into the sky, with lightning flashing through the smoke each time a set starts; spaced cooling-fill banks sit below the open steel grating, with wide gaps revealing the collection basin; water falls from the banks into the basin below. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></details></li>
+    <li><button class="tgl" data-t="1" aria-pressed="true" aria-label="Show or hide The Stack label" title="Show or hide label"><span class="n" style="background:var(--green)">1</span></button><details class="key-description"><summary>The Stack</summary><span> Up the stairs to the grating deck at the tops of the X-legs, crowd all round the low DJ stage on the water riser. Lasers and LED-lit plume circles pour out of the top and ride the wind east off the map, with lightning flashing through the smoke each time a set starts; spaced cooling-fill banks sit below the open steel grating, with wide gaps revealing the collection basin; water falls from the banks into the basin below. A caged ladder up the outside, tagged with graffiti, leads to the rim: no railing, just a wide concrete lip where people sit and watch.</span></details></li>
      <li><button class="tgl" data-t="2" aria-pressed="true" aria-label="Show or hide Turbine Hall label" title="Show or hide label"><span class="n" style="background:var(--magenta)">2</span></button><details class="key-description"><summary>Turbine Hall</summary><span> Follow the makeshift cone lane and painted arrows beside the pipes to an open turbine service door. The open high bay has a crane, a glass-covered turbine cutaway visible from the crowd, raised dance platforms along the turbine train, and a two-person DJ/VJ console facing the audience.</span></details></li>
     <li><button class="tgl" data-t="3" aria-pressed="true" aria-label="Show or hide Reactor Hall label" title="Show or hide label"><span class="n" style="background:var(--blue)">3</span></button><details class="key-description"><summary>Reactor Hall</summary><span> Through the equipment hatch into the dome. Refueling-outage view: the open reactor vessel sits beneath a flooded cavity. Its removed lid is parked on a separate stand. The DJ booth and moving fuel-grid show are fictional venue elements.</span></details></li>
     <li><button class="tgl" data-t="back" aria-pressed="false" aria-label="Show or hide Pad back to 1 label" title="Show or hide label"><span class="n" style="background:#93a3ad">↺</span></button><details class="key-description"><summary>Pad back to 1</summary><span> whenever you want.</span></details></li>
@@ -170,7 +170,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   <ul class="legend">
     <li class="kind" data-k="lasers" role="button" tabindex="0" aria-pressed="true" title="Lasers: 12 out of the top of the stack"><span class="dot" style="background:var(--green)"></span>Lasers</li>
     <li class="kind" data-k="heads" role="button" tabindex="0" aria-pressed="true" title="Moving heads: the stack wall, the turbine hall crane girders, the dome"><span class="dot" style="background:var(--magenta)"></span>Moving heads</li>
-    <li class="kind" data-k="wash" role="button" tabindex="0" aria-pressed="true" title="Washes and glows: throat ring, turbine hall washes and strobes, LED smoke"><span class="dot" style="background:var(--blue)"></span>Washes &amp; glows</li>
+    <li class="kind" data-k="wash" role="button" tabindex="0" aria-pressed="true" title="Washes and glows: throat ring, turbine hall washes and strobes, LED plume circles"><span class="dot" style="background:var(--blue)"></span>Washes &amp; glows</li>
     <li class="kind" data-k="power" role="button" tabindex="0" aria-pressed="true" title="Power effects: stack lightning, generator sparks and reactor-grid projections"><span class="dot" style="background:#bfe9ff"></span>Power effects</li>
     <li class="kind" data-k="beacons" role="button" tabindex="0" aria-pressed="true" title="Beacons on the X-legs (breakdown look)"><span class="dot" style="background:var(--amber)"></span>X-brace beacons</li>
     <li class="kind" data-k="crowd" role="button" tabindex="0" aria-pressed="true" title="Stick-figure crowd in hard hats"><span class="dot" style="background:var(--hat)"></span>Crowd</li>
@@ -1704,8 +1704,9 @@ function updateShowerShow(t){
 HOVER=null;
 
 const smoke = add(new THREE.Mesh(new THREE.CylinderGeometry(20, 9, TOP - D, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })), 0, (TOP + D) / 2, 0, venueLights[0]);
-const puffs = [];
-for (let i = 0; i < 90; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2.4 + Math.random() * 3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.1, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, y: Math.random() * 170, hue: Math.random() }; puffs.push(p); }
+smoke.visible = false; // for now the plume is only the circles (Astra, 2026-10-31)
+const puffs = [], PLUME_IN = 0.3, PLUME_FAR = 1800; // first 30% of a circle's trip is inside the stack; then the wind carries it past the map edge (terrain ends at x = 1660)
+for (let i = 0; i < 160; i++) { const p = add(new THREE.Mesh(new THREE.SphereGeometry(2.4 + Math.random() * 3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xc9d4dc, transparent: true, opacity: 0.1, depthWrite: false })), 0, 0, 0, venueLights[0]); p.userData = { a: Math.random() * 6.28, r: 3 + Math.random() * 11, ph: Math.random(), hue: Math.random() }; puffs.push(p); }
 // lightning: jagged bolts that flash inside the smoke, a storm of them each time a set starts
 const bolts = [];
 function makeBolt(){
@@ -1716,7 +1717,7 @@ function makeBolt(){
 for (let i = 0; i < 10; i++) bolts.push(makeBolt());
 let stormUntil = 3, flashGlow = add(new THREE.PointLight(0xbfe0ff, 0, 160), 0, 70, 0, venueLights[0]);
 kinds.wash.push(add(new THREE.Mesh(new THREE.TorusGeometry(22.8, 0.55, 8, 96), glow(0x4fc3ff)), 0, 82, 0, venueLights[0])); kinds.wash[kinds.wash.length - 1].rotation.x = Math.PI / 2;
-kinds.wash.push(smoke, ...puffs);
+kinds.wash.push(...puffs);
 // Broad wind-sheared cloud canopy spans several plant widths over the halls and observatory.
 const plantCloud=new THREE.Group();plantCloud.name='Drifting cloud canopy across plant';venueLights[0].add(plantCloud);
 const cloudCanvas=document.createElement('canvas');cloudCanvas.width=128;cloudCanvas.height=128;const cc=cloudCanvas.getContext('2d'),cg=cc.createRadialGradient(64,64,4,64,64,64);cg.addColorStop(0,'rgba(220,229,239,0.65)');cg.addColorStop(.45,'rgba(184,200,221,0.3)');cg.addColorStop(1,'rgba(146,172,198,0)');cc.fillStyle=cg;cc.fillRect(0,0,128,128);const plantCloudTexture=new THREE.CanvasTexture(cloudCanvas);
@@ -1725,7 +1726,7 @@ for(let i=0;i<72;i++){
  const u=i/71,w=new THREE.Sprite(new THREE.SpriteMaterial({map:plantCloudTexture,color:0xb1bdd5,transparent:true,opacity:.27,depthWrite:false,fog:false}));
  w.userData={baseX:-180+u*1200,baseY:155+Math.sin(i*2.3)*32+(i%3)*22,baseZ:90+Math.sin(i*1.73)*290,phase:i*.7};w.position.set(w.userData.baseX,w.userData.baseY,w.userData.baseZ);w.scale.set(190+(i%5)*28,80+(i%4)*22,1);plantCloud.add(w);cloudWisps.push(w);
 }
-kinds.wash.push(plantCloud);
+plantCloud.visible = false; // the cloud canopy is off while the plume is only the circles
 
 const lasers = [];
 for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(Math.cos(a) * 4.5, D + 2, Math.sin(a) * 4.5), V(Math.cos(a) * 1900, 9500, Math.sin(a) * 1900)]), new THREE.LineBasicMaterial({ color: 0x8dff5a, transparent: true, opacity: 0.9, fog:false })); venueLights[0].add(l); lasers.push(l); }
@@ -3104,9 +3105,11 @@ function frame() {
     strobes.forEach((s, i) => { s.visible = !s.userData.off && Math.sin(t * 18 + i * 1.7) > 0.6; });
     annunciators.forEach((w, i) => { w.visible = beat > 0.75 ? ((i * 7 + Math.floor(t * 4)) % 5) !== 0 : (i % 3) === 0; });
     coreGlow.intensity = 2 + beat * 2.2; water.material.opacity = 0.45 + 0.3 * beat;
-    puffs.forEach(p => { const u = p.userData; u.y = (u.y + 0.09) % 170; const spread = u.y > TOP - D ? 1 + (u.y - (TOP - D)) / 25 : 1; // the plume widens once it leaves the top
-      const above = Math.max(0, u.y - (TOP - D)), drift = Math.pow(above, 1.45) * 0.8; // the wind carries the plume off to the east
-      p.position.set(Math.cos(u.a + t * 0.015) * u.r * spread + drift, u.y + D + 2, Math.sin(u.a + t * 0.1) * u.r * spread + drift * 0.25);
+    puffs.forEach(p => { const u = p.userData; u.ph = (u.ph + 0.00024) % 1; // one trip, stack floor to past the map edge, takes about 70 s
+      const drift = u.ph < PLUME_IN ? 0 : (u.ph - PLUME_IN) / (1 - PLUME_IN) * PLUME_FAR; // the wind carries the circles off to the east
+      const y = u.ph < PLUME_IN ? u.ph / PLUME_IN * (TOP - D) : TOP - D + 60 * (1 - Math.exp(-drift / 250)); // rise up the stack, then level off in the wind
+      const spread = 1 + Math.min(drift, 150) / 25; // the plume widens once it leaves the top
+      p.position.set(Math.cos(u.a + t * 0.015) * u.r * spread + drift, y + D + 2, Math.sin(u.a + t * 0.1) * u.r * spread + drift * 0.25);
       p.material.color.setHSL((u.hue + t * 0.05) % 1, 0.9, 0.62); p.scale.setScalar(spread); }); // LED-lit haze
     cloudWisps.forEach(w=>{const u=w.userData;w.position.set(-180+((u.baseX+180+t*.55)%1200),u.baseY+Math.sin(t*.012+u.phase)*7,u.baseZ+Math.sin(t*.008+u.phase)*22);});
     const storm = t < stormUntil, rate = storm ? 0.35 : 0.012;
