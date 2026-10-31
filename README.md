@@ -9,9 +9,9 @@ then goes through the hatch into the glowing reactor hall.
 The whole world as a 3D model you can spin on a phone or computer, no VR needed. Hover over or tap any part to see what
 it is.
 
-<a href="https://findastra.github.io/the-cooling-tower/mini-model/the-cooling-tower-mini-model-20261024.html"><img src="docs/images/the-cooling-tower-mini-model-20261029.png" alt="The Cooling Tower Mini Model: lasers and smoke rising out of the cooling tower, the walk-through water pipe to the arched turbine hall, the reactor dome behind it, and the key listing the night in order" width="100%"></a>
+<a href="https://findastra.github.io/the-cooling-tower/mini-model/the-cooling-tower-mini-model-20261030.html"><img src="docs/images/the-cooling-tower-mini-model-20261029.png" alt="The Cooling Tower Mini Model: lasers and smoke rising out of the cooling tower, the walk-through water pipe to the arched turbine hall, the reactor dome behind it, and the key listing the night in order" width="100%"></a>
 
-**[▶ Open The Cooling Tower Mini Model](https://findastra.github.io/the-cooling-tower/mini-model/the-cooling-tower-mini-model-20261024.html)**
+**[▶ Open The Cooling Tower Mini Model](https://findastra.github.io/the-cooling-tower/mini-model/the-cooling-tower-mini-model-20261030.html)**
 · **[The website, with photos and the science](https://findastra.github.io/the-cooling-tower/)**
 
 **Needs:** a browser, on a phone or a computer.
