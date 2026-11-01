@@ -136,12 +136,12 @@
     const obs = (e.obstacles || []).map(o => o.type === 'box' ? { type: 'box', min: P(o.min), max: P(o.max), name: o.name } : { type: 'cyl', a: P(o.a), b: P(o.b), r: o.r, name: o.name });
     // is a straight member (column, beam, rod) from a to b with half-width w clear of everything solid?
     // A building the pipe itself runs inside (point `inside`) does not count: the support stands on its floor.
-    e.clear = (a, b, w, ignoreRuns, inside) => {
+    e.clear = (a, b, w, ignoreRuns, inside, pipes = true) => {
       for (const o of obs) {
         if (inside && o.type === 'box' && inside.x > o.min.x && inside.x < o.max.x && inside.z > o.min.z && inside.z < o.max.z && inside.y > o.min.y && inside.y < o.max.y) continue;
         if (o.type === 'box' ? segBox(a, b, o.min, o.max, w) : segSeg(a, b, o.a, o.b) < o.r + w && segCyl(a, b, w, o.a, o.b, o.r)) return false;
       }
-      for (const s of segs) {
+      if (pipes) for (const s of segs) {
         if (ignoreRuns && ignoreRuns.has(s.run)) continue;
         if (segSeg(a, b, s.a, s.b) < s.r + w + 0.05) return false;
       }
@@ -159,6 +159,7 @@
     const perpOf = axis => axis === 'x' ? { x: 0, y: 0, z: 1 } : { x: 1, y: 0, z: 0 };
 
     // 1 · stations along every straight
+    const crossings = [];
     for (const run of runs) {
       if (env.skipRun(run)) continue;
       const r = run.radius, span = maxSpan(2 * r) * env.spanFactor;
@@ -186,49 +187,93 @@
       }
     }
 
-    // Pipe bridge: where a line runs just over one raised surface (a tank roof, a sphere crown), drops more than 3 m
-    // over a gap of at most 20 m and comes back over the next raised surface, a light box truss carries it across
-    // instead of a row of tall posts. Returns the bridged stretches as [from, to] offsets along the straight.
+    // 1b · bridges: lines that cross the same gap side by side (same kind, same direction, overlapping, close together
+    // and within 1.5 m of each other's height) share one bridge
+    {
+      const left = crossings.slice().sort((a, b) => a.perp - b.perp);
+      while (left.length) {
+        const group = [left.shift()];
+        for (let k = 0; k < left.length; k++) {
+          const c = left[k], last = group[group.length - 1];
+          if (c.kind === group[0].kind && c.axis === group[0].axis && c.a0 < Math.max(...group.map(g => g.a1)) && c.a1 > Math.min(...group.map(g => g.a0)) && c.perp - c.r - (last.perp + last.r) < 4 && Math.abs(c.y - group[0].y) < 1.5) { group.push(c); left.splice(k--, 1); }
+        }
+        spanBridge(group);
+      }
+    }
+
+    // Gaps a bridge spans instead of a row of tall posts (noted here, built in step 1b):
+    //  - truss: the line runs just over one raised surface (a tank roof, a sphere crown), drops more than 3 m over a gap
+    //    of at most 20 m and comes back over the next raised surface
+    //  - girder: an elevated line crosses ground where no column may stand (a road, a channel) at most 24 m wide
+    // Returns the bridged stretches as [from, to] offsets along the straight.
     function bridges(run, s) {
       if (s.length < 4) return [];
-      const r = run.radius, high = []; let cur = null;
+      const r = run.radius, high = [], out = []; let cur = null;
+      const note = (kind, x0, x1) => {
+        const pa = add(s.a, mul(s.dir, x0)), pb = add(s.a, mul(s.dir, x1)), al = q => s.axis === 'x' ? q.x : q.z;
+        if (!env.clear(pa, pb, 0.3, null, pa, false)) return;
+        crossings.push({ kind, run, s, r, y: s.a.y, axis: s.axis, a0: Math.min(al(pa), al(pb)), a1: Math.max(al(pa), al(pb)), perp: s.axis === 'x' ? pa.z : pa.x });
+        out.push([x0, x1]);
+      };
       for (let d = 0; d <= s.length + 1e-6; d += 0.5) {
         const p = add(s.a, mul(s.dir, d)), g = env.ground(p.x, p.z, p.y), gap = p.y - r - g;
         if (gap >= -0.02 && gap < 3.5) { if (!cur) { cur = [d, d, g, gap]; high.push(cur); } cur[1] = d; cur[3] = Math.max(cur[3], gap); } else cur = null;
       }
-      const out = [];
       for (let k = 1; k < high.length; k++) {
-        const [, a1, gA, hA] = high[k - 1], [b0, , gB, hB] = high[k], L = b0 - a1;
+        const [, a1, , hA] = high[k - 1], [b0, , , hB] = high[k], L = b0 - a1;
         if (L < 1 || L > 20) continue;
         const m = add(s.a, mul(s.dir, (a1 + b0) / 2));
         if (m.y - r - env.ground(m.x, m.z, m.y) < Math.max(3, Math.max(hA, hB) + 2)) continue;
-        const x0 = Math.max(0, a1 - 0.6), x1 = Math.min(s.length, b0 + 0.6), pa = add(s.a, mul(s.dir, x0)), pb = add(s.a, mul(s.dir, x1));
-        if (!env.clear(pa, pb, r + 0.6, new Set([run]), pa)) continue;
-        bridge(run, s, x0, x1, gA, gB); out.push([x0, x1]);
+        note('truss', Math.max(0, a1 - 0.6), Math.min(s.length, b0 + 0.6));
+      }
+      let gapStart = null;
+      for (let d = 0; d <= s.length + 1e-6; d += 0.5) {
+        const p = add(s.a, mul(s.dir, d)), ok = env.footing(p.x, p.z) || p.y - r - env.ground(p.x, p.z, p.y) < 3;
+        if (!ok && gapStart == null) gapStart = d;
+        else if (ok && gapStart != null) {
+          const x0 = gapStart - 1, x1 = d + 0.5; gapStart = null;
+          if (x0 < 0.3 || x1 > s.length - 0.3 || x1 - x0 > 24 || out.some(([a, b]) => x0 < b && x1 > a)) continue;
+          note('girder', x0, x1);
+        }
       }
       return out;
     }
-    function bridge(run, s, x0, x1, gA, gB) {
-      const r = run.radius, L = x1 - x0, side = perpOf(s.axis), w = r + 0.35, deck = s.a.y - r - SHOE, hgt = Math.max(2 * r + 0.9, L / 12); // truss about span/12 deep
-      const at = (d, off, y) => add(add(s.a, mul(s.dir, d)), add(mul(side, off), { x: 0, y: y - s.a.y, z: 0 }));
-      for (const off of [-w, w]) {
-        cyl('steel', 'Pipe bridge chord', at(x0, off, deck - 0.06), at(x1, off, deck - 0.06), 0.06);
-        cyl('steel', 'Pipe bridge chord', at(x0, off, deck + hgt), at(x1, off, deck + hgt), 0.05);
-        const n = Math.max(2, Math.round(L / 1.5));
-        for (let k = 0; k <= n; k++) {
-          const d = x0 + L * k / n; cyl('steel', 'Pipe bridge post', at(d, off, deck - 0.06), at(d, off, deck + hgt), 0.04);
-          if (k < n) cyl('steel', 'Pipe bridge diagonal', at(d, off, k % 2 ? deck + hgt : deck - 0.06), at(x0 + L * (k + 1) / n, off, k % 2 ? deck - 0.06 : deck + hgt), 0.035);
+    // One bridge for a group of lines: two truss sides (chords, posts, diagonals) or two deep plate girders, with
+    // cross-members every 1.5 m carrying a shoe for each line; at each end a bearing on the roof below or, when it is
+    // high, an end frame of two columns, a cross-beam and knee braces on footings.
+    function spanBridge(group) {
+      const kind = group[0].kind, axis = group[0].axis, a0 = Math.min(...group.map(c => c.a0)), a1 = Math.max(...group.map(c => c.a1)), L = a1 - a0;
+      const lo = Math.min(...group.map(c => c.perp - c.r)) - 0.35, hi = Math.max(...group.map(c => c.perp + c.r)) + 0.35;
+      const top = Math.min(...group.map(c => c.y - c.r)) - SHOE, rMax = Math.max(...group.map(c => c.r));
+      const depth = kind === 'girder' ? Math.max(0.45, L / 20) : 0.12, hgt = Math.max(2 * rMax + 0.9, L / 12);
+      const pt = (al, pp, y) => axis === 'x' ? { x: al, y, z: pp } : { x: pp, y, z: al }, name = kind === 'girder' ? 'Road crossing' : 'Pipe bridge';
+      const n = Math.max(2, Math.round(L / 1.5));
+      for (const pp of [lo, hi]) {
+        if (kind === 'girder') box('steel', name + ' girder', pt((a0 + a1) / 2, pp, top - depth / 2), axis === 'x' ? [L + 0.3, depth, 0.25] : [0.25, depth, L + 0.3]);
+        else {
+          cyl('steel', name + ' chord', pt(a0, pp, top - 0.06), pt(a1, pp, top - 0.06), 0.06);
+          cyl('steel', name + ' chord', pt(a0, pp, top + hgt), pt(a1, pp, top + hgt), 0.05);
+          for (let k = 0; k <= n; k++) {
+            const al = a0 + L * k / n; cyl('steel', name + ' post', pt(al, pp, top - 0.06), pt(al, pp, top + hgt), 0.04);
+            if (k < n) cyl('steel', name + ' diagonal', pt(al, pp, k % 2 ? top + hgt : top - 0.06), pt(a0 + L * (k + 1) / n, pp, k % 2 ? top - 0.06 : top + hgt), 0.035);
+          }
         }
       }
-      for (let d = x0; d <= x1 + 1e-6; d += L / Math.max(2, Math.round(L / 1.5))) {
-        cyl('steel', 'Pipe bridge cross-member', at(d, -w, deck - 0.06), at(d, w, deck - 0.06), 0.04);
-        cyl('steel', 'Pipe bridge cross-member', at(d, -w, deck + hgt), at(d, w, deck + hgt), 0.035);
+      for (let k = 0; k <= n; k++) {
+        const al = a0 + L * k / n;
+        box('steel', name + ' cross-beam', pt(al, (lo + hi) / 2, top - 0.08), axis === 'x' ? [0.16, 0.16, hi - lo] : [hi - lo, 0.16, 0.16]);
+        if (kind === 'truss') cyl('steel', name + ' cross-member', pt(al, lo, top + hgt), pt(al, hi, top + hgt), 0.035);
+        for (const c of group) { const q = pt(al, c.perp, c.y); shoe({ r: c.r, axis, s: c.s }, q, top); supports.push({ type: 'bridge-shoe', run: c.run.id, at: A(q) }); }
       }
-      for (const [d, g] of [[x0 + 0.3, gA], [x1 - 0.3, gB]]) { const p = add(s.a, mul(s.dir, d)); if (deck - 0.12 - g > 0.02) box('steel', 'Pipe bridge bearing', { x: p.x, y: (g + deck - 0.12) / 2, z: p.z }, s.axis === 'x' ? [0.4, deck - 0.12 - g, 2 * w + 0.2] : [2 * w + 0.2, deck - 0.12 - g, 0.4]); }
-      const fake = { r, axis: s.axis, s };
-      for (let d = x0 + 0.75; d < x1 - 0.5; d += 1.5) shoe(fake, add(s.a, mul(s.dir, d)), deck);
-      supports.push({ type: 'bridge', run: run.id, at: A(add(s.a, mul(s.dir, x0))), to: A(add(s.a, mul(s.dir, x1))) });
-      for (let d = x0; d <= x1; d += 1.5) supports.push({ type: 'bridge-shoe', run: run.id, at: A(add(s.a, mul(s.dir, d))) });
+      for (const al of [a0, a1]) {
+        const mid = pt(al, (lo + hi) / 2, top), g = env.ground(mid.x, mid.z, top), under = top - depth - g;
+        if (under <= 0.02) continue;
+        if (under < 1.5) { for (const pp of [lo, hi]) box('steel', name + ' bearing', pt(al, pp, g + under / 2), [0.4, under, 0.4]); continue; }
+        for (const pp of [lo, hi]) { const f = pt(al, pp, g); footing(f.x, f.z, g, 1.0); box('steel', name + ' end frame', pt(al, pp, (g + 0.28 + top - depth) / 2), [0.3, under - 0.28, 0.3]); }
+        box('steel', name + ' end frame', pt(al, (lo + hi) / 2, top - depth - 0.12), axis === 'x' ? [0.3, 0.24, hi - lo + 0.3] : [hi - lo + 0.3, 0.24, 0.3]);
+        if (under > 3) for (const [pp, sg] of [[lo, 1], [hi, -1]]) cyl('steel', 'Knee brace', pt(al, pp, top - depth - 1.1), pt(al, pp + sg * Math.min(1, (hi - lo) / 3), top - depth - 0.24), 0.06);
+      }
+      for (const c of group) supports.push({ type: kind === 'girder' ? 'road crossing' : 'bridge', run: c.run.id, at: A(pt(a0, c.perp, c.y)), to: A(pt(a1, c.perp, c.y)) });
     }
 
     // 2 · choose the support type for each station

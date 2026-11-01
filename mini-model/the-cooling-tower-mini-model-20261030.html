@@ -3254,7 +3254,7 @@ document.getElementById('runRailAudit').onclick=()=>{const r=runRailAudit();if(r
 function runSupportAudit(){const chk=PipeSpawn.check(PIPE_NET.runs,PIPE_SUPPORT_PLAN,PIPE_SUPPORT_ENV),st=PIPE_SUPPORT_PLAN.stats,findings=[];
  for(const p of PIPE_SUPPORT_PLAN.problems)findings.push({severity:'error',message:`${p.name}: ${p.why}`,at:p.at});
  for(const sp of chk.spans)findings.push({severity:'warn',message:`${sp.name}: ${sp.metres} m more than half a span from a support`,at:sp.at});
- findings.unshift({severity:'pass',message:`${st.supports} supports (${Object.entries(st.byType).filter(([k])=>k!=='bridge-shoe').map(([k,v])=>v+' '+k).join(', ')}); ${chk.unsupportedMetres} of ${chk.metres} m of above-ground pipe left without one`});
+ findings.unshift({severity:'pass',message:`${Object.entries(st.byType).filter(([k])=>!/-shoe$/.test(k)).reduce((n,[,v])=>n+v,0)} supports (${Object.entries(st.byType).filter(([k])=>!/-shoe$/.test(k)).map(([k,v])=>v+' '+k).join(', ')}); ${chk.unsupportedMetres} of ${chk.metres} m of above-ground pipe left without one`});
  return{ok:!PIPE_SUPPORT_PLAN.problems.length,errors:PIPE_SUPPORT_PLAN.problems.length,warnings:chk.spans.length,findings};}
 // Scaffold audit: each stair tower and access scaffold against the site rules it was built to.
 function runScaffoldAudit(){const findings=[];let errors=0;
