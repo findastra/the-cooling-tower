@@ -187,21 +187,21 @@
     }
 
     // Pipe bridge: where a line runs just over one raised surface (a tank roof, a sphere crown), drops more than 3 m
-    // over a gap of at most 16 m and comes back over the next raised surface, a light box truss carries it across
+    // over a gap of at most 20 m and comes back over the next raised surface, a light box truss carries it across
     // instead of a row of tall posts. Returns the bridged stretches as [from, to] offsets along the straight.
     function bridges(run, s) {
       if (s.length < 4) return [];
       const r = run.radius, high = []; let cur = null;
       for (let d = 0; d <= s.length + 1e-6; d += 0.5) {
         const p = add(s.a, mul(s.dir, d)), g = env.ground(p.x, p.z, p.y), gap = p.y - r - g;
-        if (gap >= -0.02 && gap < 1.5) { if (!cur) { cur = [d, d, g]; high.push(cur); } cur[1] = d; } else cur = null;
+        if (gap >= -0.02 && gap < 3.5) { if (!cur) { cur = [d, d, g, gap]; high.push(cur); } cur[1] = d; cur[3] = Math.max(cur[3], gap); } else cur = null;
       }
       const out = [];
       for (let k = 1; k < high.length; k++) {
-        const [, a1, gA] = high[k - 1], [b0, , gB] = high[k], L = b0 - a1;
-        if (L < 1 || L > 16) continue;
+        const [, a1, gA, hA] = high[k - 1], [b0, , gB, hB] = high[k], L = b0 - a1;
+        if (L < 1 || L > 20) continue;
         const m = add(s.a, mul(s.dir, (a1 + b0) / 2));
-        if (m.y - r - env.ground(m.x, m.z, m.y) < 3) continue;
+        if (m.y - r - env.ground(m.x, m.z, m.y) < Math.max(3, Math.max(hA, hB) + 2)) continue;
         const x0 = Math.max(0, a1 - 0.6), x1 = Math.min(s.length, b0 + 0.6), pa = add(s.a, mul(s.dir, x0)), pb = add(s.a, mul(s.dir, x1));
         if (!env.clear(pa, pb, r + 0.6, new Set([run]), pa)) continue;
         bridge(run, s, x0, x1, gA, gB); out.push([x0, x1]);
@@ -209,7 +209,7 @@
       return out;
     }
     function bridge(run, s, x0, x1, gA, gB) {
-      const r = run.radius, side = perpOf(s.axis), w = r + 0.35, deck = s.a.y - r - SHOE, hgt = 2 * r + 0.9, L = x1 - x0;
+      const r = run.radius, L = x1 - x0, side = perpOf(s.axis), w = r + 0.35, deck = s.a.y - r - SHOE, hgt = Math.max(2 * r + 0.9, L / 12); // truss about span/12 deep
       const at = (d, off, y) => add(add(s.a, mul(s.dir, d)), add(mul(side, off), { x: 0, y: y - s.a.y, z: 0 }));
       for (const off of [-w, w]) {
         cyl('steel', 'Pipe bridge chord', at(x0, off, deck - 0.06), at(x1, off, deck - 0.06), 0.06);
