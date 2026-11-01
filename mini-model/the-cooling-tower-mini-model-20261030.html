@@ -199,7 +199,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 <details id="mapControls" open>
  <summary><b class="title">Map controls</b><span class="toggle-hint">controls</span></summary>
  <div class="control-content">
-  <details class="control-section" open><summary>Show / hide</summary><p class="control-hint">Switches change what is visible.</p><div class="control-grid layer-controls"><button id="tWaterLoops" aria-pressed="true">Water loop numbers</button><button id="tRainLights" aria-pressed="true">Rain lights</button><button id="tPipes" aria-pressed="true">Pipes</button><button id="tPipeNeon" aria-pressed="false">Neon pipes</button><button id="tPipeLabels" aria-pressed="false">Pipe labels</button><button id="tDetectorCut" aria-pressed="false">Detector cutaway</button><button id="tBuildings" aria-pressed="true">Building names</button><button id="tEquip" aria-pressed="false">Equipment labels</button></div></details>
+  <details class="control-section" open><summary>Show / hide</summary><p class="control-hint">Switches change what is visible.</p><div class="control-grid layer-controls"><button id="tWaterLoops" aria-pressed="true">Water loop numbers</button><button id="tRainLights" aria-pressed="true">Rain lights</button><button id="tPipes" aria-pressed="true">Pipes</button><button id="tPipeNeon" aria-pressed="false">Neon pipes</button><button id="tPipeLabels" aria-pressed="false">Pipe labels</button><button id="tPipeSupports" aria-pressed="true">Pipe supports</button><button id="tDetectorCut" aria-pressed="false">Detector cutaway</button><button id="tBuildings" aria-pressed="true">Building names</button><button id="tEquip" aria-pressed="false">Equipment labels</button></div></details>
   <details class="control-section" open><summary>Pipe services</summary><p class="control-hint">One colour per fluid. Tap to show or hide it; hover a pipe for its service and diameter.</p><div class="control-grid pipe-services" id="pipeServices"></div></details>
   <details class="control-section"><summary>Audits</summary><p class="control-hint">Re-check the drawing with the Pipe Continuity and Rail Continuity auditors, the pipe supports Pipe Spawn placed and the scaffolds Scaffold Spawn built. Tap a finding to fly to it.</p><div class="control-grid audit-controls"><button id="runPipeAudit">Pipe audit</button><button id="runRailAudit">Rail audit</button><button id="runSupportAudit">Support audit</button><button id="runScaffoldAudit">Scaffold audit</button></div><div id="auditResult" class="audit-result" aria-live="polite"></div></details>
   <details class="control-section" open><summary>Go to a place</summary><p class="control-hint">Arrows move the camera to a view.</p><nav class="venues" aria-label="Go to a main area">
@@ -3239,6 +3239,7 @@ for(const s of Object.values(PIPE_NET.services)){const b=document.createElement(
 let pipesVisible=true,pipesNeon=false;
 document.getElementById('tPipes').onclick=e=>{pipesVisible=!pipesVisible;e.currentTarget.setAttribute('aria-pressed',String(pipesVisible));pipeRoot.visible=pipesVisible;};
 document.getElementById('tPipeNeon').onclick=e=>{pipesNeon=!pipesNeon;e.currentTarget.setAttribute('aria-pressed',String(pipesNeon));for(const s of Object.values(PIPE_NET.services))s.material.emissiveIntensity=pipesNeon?.9:.2;};
+document.getElementById('tPipeSupports').onclick=e=>{pipeSupports.visible=!pipeSupports.visible;e.currentTarget.setAttribute('aria-pressed',String(pipeSupports.visible));};
 document.getElementById('tPipeLabels').onclick=e=>{pipeLabels.visible=!pipeLabels.visible;e.currentTarget.setAttribute('aria-pressed',String(pipeLabels.visible));};
 
 // ----- audits: run the two auditor tools on what this page drew -----
@@ -3254,7 +3255,9 @@ document.getElementById('runRailAudit').onclick=()=>{const r=runRailAudit();if(r
 function runSupportAudit(){const chk=PipeSpawn.check(PIPE_NET.runs,PIPE_SUPPORT_PLAN,PIPE_SUPPORT_ENV),st=PIPE_SUPPORT_PLAN.stats,findings=[];
  for(const p of PIPE_SUPPORT_PLAN.problems)findings.push({severity:'error',message:`${p.name}: ${p.why}`,at:p.at});
  for(const sp of chk.spans)findings.push({severity:'warn',message:`${sp.name}: ${sp.metres} m more than half a span from a support`,at:sp.at});
- findings.unshift({severity:'pass',message:`${Object.entries(st.byType).filter(([k])=>!/-shoe$/.test(k)).reduce((n,[,v])=>n+v,0)} supports (${Object.entries(st.byType).filter(([k])=>!/-shoe$/.test(k)).map(([k,v])=>v+' '+k).join(', ')}); ${chk.unsupportedMetres} of ${chk.metres} m of above-ground pipe left without one`});
+ const t=st.byType,n=k=>t[k]||0;
+ const kinds=[[n('T-post'),'T-posts'],[st.bents,'shared rack bents'],[n('hanger'),'hangers'],[n('saddle'),'concrete saddles'],[n('sleeper')+n('stand'),'sleepers and stands'],[st.bridges,'pipe bridges'],[st.roadCrossings,'road crossings'],[n('guide'),'riser guides']].filter(([v])=>v).map(([v,k])=>v+' '+k).join(', ');
+ findings.unshift({severity:'pass',message:`${kinds}; ${chk.unsupportedMetres} of ${chk.metres} m of above-ground pipe left more than half a span from one`});
  return{ok:!PIPE_SUPPORT_PLAN.problems.length,errors:PIPE_SUPPORT_PLAN.problems.length,warnings:chk.spans.length,findings};}
 // Scaffold audit: each stair tower and access scaffold against the site rules it was built to.
 function runScaffoldAudit(){const findings=[];let errors=0;

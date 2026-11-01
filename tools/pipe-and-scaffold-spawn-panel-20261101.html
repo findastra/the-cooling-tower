@@ -25,7 +25,7 @@ select{grid-column:1/3;background:#1d1e21;color:var(--text);border:1px solid var
 main{position:relative}#view{position:absolute;inset:0}
 #hud{position:absolute;left:12px;bottom:10px;color:var(--dim);font-size:12px;pointer-events:none}
 #tip{position:absolute;pointer-events:none;background:#000c;border:1px solid var(--line);padding:3px 7px;border-radius:5px;font-size:12px;display:none}
-@media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:auto 55vh;overflow:auto;height:auto}aside{border-right:0;border-bottom:1px solid var(--line)}main{height:55vh}}
+@media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:55vh auto;overflow:auto;height:auto}aside{border-right:0;border-top:1px solid var(--line)}main{height:55vh;order:-1;position:sticky;top:0;z-index:1}}
 </style>
 </head>
 <body>
@@ -117,8 +117,11 @@ function pipeDemo() {
   for (const run of runs) { const pts = run.points.map(p => V(...p)), m = new THREE.Mesh(new THREE.TubeGeometry(elbowCurve(pts, r), 120, r, 18, false), pipeMat); m.userData.name = run.name + ' · ⌀ ' + fmt(D) + ' m'; world.add(m); hoverables.push(m); }
   const plan = PipeSpawn.plan(runs, env), chk = PipeSpawn.check(runs, plan, env);
   PipeSpawn.build(THREE, plan.parts, supportMats, world).forEach(m => hoverables.push(m));
-  const by = Object.entries(plan.stats.byType).filter(([k]) => !/-shoe$/.test(k)).map(([k, v]) => `${v} ${k}`).join(', ') || 'none';
-  $('pOut').innerHTML = `<div><b>${plan.stats.supports - Object.entries(plan.stats.byType).filter(([k]) => /-shoe$/.test(k)).reduce((n, [, v]) => n + v, 0)}</b> supports: ${by}${plan.stats.bents ? ` · ${plan.stats.bents} shared bents` : ''}</div>
+  // count structures, not the rests on them: a bent or bridge carrying three lines is one
+  const t = plan.stats.byType, n = k => t[k] || 0, st = plan.stats;
+  const parts = [[n('T-post'), 'T-post'], [st.bents, 'shared rack bent'], [n('hanger'), 'hanger'], [n('saddle'), 'concrete saddle'], [n('sleeper') + n('stand'), 'floor stand'], [st.bridges, 'pipe bridge'], [st.roadCrossings, 'road crossing'], [n('guide'), 'riser guide']].filter(([v]) => v);
+  const total = parts.reduce((s, [v]) => s + v, 0), by = parts.map(([v, k]) => `${v} ${k}${v > 1 ? 's' : ''}`).join(', ') || 'none';
+  $('pOut').innerHTML = `<div><b>${total}</b> supports: ${by}</div>
     <div>Longest allowed span for ⌀ ${fmt(D)} m: <b>${fmt(PipeSpawn.maxSpan(D))} m</b> (ASME B31.1)</div>
     <div class="${chk.unsupportedMetres ? 'warn' : 'ok'}">${chk.unsupportedMetres ? chk.unsupportedMetres + ' m' : 'No pipe'} more than half a span from a support (of ${chk.metres} m)</div>
     ${plan.problems.length ? `<div class="bad">${plan.problems.length} supports had no clear place:</div><ul>${plan.problems.slice(0, 5).map(p => `<li>${p.name}: ${p.why}</li>`).join('')}</ul>` : '<div class="ok">Every support found a clear place.</div>'}`;
@@ -155,13 +158,17 @@ for (const b of $('sExit').children) b.onclick = () => { sExit = b.dataset.e; [.
 rebuild();
 
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(), tip = $('tip');
-renderer.domElement.addEventListener('pointermove', e => {
+renderer.domElement.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') showTip(e); });
+renderer.domElement.addEventListener('pointermove', showTip);
+function showTip(e) {
   const r = renderer.domElement.getBoundingClientRect(); ptr.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ray.setFromCamera(ptr, camera);
   const hit = ray.intersectObjects(hoverables, false)[0]; if (!hit) { tip.style.display = 'none'; return; }
-  tip.textContent = hit.object.userData.name; tip.style.display = 'block'; tip.style.left = (e.clientX - r.left + 12) + 'px'; tip.style.top = (e.clientY - r.top + 12) + 'px';
-});
+  tip.textContent = hit.object.userData.name; tip.style.display = 'block'; tip.style.left = Math.min(e.clientX - r.left + 12, r.width - 180) + 'px'; tip.style.top = (e.clientY - r.top + 12) + 'px';
+}
 function size() { const w = view.clientWidth, h = view.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
-addEventListener('resize', size); size(); camera.position.set(0, 34, 62); controls.target.set(0, 5, 0);
+addEventListener('resize', size); size();
+if (camera.aspect < 1) { camera.position.set(2, 70, 120); $('hud').textContent = 'Drag to turn · pinch to zoom · two-finger drag to pan · tap a part for its name'; } else camera.position.set(0, 34, 62);
+controls.target.set(2, 5, 0);
 (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
 </script>
 </body>

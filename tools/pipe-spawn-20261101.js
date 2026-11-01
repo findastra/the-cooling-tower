@@ -152,7 +152,7 @@
 
   // ---------- planning ----------
   function plan(runs, envIn, opts = {}) {
-    const env = makeEnv(envIn, runs), parts = [], problems = [], stations = [], supports = [], bents = [];
+    const env = makeEnv(envIn, runs), parts = [], problems = [], stations = [], supports = [], bents = [], spans = [];
     const part = (o) => { parts.push(o); return o; };
     const box = (m, tag, c, s) => part({ k: 'box', m, tag, c: A(c), s: [+s[0].toFixed(3), +s[1].toFixed(3), +s[2].toFixed(3)] });
     const cyl = (m, tag, a, b, r) => part({ k: 'cyl', m, tag, a: A(a), b: A(b), r });
@@ -262,6 +262,7 @@
     // cross-members every 1.5 m carrying a shoe for each line; at each end a bearing on the roof below or, when it is
     // high, an end frame of two columns, a cross-beam and knee braces on footings.
     function spanBridge(group) {
+      spans.push({ kind: group[0].kind, lines: group.length });
       const kind = group[0].kind, axis = group[0].axis, a0 = Math.min(...group.map(c => c.a0)), a1 = Math.max(...group.map(c => c.a1)), L = a1 - a0;
       const lo = Math.min(...group.map(c => c.perp - c.r)) - 0.35, hi = Math.max(...group.map(c => c.perp + c.r)) + 0.35;
       const top = Math.min(...group.map(c => c.y - c.r)) - SHOE, rMax = Math.max(...group.map(c => c.r));
@@ -463,7 +464,7 @@
     }
 
     const count = {}; for (const s of supports) count[s.type] = (count[s.type] || 0) + 1;
-    return { version: VERSION, parts, supports, bents, problems, stats: { stations: stations.length, supports: supports.length, byType: count, bents: bents.length, parts: parts.length, unsupported: problems.length } };
+    return { version: VERSION, parts, supports, bents, problems, stats: { stations: stations.length, supports: supports.length, byType: count, bents: bents.length, bridges: spans.filter(b => b.kind === 'truss').length, roadCrossings: spans.filter(b => b.kind === 'girder').length, parts: parts.length, unsupported: problems.length } };
   }
 
   // ---------- check: is every metre of above-ground horizontal pipe within half a span of a support? ----------

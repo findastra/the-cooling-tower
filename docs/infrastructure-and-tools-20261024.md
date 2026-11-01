@@ -36,6 +36,12 @@ What you would see walking through The Cooling Tower, grouped by the kind of thi
 | **Steam & Smoke Spawner** | Tower plume, coloured smoke columns that pulse with the music (AudioLink), steam vents, rain particles | VRChat has no built-in fog that fills a room, so particles plus soft materials | Every rave world |
 | **CAD Converter** | Brings engineers' CAD parts into Unity: STEP in, slim textured mesh out | FreeCAD (free) turns STEP into a mesh, Blender slims it and adds UVs and materials, then FBX into Unity | Any world |
 
+**2026-11-01:** the Mini Model now has web versions of two of these, named the way Astra names tools: `pipe-spawn`
+(`tools/pipe-spawn-20261101.js`: every pipe support, pipe bridge and road crossing, at ASME B31.1 spans) and
+`scaffold-spawn` (`tools/scaffold-spawn-20261101.js`: stair towers and access scaffolds with real rise, going, bays,
+bracing and guardrails). They work on part lists, so a Unity Pipe Spawner and Scaffold Spawner can reuse their rules.
+See [Pipe Spawn and Scaffold Spawn](pipe-and-scaffold-spawn-20261101.md).
+
 ### Light Show Generator (Astra, 2026-10-24)
 
 Every DJ plays from their own stream link on a third-party host. The Light Show Generator turns whatever they play into the light show, and every future DJ world reuses it with its own look preset. It does not need to be clever; it needs to have no delay.
