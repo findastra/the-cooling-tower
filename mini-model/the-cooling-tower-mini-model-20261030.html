@@ -2176,7 +2176,7 @@ const intakePlans=[[[-767.6,-70],[-767.6,-24.4],[-100,-24.4]],[[-772.4,-70],[-77
 const intakeLines=intakePlans.map(p=>overlandCurve(p));
 equipment('lake','Mountain-lake intake screen',{inletA:intakeLines[0].getPoint(0),inletB:intakeLines[1].getPoint(0)});
 intakeLines.forEach((c,i)=>pipeRun('raw',`twin lake main ${'AB'[i]} · lake to pump house`,c.points,1.05,{curve:c,overland:true,plan:intakePlans[i],from:{eq:'lake',n:'inlet'+'AB'[i]},label:i?null:'RAW LAKE WATER →'}));
-intakePath.getSpacedPoints(48).forEach((p,i)=>{if(Math.abs(p.x-PATROL.west)<PATROL.width/2+1||Math.abs(p.x-ROAD.west)<ROAD.width/2+1)return;const t=intakePath.getTangentAt(i/48),side=V(-t.z,0,t.x).normalize(),y=intakeElevation(p.x,p.z);for(const off of [-3.4,3.4]){const q=p.clone().addScaledVector(side,off);rod(V(q.x,terrainHeight(q.x,q.z),q.z),V(q.x,y-1.2,q.z),.14,steel,detailGroup);}rod(V(p.x+t.z*3.4,y-1.2,p.z-t.x*3.4),V(p.x-t.z*3.4,y-1.2,p.z+t.x*3.4),.16,steel,detailGroup);});
+// the twin mains' saddles and bents come from Pipe Spawn with the rest of the supports (see 'supports and welds')
 HOVER='Lake intake main · trail follows the pipes';label('M · LAKE → MAKE-UP PUMPS',-490,terrainHeight(-490,-22)+18,-22,'#74d8ff',false,detailGroup);HOVER=null;
 const nearIntake=(x,z)=>{for(let i=1;i<intakeNodes.length;i++){const [ax,az]=intakeNodes[i-1],[bx,bz]=intakeNodes[i],dx=bx-ax,dz=bz-az,u=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz)));if(Math.hypot(x-(ax+u*dx),z-(az+u*dz))<15)return true;}return false;};
 // Stable, instanced trees planted on the rendered terrain. Trunks bury slightly into the soil.
@@ -3212,7 +3212,7 @@ const onRoad=(x,z)=>[ROAD.west,ROAD.east].some(r=>Math.abs(x-r)<ROAD.width/2+.5)
 const PIPE_SUPPORT_ENV={
  obstacles:PIPE_NET.obstacles,
  anchors:Object.values(PIPE_NET.equipment).filter(e=>!/^bank/.test(e.id)).flatMap(e=>Object.values(e.nozzles)),
- skipRun:r=>!!r.overland||!!r.buried,       // the lake mains keep their hillside saddles
+ skipRun:r=>!!r.buried,
  // tank roofs and sphere tops count as floors: small lines over them sit on roof stands
  ground:(x,z,y)=>{if(y>14.1&&chemicalTankPositions.some(t=>Math.hypot(x-t.x,z-t.z)<3.2))return 14.1;if(y>22.5&&hortonSpherePositions.some(s=>Math.hypot(x-s.x,z-s.z)<3.5))return 22.5;if(Math.hypot(x-RC,z)<RR)return y>FL?FL:0;if(x>79&&x<135&&z>-16&&z<-4&&y>6)return 6;if(x>130&&x<240&&z>55&&z<165)return 0;return Math.max(0,surfaceHeight(x,z));},
  ceiling:p=>{
@@ -3221,7 +3221,7 @@ const PIPE_SUPPORT_ENV={
   if(Math.hypot(p.x-RC,p.z)<RR-1&&p.y>FL)return{y:RH,name:'containment ring girder',prefer:true,maxHang:12};
   if(Math.hypot(p.x-RC,p.z)<RR-1&&p.y<FL-1)return{y:FL-.5,name:Math.hypot(p.x-RC,p.z)>10.5?'operating floor steel':'refuelling pool floor steel',prefer:true};
   const B=buildingBoxes.find(B=>inBuilding(B,p));return B?{y:B.h-.3,name:B.name,prefer:true}:null;},
- footing:(x,z)=>!onRoad(x,z)};
+ footing:(x,z)=>!onRoad(x,z)&&Math.abs(x-PATROL.west)>PATROL.width/2+.5};
 const supportMats={steel:mat(0x7d858c,{metalness:.45,roughness:.55}),galv:mat(0xb9c0c6,{metalness:.6,roughness:.35}),concrete:mat(0x7b7d78,{roughness:.95})};
 const pipeSupports=new THREE.Group();pipeSupports.name='Pipe supports';pipeRoot.add(pipeSupports);
 const PIPE_SUPPORT_PLAN=PipeSpawn.plan(PIPE_NET.runs,PIPE_SUPPORT_ENV,{welds:false});window.PIPE_SUPPORT_PLAN=PIPE_SUPPORT_PLAN;

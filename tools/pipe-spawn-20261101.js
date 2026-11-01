@@ -163,6 +163,7 @@
     for (const run of runs) {
       if (env.skipRun(run)) continue;
       const r = run.radius, span = maxSpan(2 * r) * env.spanFactor;
+      if (run.overland) { overland(run, r, span); continue; }
       for (const s of straights(run)) {
         if (s.horizontal) {
           const mid = add(s.a, mul(s.dir, s.length / 2)), c = env.ceiling(mid, run);
@@ -184,6 +185,25 @@
             guide(run, p, r); supports.push({ type: 'guide', run: run.id, at: A(p) });
           }
         }
+      }
+    }
+
+    // An overland line follows the ground up and down (its points are a smooth curve, square in plan): a station every
+    // span along it, moved up to 6 m where it lands on a road, each one a short piece of straight in its own direction.
+    function overland(run, r, span) {
+      const pts = cleanPoints(run.points), cum = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + dist(pts[i - 1], pts[i]));
+      const at = d => { let i = 1; while (i < pts.length - 1 && cum[i] < d) i++; const t = (d - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1); return { p: add(pts[i - 1], mul(sub(pts[i], pts[i - 1]), t)), dir: unit(sub(pts[i], pts[i - 1])) }; };
+      const total = cum[cum.length - 1];
+      for (let d = span / 2; d < total - 1; d += span) {
+        let hit = null;
+        for (const shift of [0, 1, -1, 2, -2, 3, -3, 4.5, -4.5, 6, -6]) { const q = at(Math.min(total - 0.5, Math.max(0.5, d + shift))); if (env.footing(q.p.x, q.p.z)) { hit = q; break; } }
+        if (!hit || env.skip(hit.p, run) || env.anchored(hit.p)) continue;
+        const flat = unit({ x: hit.dir.x, y: 0, z: hit.dir.z }), axis = Math.abs(flat.x) > Math.abs(flat.z) ? 'x' : 'z';
+        const s = { a: add(hit.p, mul(flat, -1)), dir: axis === 'x' ? { x: Math.sign(flat.x) || 1, y: 0, z: 0 } : { x: 0, y: 0, z: Math.sign(flat.z) || 1 }, length: 2, axis, horizontal: true };
+        const p = hit.p, g = env.ground(p.x, p.z, p.y), h = p.y - r - g;
+        if (h < -0.02) continue;
+        stations.push({ run, s, d: 1, p, r, g, h, axis, along: axis === 'x' ? p.x : p.z, perp: axis === 'x' ? p.z : p.x });
       }
     }
 
@@ -281,6 +301,7 @@
     for (const st of stations) {
       const c = env.ceiling(st.p, st.run), gapUp = c ? c.y - (st.p.y + st.r) : Infinity;
       st.ceiling = c && gapUp > 0.05 && gapUp <= (c.maxHang || MAX_HANG) ? c : null;
+      if (st.r >= 0.45 && st.h < 4 && saddle(st)) continue;   // big lines sit in concrete saddles
       if (st.h <= 0.9) { if (!stand(st)) fail(st, 'no room for a stand'); }
       else if (st.ceiling && (st.ceiling.prefer || gapUp < st.h)) { if (!hang(st) && !tpost(st)) fail(st, 'hanger and post both blocked'); }
       else posts.push(st);
@@ -326,6 +347,15 @@
       }
       shoe(st, p, top); supports.push({ type: st.h < 0.45 ? 'sleeper' : 'stand', run: st.run.id, at: A(p) }); return true;
     }
+    // concrete saddle for a big line (⌀ 0.9 m and up) up to 4 m over the floor: a pier that cradles the lower part of
+    // the pipe, with a steel strap over the top
+    function saddle(st) {
+      const p = st.p, w = 2 * st.r * 0.92, len = Math.max(0.8, st.r * 0.8), topY = p.y - st.r * 0.45;
+      if (!env.clear({ x: p.x, y: st.g + 0.3, z: p.z }, { x: p.x, y: p.y - st.r - 0.1, z: p.z }, Math.min(w, len) / 2, new Set([st.run]), p)) return false;
+      box('concrete', 'Concrete saddle', { x: p.x, y: (st.g + topY) / 2, z: p.z }, st.axis === 'x' ? [len, topY - st.g, w] : [w, topY - st.g, len]);
+      part({ k: 'disk', m: 'galv', tag: 'Saddle strap', c: A(p), axis: A(st.s.dir), R: st.r + 0.03, t: 0.12 });
+      supports.push({ type: 'saddle', run: st.run.id, at: A(p) }); return true;
+    }
     function hang(st) {
       const p = st.p, c = st.ceiling; if (!c) return false;
       const perp = perpOf(st.axis), ign = new Set([st.run]);
@@ -347,19 +377,20 @@
     }
     function tpost(st) {
       if (!env.footing(st.p.x, st.p.z)) return false;
-      const p = st.p, perp = perpOf(st.axis), top = p.y - st.r - SHOE, beamY = top - BEAM / 2, half = st.r + 0.35, ign = new Set([st.run]);
+      const C = Math.max(COL, 0.1 + st.r * 0.12), B = Math.max(BEAM, st.r * 0.3); // column and beam grow with the pipe
+      const p = st.p, perp = perpOf(st.axis), top = p.y - st.r - SHOE, beamY = top - B / 2, half = st.r + 0.35, ign = new Set([st.run]);
       for (const shift of [0, 0.8, -0.8, 1.6, -1.6, 2.4, -2.4, 3.2, -3.2, 4.8, -4.8, 6.4, -6.4]) {
         const q = add(p, mul(st.s.dir, shift)), dd = st.d + shift;
         if (dd < 0.15 || dd > st.s.length - 0.15) continue;
-        const lo = { x: q.x, y: st.g + 0.3, z: q.z }, hi = { x: q.x, y: beamY - BEAM / 2, z: q.z };
-        if (!env.footing(q.x, q.z) || !env.clear(lo, hi, COL + 0.05, ign, p)) continue;
+        const lo = { x: q.x, y: st.g + 0.3, z: q.z }, hi = { x: q.x, y: beamY - B / 2, z: q.z };
+        if (!env.footing(q.x, q.z) || !env.clear(lo, hi, C + 0.05, ign, p)) continue;
         const bA = add({ x: q.x, y: beamY, z: q.z }, mul(perp, -half)), bB = add({ x: q.x, y: beamY, z: q.z }, mul(perp, half));
-        if (!env.clear(bA, bB, BEAM / 2, ign, p)) continue;
-        footing(q.x, q.z, st.g, 1.0);
-        box('steel', 'T-post column', { x: q.x, y: (st.g + 0.28 + beamY - BEAM / 2) / 2, z: q.z }, [2 * COL, beamY - BEAM / 2 - st.g - 0.28, 2 * COL]);
-        box('steel', 'T-post beam', { x: q.x, y: beamY, z: q.z }, st.axis === 'x' ? [0.3, BEAM, 2 * half] : [2 * half, BEAM, 0.3]);
-        if (beamY - st.g > 3) for (const sg of [-1, 1]) cyl('steel', 'Knee brace', add({ x: q.x, y: beamY - BEAM / 2 - 0.9, z: q.z }, mul(perp, sg * COL)), add({ x: q.x, y: beamY - BEAM / 2, z: q.z }, mul(perp, sg * Math.min(half - 0.1, 0.9))), 0.06);
-        shoe(st, q, beamY + BEAM / 2); st.final = dd;
+        if (!env.clear(bA, bB, B / 2, ign, p)) continue;
+        footing(q.x, q.z, st.g, Math.max(1.0, C * 6));
+        box('steel', 'T-post column', { x: q.x, y: (st.g + 0.28 + beamY - B / 2) / 2, z: q.z }, [2 * C, beamY - B / 2 - st.g - 0.28, 2 * C]);
+        box('steel', 'T-post beam', { x: q.x, y: beamY, z: q.z }, st.axis === 'x' ? [Math.max(0.3, 2 * C), B, 2 * half] : [2 * half, B, Math.max(0.3, 2 * C)]);
+        if (beamY - st.g > 3) for (const sg of [-1, 1]) cyl('steel', 'Knee brace', add({ x: q.x, y: beamY - B / 2 - 0.9, z: q.z }, mul(perp, sg * C)), add({ x: q.x, y: beamY - B / 2, z: q.z }, mul(perp, sg * Math.min(half - 0.1, 0.9))), 0.06);
+        shoe(st, q, beamY + B / 2); st.final = dd;
         supports.push({ type: 'T-post', run: st.run.id, at: A(q) }); return true;
       }
       return false;
