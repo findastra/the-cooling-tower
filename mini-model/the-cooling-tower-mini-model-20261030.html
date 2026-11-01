@@ -199,9 +199,9 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 <details id="mapControls" open>
  <summary><b class="title">Map controls</b><span class="toggle-hint">controls</span></summary>
  <div class="control-content">
-  <details class="control-section" open><summary>Show / hide</summary><p class="control-hint">Switches change what is visible.</p><div class="control-grid layer-controls"><button id="tWaterLoops" aria-pressed="true">Water loop numbers</button><button id="tRainLights" aria-pressed="true">Rain lights</button><button id="tPipes" aria-pressed="true">Pipes</button><button id="tPipeNeon" aria-pressed="false">Neon pipes</button><button id="tPipeLabels" aria-pressed="false">Pipe labels</button><button id="tDetectorCut" aria-pressed="false">Detector cutaway</button><button id="tBuildings" aria-pressed="true">Building names</button><button id="tEquip" aria-pressed="false">Equipment labels</button></div></details>
+  <details class="control-section" open><summary>Show / hide</summary><p class="control-hint">Switches change what is visible.</p><div class="control-grid layer-controls"><button id="tWaterLoops" aria-pressed="true">Water loop numbers</button><button id="tRainLights" aria-pressed="true">Rain lights</button><button id="tPipes" aria-pressed="true">Pipes</button><button id="tPipeNeon" aria-pressed="false">Neon pipes</button><button id="tPipeLabels" aria-pressed="false">Pipe labels</button><button id="tPipeSupports" aria-pressed="true">Pipe supports</button><button id="tDetectorCut" aria-pressed="false">Detector cutaway</button><button id="tBuildings" aria-pressed="true">Building names</button><button id="tEquip" aria-pressed="false">Equipment labels</button></div></details>
   <details class="control-section" open><summary>Pipe services</summary><p class="control-hint">One colour per fluid. Tap to show or hide it; hover a pipe for its service and diameter.</p><div class="control-grid pipe-services" id="pipeServices"></div></details>
-  <details class="control-section"><summary>Audits</summary><p class="control-hint">Re-check the drawing with the Pipe Continuity and Rail Continuity auditors. Tap a finding to fly to it.</p><div class="control-grid audit-controls"><button id="runPipeAudit">Pipe audit</button><button id="runRailAudit">Rail audit</button></div><div id="auditResult" class="audit-result" aria-live="polite"></div></details>
+  <details class="control-section"><summary>Audits</summary><p class="control-hint">Re-check the drawing with the Pipe Continuity and Rail Continuity auditors, the pipe supports Pipe Spawn placed and the scaffolds Scaffold Spawn built. Tap a finding to fly to it.</p><div class="control-grid audit-controls"><button id="runPipeAudit">Pipe audit</button><button id="runRailAudit">Rail audit</button><button id="runSupportAudit">Support audit</button><button id="runScaffoldAudit">Scaffold audit</button></div><div id="auditResult" class="audit-result" aria-live="polite"></div></details>
   <details class="control-section" open><summary>Go to a place</summary><p class="control-hint">Arrows move the camera to a view.</p><nav class="venues" aria-label="Go to a main area">
   <button data-v="0" style="--c:#8dff5a">1 · The Stack</button>
   <button data-v="1" style="--c:#ff5ad8">2 · Turbine Hall</button>
@@ -1289,6 +1289,8 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 </script>
 <script src="../tools/pipe-continuity-auditor-20261031.js"></script>
 <script src="../tools/rail-continuity-auditor-20261031.js"></script>
+<script src="../tools/pipe-spawn-20261101.js"></script>
+<script src="../tools/scaffold-spawn-20261101.js"></script>
 <script>
 const mobileLayout=window.matchMedia('(max-width:760px), (max-height:560px) and (pointer:coarse)');
 const view = document.getElementById('view');
@@ -1470,23 +1472,17 @@ pipeService('n2',{name:'Nitrogen gas',color:'#9b6bff',kind:'split',rFull:.32,qFu
 pipeService('acid',{name:'Sulfuric acid · H₂SO₄',color:'#ff8a00',kind:'join',rFull:.2,qFull:8});
 pipeService('caustic',{name:'Caustic soda · NaOH',color:'#c6ff00',kind:'join',rFull:.2,qFull:8});
 
-function scaffoldStair(x0, y0, z0, dx, dz, steps, rise = 0.5, run = 0.6, width = 2.4) {
-  const tube = mat(0x9aa0a6, { metalness: 0.4, roughness: 0.5 }), clamp = mat(0xc9a227);
-  const dir = V(dx, 0, dz).normalize(), side = V(-dir.z, 0, dir.x), yaw = -Math.atan2(dir.z, dir.x);
-  const len = steps * run, top = y0 + steps * rise, w = width / 2 + 0.4;
-  for (let s = 0; s < steps; s++) { const t = add(new THREE.Mesh(new THREE.BoxGeometry(run, 0.12, width), mat(0x6f7c82)), x0 + dir.x * (s + 0.5) * run, y0 + (s + 1) * rise, z0 + dir.z * (s + 0.5) * run); t.rotation.y = yaw; }
-  for (let d = 0; d <= len + 0.01; d += 2) for (const k of [-w, w]) { // standards (uprights)
-    const base = V(x0, y0, z0).addScaledVector(dir, d).addScaledVector(side, k);
-    rod(base, base.clone().setY(top + 1.2), 0.08, tube);
-  }
-  for (let y = y0 + 2; y <= top + 1.2; y += 2) for (const k of [-w, w]) { // ledgers at every lift, with clamps
-    const a = V(x0, y, z0).addScaledVector(side, k), b = a.clone().addScaledVector(dir, len);
-    rod(a, b, 0.07, tube);
-    for (let d = 0; d <= len + 0.01; d += 2) add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 6, 4), clamp), a.x + dir.x * d, y, a.z + dir.z * d);
-  }
-  for (const k of [-w, w]) { const a = V(x0, y0 + 1.1, z0).addScaledVector(side, k), b = V(x0, top + 1.1, z0).addScaledVector(dir, len).addScaledVector(side, k); rod(a, b, 0.06, mat(0xffc93c)); } // handrails
-  for (let d = 0; d + 4 <= len + 0.01; d += 4) { const a = V(x0, y0, z0).addScaledVector(dir, d).addScaledVector(side, w), b = V(x0, Math.min(top, y0 + 4), z0).addScaledVector(dir, d + 4).addScaledVector(side, w); rod(a, b, 0.06, tube); } // braces
-}
+// ---------- scaffolds: Scaffold Spawn (tools/scaffold-spawn-20261101.js) ----------
+// Stair towers and access scaffolds built to site rules: rise ≤ 0.2 m on a 0.25 m going, a landing every lift, bays
+// ≤ 2.6 m, standards on base plates and sole boards, ledgers and transoms every lift, zig-zag face bracing, boarded decks
+// with toe boards, guardrails at 1.0 m with a mid-rail. Each one is checked against those rules as it is built.
+const scaffoldMats={tube:mat(0x9aa0a6,{metalness:.5,roughness:.45}),coupler:mat(0x4d5358,{metalness:.6,roughness:.4}),base:steel,sole:mat(0x6b5236),board:mat(0x8a6f4a),toe:mat(0x9a7b50),tread:mat(0x6f7c82,{metalness:.5,roughness:.5}),rail:mat(0xffc93c)};
+const scaffoldRecords=[];
+function scaffold(name,record,group=scene,mats=scaffoldMats){
+ ScaffoldSpawn.build(THREE,record.parts,mats,group).forEach(m=>{m.userData.name=name+' · '+m.userData.name.toLowerCase();hoverables.push(m);});
+ record.name=name;record.problems=ScaffoldSpawn.check(record);if(record.problems.length)console.warn('Scaffold Spawn: '+name,record.problems);
+ scaffoldRecords.push(record);return record;}
+window.SCAFFOLDS=scaffoldRecords;
 function label(text, x, y, z, color = '#eceef2', big = false, g = scene) {
   const c = document.createElement('canvas'); c.width = 720; c.height = 120;
   const x2 = c.getContext('2d');
@@ -1513,9 +1509,12 @@ const figLines = (() => {
 const figMat = new THREE.LineBasicMaterial({ color: 0xf2f4f8 });
 const hatGeo = new THREE.SphereGeometry(0.22, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2);
 const hatMat = mat(0xffd23f, { emissive: 0x3a2e00 });
+const crowdKeepOut = []; // floor openings nobody may stand in: { x0, x1, z0, z1 }
 function crowd(cx, cz, rIn, rOut, n, y, scale = 1.5) {
   for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2, r = rIn + Math.random() * (rOut - rIn);
+    let a, r, tries = 0;
+    do { a = Math.random() * Math.PI * 2; r = rIn + Math.random() * (rOut - rIn); }
+    while (tries++ < 30 && crowdKeepOut.some(w => { const x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r; return x > w.x0 - .5 && x < w.x1 + .5 && z > w.z0 - .5 && z < w.z1 + .5; }));
     const g = new THREE.Group();
     g.add(new THREE.LineSegments(figLines, figMat));
     const hat = new THREE.Mesh(hatGeo, hatMat); hat.position.y = 1.74; g.add(hat);
@@ -1652,11 +1651,15 @@ add(new THREE.Mesh(new THREE.CylinderGeometry(38,38,.5,72),mat(0x69777b)),0,.25,
 const basinWater=add(new THREE.Mesh(new THREE.CircleGeometry(37,96),new THREE.MeshPhongMaterial({color:0x398ca8,transparent:true,opacity:.32,shininess:85,side:THREE.DoubleSide,depthWrite:false})),0,1.45,0);basinWater.rotation.x=-Math.PI/2;
 HOVER = 'Open steel grating: real gaps let you see the water and pipes below';
 const grateRadius=rAt(D)-.6, grateBars=[];
-// Clip both families of bars to the circular deck and central stage opening.
+// The two scaffold stair towers come up through the deck in these wells (their top landings fill the exit end).
+const stairWells=[-1,1].map(s=>({x0:Math.min(s*18.1,s*20.3),x1:Math.max(s*18.1,s*20.3),z0:-6.25,z1:-.5}));crowdKeepOut.push(...stairWells);
+const cutWells=(spans,q,alongZ)=>{let out=spans;for(const w of stairWells){const [a0,a1,b0,b1]=alongZ?[w.x0,w.x1,w.z0,w.z1]:[w.z0,w.z1,w.x0,w.x1];if(q<a0||q>a1)continue;out=out.flatMap(([lo,hi])=>hi<=b0||lo>=b1?[[lo,hi]]:[[lo,Math.min(hi,b0)],[Math.max(lo,b1),hi]].filter(([l,h])=>h-l>.05));}return out;};
+// Clip both families of bars to the circular deck, the central stage opening and the stair wells.
 for(let q=-grateRadius;q<=grateRadius;q+=.65){
  const edge=Math.sqrt(grateRadius*grateRadius-q*q),hole=Math.abs(q)<5?Math.sqrt(25-q*q):0;
  const spans=hole?[[-edge,-hole],[hole,edge]]:[[-edge,edge]];
- for(const [lo,hi] of spans)if(hi-lo>.05){grateBars.push([q,(lo+hi)/2,.065,hi-lo]);grateBars.push([(lo+hi)/2,q,hi-lo,.065]);}
+ for(const [lo,hi] of cutWells(spans,q,true))if(hi-lo>.05)grateBars.push([q,(lo+hi)/2,.065,hi-lo]);
+ for(const [lo,hi] of cutWells(spans,q,false))if(hi-lo>.05)grateBars.push([(lo+hi)/2,q,hi-lo,.065]);
 }
 const grateMesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.16,1),mat(0x91a8b0,{metalness:.65,roughness:.4}),grateBars.length);
 const grateMatrix=new THREE.Matrix4(),grateRotation=new THREE.Quaternion();
@@ -1678,14 +1681,14 @@ HOVER='Collection sump outlet: submerged screened intake returning cold water to
 add(new THREE.Mesh(new THREE.BoxGeometry(4,.12,4),mat(0x233e48)),25,.56,-24);
 for(const z of [-26,-22])add(new THREE.Mesh(new THREE.BoxGeometry(4,.65,.18),mat(0x879393)),25,.85,z);
 for(let z=-25.7;z<=-22.3;z+=.3)rod(V(23,.6,z),V(23,1.4,z),.035,steel);
-HOVER = 'Stairs up to the dance floor';
-for (const side of [-1, 1]) scaffoldStair(side * 19.5, 2.16, -6, 0, 1, 11, (D-2.16)/11);
 HOVER = null;
-for (let c = 0; c < 8; c++) for (let r = 0; r < 5; r++) { // scaffold on the inner wall
-  const a = Math.PI * 0.62 + c * 0.04, y0 = LEG + r * 5, rad = rAt(y0) - 1.5;
-  rod(V(Math.cos(a) * rad, y0, Math.sin(a) * rad), V(Math.cos(a) * rad, y0 + 5, Math.sin(a) * rad), 0.08, steel);
-  if (c < 7) { const b = a + 0.04; rod(V(Math.cos(a) * rad, y0 + 5, Math.sin(a) * rad), V(Math.cos(b) * rad, y0 + 5, Math.sin(b) * rad), 0.07, steel); }
-}
+// two switchback stair towers from the lower waffle grid up through the deck wells; each top landing opens north onto the deck
+for (const side of [-1, 1]) scaffold('Stairs up to the dance floor', ScaffoldSpawn.stairTower({ foot: [side * 18.2, 2.16, -6.2], dir: [0, 1], across: [side, 0], height: D - 2.16, laneWidth: 1.0 }));
+// maintenance scaffold on the inner shell: boarded every lift, tied back to the shell, which leans in as it rises
+{ const top = D + 12, R = rAt(top + 1) - 0.4, a0 = Math.PI * 0.62, path = [];
+  for (let i = 0; i <= 4; i++) { const a = a0 + i * 0.07; path.push([Math.cos(a) * R, Math.sin(a) * R]); }
+  scaffold('Maintenance scaffold on the inner shell', ScaffoldSpawn.accessScaffold({ path, wallSide: -1, base: D, height: 12, width: 1.0,
+    tieLength: p => Math.max(0.3, rAt(p[1]) - Math.hypot(p[0], p[2])) })); }
 // caged ladder up the outside, on the break-in side, to the rim walk at the top
 HOVER = 'Caged ladder to the rim: climb up and watch the show from the top';
 { const LA = Math.PI - 0.32, c = Math.cos(LA), sn = Math.sin(LA), tx = -sn, tz = c; // ladder angle and its sideways direction
@@ -1945,11 +1948,15 @@ const cont = add(new THREE.Mesh(new THREE.CylinderGeometry(RR, RR, RH, 64, 1, tr
 const dome = add(new THREE.Mesh(new THREE.SphereGeometry(RR, 64, 18, 0, Math.PI * 2, 0, Math.PI / 2), cont.material), RC, RH, 0); walls.push(dome);
 HOVER = 'Equipment hatch: the way into the dome';
 add(new THREE.Mesh(new THREE.TorusGeometry(4, 0.7, 8, 32), steel), HX1 + 0.4, 4.4, 0).rotation.y = Math.PI / 2;
-HOVER = 'Scaffold stairs up to the operating floor';
-scaffoldStair(HX1 + 1.2, 0.2, 0, 1, 0, 16, 0.5, 0.55, 3.2);
-HOVER = 'Equipment hatch: the way into the dome';
+HOVER = null;
+// a four-lift stair tower inside the hatch; its top landing opens south onto the operating floor
+const reactorStair = scaffold('Scaffold stairs up to the operating floor', ScaffoldSpawn.stairTower({ foot: [HX1 + 1.2, 0, -1.2], dir: [1, 0], across: [0, 1], height: FL, laneWidth: 1.2, exit: 'side', exitSide: 0 }));
 HOVER = 'Operating floor';
-add(new THREE.Mesh(new THREE.RingGeometry(10.5, RR - 0.6, 64), mat(0x4a5258, { side: THREE.DoubleSide })), RC, FL, 0).rotation.x = -Math.PI / 2;
+{ // the floor ring, with a well where the stair tower comes up
+  const fp = reactorStair.footprint, shape = new THREE.Shape(); shape.absarc(0, 0, RR - 0.6, 0, Math.PI * 2, false);
+  const pool = new THREE.Path(); pool.absarc(0, 0, 10.5, 0, Math.PI * 2, true); shape.holes.push(pool);
+  const well = new THREE.Path(); well.moveTo(fp.min[0] - RC - .05, -fp.min[2] + .05); well.lineTo(fp.max[0] - RC + .05, -fp.min[2] + .05); well.lineTo(fp.max[0] - RC + .05, -fp.max[2] - .05); well.lineTo(fp.min[0] - RC - .05, -fp.max[2] - .05); well.lineTo(fp.min[0] - RC - .05, -fp.min[2] + .05); shape.holes.push(well);
+  add(new THREE.Mesh(new THREE.ShapeGeometry(shape, 64), mat(0x4a5258, { side: THREE.DoubleSide })), RC, FL, 0).rotation.x = -Math.PI / 2; }
 add(new THREE.Mesh(new THREE.TorusGeometry(10.5, 0.1, 4, 64), rail), RC, FL + 1.1, 0).rotation.x = Math.PI / 2;
 // refuelling pool: concrete cavity, water, the reactor vessel and its core
 HOVER = 'Refuelling pool, flooded: the water shields the open reactor';
@@ -2169,7 +2176,7 @@ const intakePlans=[[[-767.6,-70],[-767.6,-24.4],[-100,-24.4]],[[-772.4,-70],[-77
 const intakeLines=intakePlans.map(p=>overlandCurve(p));
 equipment('lake','Mountain-lake intake screen',{inletA:intakeLines[0].getPoint(0),inletB:intakeLines[1].getPoint(0)});
 intakeLines.forEach((c,i)=>pipeRun('raw',`twin lake main ${'AB'[i]} · lake to pump house`,c.points,1.05,{curve:c,overland:true,plan:intakePlans[i],from:{eq:'lake',n:'inlet'+'AB'[i]},label:i?null:'RAW LAKE WATER →'}));
-intakePath.getSpacedPoints(48).forEach((p,i)=>{if(Math.abs(p.x-PATROL.west)<PATROL.width/2+1||Math.abs(p.x-ROAD.west)<ROAD.width/2+1)return;const t=intakePath.getTangentAt(i/48),side=V(-t.z,0,t.x).normalize(),y=intakeElevation(p.x,p.z);for(const off of [-3.4,3.4]){const q=p.clone().addScaledVector(side,off);rod(V(q.x,terrainHeight(q.x,q.z),q.z),V(q.x,y-1.2,q.z),.14,steel,detailGroup);}rod(V(p.x+t.z*3.4,y-1.2,p.z-t.x*3.4),V(p.x-t.z*3.4,y-1.2,p.z+t.x*3.4),.16,steel,detailGroup);});
+// the twin mains' saddles and bents come from Pipe Spawn with the rest of the supports (see 'supports and welds')
 HOVER='Lake intake main · trail follows the pipes';label('M · LAKE → MAKE-UP PUMPS',-490,terrainHeight(-490,-22)+18,-22,'#74d8ff',false,detailGroup);HOVER=null;
 const nearIntake=(x,z)=>{for(let i=1;i<intakeNodes.length;i++){const [ax,az]=intakeNodes[i-1],[bx,bz]=intakeNodes[i],dx=bx-ax,dz=bz-az,u=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz)));if(Math.hypot(x-(ax+u*dx),z-(az+u*dz))<15)return true;}return false;};
 // Stable, instanced trees planted on the rendered terrain. Trunks bury slightly into the soil.
@@ -2250,13 +2257,16 @@ function lockedBuilding(name, x, z, w, h, d, doorSide = 'z+') {buildingBoxes.pus
   for(const fy of [0,4,8])add(new THREE.Mesh(new THREE.BoxGeometry(w,.16,d),mat(0x717a7e)),x,fy-.08,z);
   // Move upper windows out of the new third-floor doorway openings.
   buildingWindows.children.forEach(win=>{const q=win.position;if(q.y!==10)return;for(const side of accessSides){const vertical=side[0]==='x',sign=side[1]==='-'?-1:1;if(vertical?Math.abs(q.x-(x+sign*(w/2+.09)))<.02&&Math.abs(q.z-z)<1.5:Math.abs(q.z-(z+sign*(d/2+.09)))<.02&&Math.abs(q.x-x)<1.5)win.visible=false;}});
-  // Roof guardrails are independent of the raceway toggle; the makeshift scaffold has a landing gap.
+  // Roof guardrails are independent of the raceway toggle. The pump house has two openings, each as wide as the deck
+  // that steps onto the roof there: the makeshift scaffold's exit deck (west) and the east stair tower's top landing.
   for(const side of [-1,1]){
    for(const y of [h+.95,h+1.5])rod(V(x-w/2,y,z+side*d/2),V(x+w/2,y,z+side*d/2),.045,rail,detailGroup);
    for(let xx=x-w/2;xx<=x+w/2;xx+=3)rod(V(xx,h+.4,z+side*d/2),V(xx,h+1.5,z+side*d/2),.045,rail,detailGroup);
-   const sx=x+side*w/2,scaffoldGap=name.includes('pump house')&&side===-1;
-   for(const y of [h+.95,h+1.5]){if(scaffoldGap){rod(V(sx,y,z-d/2),V(sx,y,z-4.5),.045,rail,detailGroup);rod(V(sx,y,z+4.5),V(sx,y,z+d/2),.045,rail,detailGroup);}else rod(V(sx,y,z-d/2),V(sx,y,z+d/2),.045,rail,detailGroup);}
-   for(let zz=z-d/2;zz<=z+d/2;zz+=3){if(scaffoldGap&&Math.abs(zz-z)<4.5)continue;rod(V(sx,h+.4,zz),V(sx,h+1.5,zz),.045,rail,detailGroup);}
+   const sx=x+side*w/2,gaps=name.includes('pump house')?(side<0?[[-23.25,-20.75]]:[[-20.75,-19.45]]):[];
+   const lengths=[];let from=z-d/2;for(const [g0,g1] of gaps){lengths.push([from,g0]);from=g1;}lengths.push([from,z+d/2]);
+   for(const y of [h+.95,h+1.5])for(const [a,b] of lengths)rod(V(sx,y,a),V(sx,y,b),.045,rail,detailGroup);
+   for(let zz=z-d/2;zz<=z+d/2;zz+=3){if(gaps.some(([g0,g1])=>zz>g0-.3&&zz<g1+.3))continue;rod(V(sx,h+.4,zz),V(sx,h+1.5,zz),.045,rail,detailGroup);}
+   for(const [g0,g1] of gaps)for(const zz of [g0,g1])rod(V(sx,h+.4,zz),V(sx,h+1.5,zz),.045,rail,detailGroup);
   }
   add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, 0.4, d + 0.4), mat(0x3a3c42)), x, h + 0.2, z);
   const dz = doorSide === 'z+' ? d / 2 + 0.06 : doorSide === 'z-' ? -d / 2 - 0.06 : 0, dx = doorSide === 'x+' ? w / 2 + 0.06 : doorSide === 'x-' ? -w / 2 - 0.06 : 0;
@@ -2431,46 +2441,20 @@ for(const [x,z,name] of [[-33,15,'STACK'],[138,15,'TURBINE'],[166,26,'REACTOR'],
 label('ASSEMBLY POINT',56,5,139,'#7dffab',false,detailGroup);
 HOVER=null;
 
-HOVER='Makeshift crew scaffold · salvaged switchback stairs to the clubhouse roof';
+// The crew's makeshift scaffold: built from salvaged tube, rusty clamps and mixed planks, but put up the proper way.
+// Walkers come along the tops of the two lake mains onto the entry deck (it rests between and over the pipes at 10 m),
+// climb one flight and cross the exit deck onto the clubhouse roof.
 const pipeRoofScaffold=new THREE.Group();pipeRoofScaffold.name='Makeshift clubhouse roof scaffold';detailGroup.add(pipeRoofScaffold);
-const pipeRoofAccess={landingY:10,roofY:12.46,roofSurface:12.4,xStart:-102,xEnd:-88.6,steps:16,flights:2,zMin:-26.8,zMax:-17.2};
-const scaffoldTube=mat(0x6b7478,{metalness:.35,roughness:.86}),scaffoldClamp=mat(0x8c604c),scaffoldDeck=mat(0x665b4b),scaffoldPlanks=[mat(0x766750),mat(0x8a7960),mat(0x5e625b)];
-for(const x of [-102,-99.6,-96,-93.6,-91.2])for(const z of [-27.4,-16.8]){
- add(new THREE.Mesh(new THREE.BoxGeometry(.55,.13,.6),scaffoldPlanks[1]),x,.065,z,pipeRoofScaffold);
- rod(V(x,.13,z),V(x,13.5+(x%2)*.12,z),.075,scaffoldTube,pipeRoofScaffold);
- for(const y of [1.4,4.4,9.8,13.2])add(new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),scaffoldClamp),x,y,z,pipeRoofScaffold);
-}
-for(const z of [-27.4,-16.8]){
- for(const y of [1.4,4.4,9.8,13.2])rod(V(-102,y,z),V(-91.2,y,z),.065,scaffoldTube,pipeRoofScaffold);
- for(const x of [-102,-98.4,-94.8]){rod(V(x,.3,z),V(x+3.6,9.8,z),.052,scaffoldTube,pipeRoofScaffold);rod(V(x,9.8,z),V(x+3.6,13.3,z),.052,scaffoldTube,pipeRoofScaffold);}
-}
-function salvagedLanding(x0,x1,y,z0,z1){
- const n=Math.ceil((z1-z0)/.3),span=(z1-z0)/n;
- for(let i=0;i<n;i++){const plank=add(new THREE.Mesh(new THREE.BoxGeometry(x1-x0+.035*(i%3),.1,span+.005),scaffoldPlanks[i%3]),(x0+x1)/2,y-.05,z0+(i+.5)*span,pipeRoofScaffold);plank.userData.name='Salvaged scaffold planks';}
-}
-salvagedLanding(-102,-100,10,-26.8,-18.4);
-salvagedLanding(-102,-97.2,10,-26.8,-25.6);
-salvagedLanding(-99.6,-93.6,11.23,-18.4,-17.2);
-salvagedLanding(-96,-88.6,12.46,-26.8,-25.6);
-const pipeRoofFlights=[{x:-98.4,z:-25.6,dir:1,y:10},{x:-94.8,z:-18.4,dir:-1,y:11.23}];
-for(const f of pipeRoofFlights){
- for(let i=0;i<8;i++){
-  const top=f.y+(i+1)*1.23/8,tread=add(new THREE.Mesh(new THREE.BoxGeometry(2.4,1.23/8,.905),scaffoldPlanks[i%3]),f.x,top-1.23/16,f.z+f.dir*(i+.5)*.9,pipeRoofScaffold);tread.userData.name='Makeshift switchback wooden stair';
-  for(const dx of [-.82,.82])add(new THREE.Mesh(new THREE.BoxGeometry(.08,.025,.13),scaffoldClamp),f.x+dx,top+.012,f.z+f.dir*(i+.5)*.9,pipeRoofScaffold);
- }
- for(const dx of [-1.2,1.2]){
-  rod(V(f.x+dx,f.y-.12,f.z),V(f.x+dx,f.y+1.11,f.z+f.dir*7.2),.09,scaffoldTube,pipeRoofScaffold);
-  for(const lift of [.55,1.05])rod(V(f.x+dx,f.y+lift,f.z),V(f.x+dx,f.y+1.23+lift,f.z+f.dir*7.2),.055,scaffoldTube,pipeRoofScaffold);
-  for(let i=0;i<=8;i+=4){const y=f.y+i*1.23/8,z=f.z+f.dir*i*.9;rod(V(f.x+dx,y,z),V(f.x+dx,y+1.05,z),.055,scaffoldTube,pipeRoofScaffold);}
- }
-}
-for(const [a,b]of [[V(-102,10,-26.8),V(-97.2,10,-26.8)],[V(-99.6,11.23,-17.2),V(-93.6,11.23,-17.2)],[V(-96,12.46,-26.8),V(-88.6,12.46,-26.8)]])for(const h of [.55,1.05])rod(a.clone().add(V(0,h,0)),b.clone().add(V(0,h,0)),.055,scaffoldTube,pipeRoofScaffold);
-const crewRoofSign=surfaceArt('UP TO ROOF',-100.7,11.9,-25.8,3.2,.8,'#e8ddbc',-Math.PI/2,true);crewRoofSign.userData.name='Crew-painted makeshift roof access sign';
+const scaffoldPlanks=[mat(0x766750),mat(0x8a7960),mat(0x5e625b)];
+const salvagedMats={tube:mat(0x6b7478,{metalness:.35,roughness:.86}),coupler:mat(0x8c604c),base:mat(0x5d5a52),sole:scaffoldPlanks[1],board1:scaffoldPlanks[0],board2:scaffoldPlanks[1],board3:scaffoldPlanks[2],toe:scaffoldPlanks[2],tread1:scaffoldPlanks[0],tread2:scaffoldPlanks[1],tread3:scaffoldPlanks[2],rail:mat(0x6b7478,{metalness:.35,roughness:.86})};
+scaffold('Makeshift crew scaffold · salvaged stair to the clubhouse roof',ScaffoldSpawn.stairTower({foot:[-99,10,-23.2],dir:[1,0],across:[0,1],height:2.46,laneWidth:2.4,lanes:1,standFrom:0,entry:{length:3,widen:2.4},exitDeck:3.6,style:{mixed:{board:3,tread:3}}}),pipeRoofScaffold,salvagedMats);
+HOVER='Makeshift crew scaffold · salvaged stair to the clubhouse roof';
+const crewRoofSign=surfaceArt('UP TO ROOF',-100.5,10.6,-25.68,2.6,.7,'#e8ddbc',0,true);crewRoofSign.userData.name='Crew-painted sign tied to the entry deck guardrail';
 HOVER=null;
 // Direct roof-to-yard stairs remain; the long pipe-side catwalk network is removed.
-HOVER='Pump-house east roof-to-yard stairs';
-scaffoldStair(-72,.2,-10,0,-1,24,.5,.5,2.4);
-add(new THREE.Mesh(new THREE.BoxGeometry(3.8,.14,2.4),steel),-72,12.4,-22,detailGroup);
+// A six-lift stair tower against the east wall, south of the Human Raceway bridge; the top landing opens west onto the roof.
+HOVER=null;
+const pumpRoofStair=scaffold('Pump-house east roof-to-yard stairs',ScaffoldSpawn.stairTower({foot:[-73.9,0,-20.7],dir:[0,1],across:[1,0],height:12.4,laneWidth:1.2,exit:'side',exitSide:0}),detailGroup);
 // Standalone service vessels retain bottom drains and have individual top connection stubs.
 HOVER='Detector water-service vessels · independent purified-water circuit';
 for(const [x,z,name] of [[-28,46,'DETECTOR · PURE WATER BUFFER'],[-14,46,'DETECTOR · RECOVERY WATER']]){add(new THREE.Mesh(new THREE.CylinderGeometry(5,5,9,32),mat(0xa8c4d0,{metalness:.6,roughness:.3})),x,4.5,z,detailGroup);label(name,x,11,z,'#8ce6ff',false,detailGroup);rod(V(x,9,z),V(x,10.5,z),.2,steel,detailGroup);flange(V(x,10.5,z),V(0,1,0),.2,detailGroup,true);blindCap(V(x,10.5,z),V(0,1,0),.2,steel,detailGroup);rod(V(x,1,z+5),V(x,1,56),.2,steel,detailGroup);blindCap(V(x,1,56),V(0,0,1),.2,steel); }
@@ -3097,9 +3081,6 @@ pumpBody('Lake-water pump A',-83.25,1.8,-24.4,1);pumpBody('Lake-water pump B',-8
 pumpBody('Sulfuric acid transfer pump · drains the acid tanks to the basin dosing point',121.55,2,69,1);
 pumpBody('Caustic transfer pump · drains the caustic tanks to water treatment',128.95,2,153,-1);
 for(const [i,x] of [[1,185],[2,191],[3,197]]){HOVER=`4 · Detector purification filter ${i}`;add(new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,4,20),steel),x,2,125,pipeRoot);add(new THREE.Mesh(new THREE.SphereGeometry(1.1,20,8,0,Math.PI*2,0,Math.PI/2),steel),x,4,125,pipeRoot);}
-HOVER='3 · Cooling-water pipe rack · the cold line rests on shoes';
-for(let x=40;x<=72;x+=8){for(const z of [-26.5,-21])rod(V(x,0,z),V(x,CW_Y-1.15,z),.18,steel,pipeRoot);rod(V(x,CW_Y-1.35,-26.5),V(x,CW_Y-1.35,-21),.2,steel,pipeRoot);}
-HOVER=null;
 
 // ----- loop 3 · cooling water -----
 // Cold: basin → circulating pump → rack → header along the south side of the condensers, stepping down after each branch.
@@ -3173,10 +3154,10 @@ pipeRun('detS','filter 2 to filter 3',[nz('filter2','side'),nz('filter3','side')
 pipeRun('detS','detector supply · filter 3 down the east chase to the tank roof',[nz('filter3','top'),V(197,5.8,125),V(199,5.8,125),V(199,-12,125),V(199,-12,112),nz('detector','supplyIn')],.24,{from:{eq:'filter3',n:'top'},to:{eq:'detector',n:'supplyIn'},goalpost:true,label:'DETECTOR SUPPLY →'});
 
 // ----- nitrogen: six spheres collect into one trunk, which blankets all sixteen chemical tanks -----
-const N2_TOP=25.8,N2_Y=16,tankX=[107.5,116.5,131.5,140.5],tankZ=[80,100,120,140];
+const N2_TOP=25.8,N2_Y=15,tankX=[107.5,116.5,131.5,140.5],tankZ=[80,100,120,140];
 for(const {x,z} of hortonSpherePositions)valve('n2',V(x,24.1,z),V(0,1,0),pipeR('n2',1),'sphere outlet isolation valve');
-header('n2','sphere row 140 and trunk to the tank block',[nz('n2-56-140','out'),V(56,N2_TOP,140),V(100,N2_TOP,140),V(100,N2_TOP,72),V(100,N2_Y,72)],1,[{at:V(82,N2_TOP,140),q:1},{at:V(100,N2_TOP,114),q:2},{at:V(100,N2_TOP,88),q:2}],{join:true,kind:'join',from:{eq:'n2-56-140',n:'out'},label:'NITROGEN →'});
-for(const z of [114,88])header('n2',`sphere row ${z}`,[nz(`n2-56-${z}`,'out'),V(56,N2_TOP,z),V(100,N2_TOP,z)],1,[{at:V(82,N2_TOP,z),q:1}],{join:true,kind:'join',from:{eq:`n2-56-${z}`,n:'out'}});
+header('n2','sphere row 140 and trunk to the tank block',[nz('n2-56-140','out'),V(56,N2_TOP,140),V(100,N2_TOP,140),V(100,N2_Y,140),V(100,N2_Y,72)],1,[{at:V(82,N2_TOP,140),q:1},{at:V(100,N2_Y,114),q:2},{at:V(100,N2_Y,88),q:2}],{join:true,kind:'join',from:{eq:'n2-56-140',n:'out'},label:'NITROGEN →'});
+for(const z of [114,88])header('n2',`sphere row ${z}`,[nz(`n2-56-${z}`,'out'),V(56,N2_TOP,z),V(100,N2_TOP,z),V(100,N2_Y,z)],1,[{at:V(82,N2_TOP,z),q:1}],{join:true,kind:'join',from:{eq:`n2-56-${z}`,n:'out'}});
 for(const z of [140,114,88])pipeRun('n2',`sphere outlet 82, ${z}`,[nz(`n2-82-${z}`,'out'),V(82,N2_TOP,z)],pipeR('n2',1),{from:{eq:`n2-82-${z}`,n:'out'},kind:'join'});
 const perTank=6/16,tankTop=(x,z)=>nz(`tank-${x}-${z}`,'top');
 header('n2','tank blanketing header',[V(100,N2_Y,72),V(140.5,N2_Y,72),V(140.5,N2_Y,140),tankTop(140.5,140)],6,[...tankX.slice(0,3).map(x=>({at:V(x,N2_Y,72),q:4*perTank})),...tankZ.slice(0,3).map(z=>({at:V(140.5,N2_Y,z),q:perTank}))],{kind:'split',to:{eq:'tank-140.5-140',n:'top'}});
@@ -3207,10 +3188,9 @@ for(let x=HX0;x<=HX1;x+=6)for(const z of [-HZ,HZ])obstacleCyl('Turbine hall wall
 LOOPS.forEach((a,i)=>{obstacleCyl(`Steam generator 1${'ABCD'[i]}`,V(sgX(i),3,sgZ(i)),V(sgX(i),24,sgZ(i)),2.3,'sg'+i);const px=RC+Math.cos(a+.2)*13,pz=Math.sin(a+.2)*13;obstacleCyl(`Reactor coolant pump 1${'ABCD'[i]}`,V(px,0,pz),V(px,7.7,pz),1.3,'rcp'+i);});
 for(const k of ['N','S'])obstacleCyl(`Moisture separator reheater ${k}`,V(92,9,k==='N'?-2.6:-17.6),V(114,9,k==='N'?-2.6:-17.6),1.6,'msr'+k);
 obstacleCyl('Upper internals parked in the pool',V(RC,FL-5,5),V(RC,FL-1,5),2.6);
-// the stair climbs one metre per metre from the yard (z −10) to the roof (z −23): kept as four steps of solid space
-for(const [z0,z1,top] of [[-12,-10,3],[-14.5,-12,5.6],[-17,-14.5,8.1],[-23.2,-17,12.5]])obstacleBox('Pump-house east roof-to-yard stairs',-73.9,0,z0,-70.1,top,z1);
+// every scaffold stair tower is solid space for pipes
+for(const t of scaffoldRecords)if(t.kind==='stair tower')obstacleBox(t.name,...t.footprint.min,...t.footprint.max);
 for(const x of [-28,-14])obstacleCyl('Detector water-service vessel',V(x,0,46),V(x,9,46),5);
-for(const sx of [-1,1])obstacleBox('Stair tower to the dance floor',Math.min(sx*17.8,sx*21.2),2,-6.1,Math.max(sx*17.8,sx*21.2),8.9,.7);
 obstacleBox('Lake trailhead and crew meetup',-747,0,-79,-733,140,-69);
 obstacleCyl('Pressurizer',V(RC+4,FL,19.5),V(RC+4,FL+16.7,19.5),1.7,'pzr');obstacleCyl('Reactor vessel',V(RC,-5,0),V(RC,5,0),3.2,'vessel');
 for(const {x,z} of hortonSpherePositions)obstacleCyl('Nitrogen Hortonsphere',V(x,0,z),V(x,22.5,z),10,`n2-${x}-${z}`);
@@ -3223,16 +3203,33 @@ for(const b of fillCenters)obstacleBox('Cooling-fill bank',b.x-2.2,FILL_Y-.35,b.
 for(const f of racewayFlats)obstacleBox(f[5],f[0],f[4]-.18,f[1],f[2],f[4],f[3]);
 for(const [x,z] of racewayPosts)obstacleCyl('Human Raceway support post',V(x,0,z),V(x,HUMAN_RACEWAY_Y-.18,z),.12);
 
-// ----- support posts under the yard rack runs -----
-function postClear(x,z,top){return !PIPE_NET.obstacles.some(o=>o.type==='box'?x>o.min[0]-.3&&x<o.max[0]+.3&&z>o.min[2]-.3&&z<o.max[2]+.3&&o.min[1]<top&&o.max[1]>0:Math.hypot(x-o.a[0],z-o.a[2])<o.r+.4&&Math.min(o.a[1],o.b[1])<top);}
-function rackPosts(run,step=9){const pts=run.points.map(p=>V(p[0],p[1],p[2])),g=PIPE_NET.services[run.service].group;
- for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if(Math.abs(a.y-b.y)>1e-3||a.y<3.5)continue;const L=a.distanceTo(b),dir=b.clone().sub(a).normalize(),side=V(-dir.z,0,dir.x);
-  for(let d=Math.min(step/2,L/2);d<L-1;d+=step){const p=a.clone().addScaledVector(dir,d),top=p.y-run.radius-.08;
-   if(Math.hypot(p.x,p.z)<44||(p.x>HX0-1&&p.x<HX1+1&&Math.abs(p.z)<HZ+1)||Math.hypot(p.x-RC,p.z)<RR+1)continue;
-   if([ROAD.west,ROAD.east].some(x=>Math.abs(p.x-x)<ROAD.width/2+1)||[ROAD.north,ROAD.south].some(z=>Math.abs(p.z-z)<ROAD.width/2+1)||!postClear(p.x,p.z,top))continue;
-   HOVER='Pipe support post';rod(V(p.x,0,p.z),V(p.x,top,p.z),.13,steel,g);add(new THREE.Mesh(new THREE.BoxGeometry(.25,.18,1.1),steel),p.x,top-.09,p.z,g).quaternion.setFromUnitVectors(V(0,0,1),side);HOVER=null;}}}
-yardRuns.forEach(r=>rackPosts(r));
-PIPE_NET.runs.filter(r=>r.service==='n2'&&r.points.some(p=>p[1]>20)).forEach(r=>rackPosts(r,12));
+// ----- supports and welds: Pipe Spawn (tools/pipe-spawn-20261101.js) -----
+// Spans follow ASME B31.1 Table 121.5 by pipe size, with a support beside every elbow. Lines side by side share rack
+// bents; a lone line gets a T-post; inside buildings and under the fill the pipes hang from the steel overhead; near the
+// floor they rest on concrete sleepers or stub stands. Nothing is pushed through a building, equipment or another pipe.
+const inBuilding=(B,p)=>Math.abs(p.x-B.x)<B.w/2&&Math.abs(p.z-B.z)<B.d/2&&p.y<B.h;
+const onRoad=(x,z)=>[ROAD.west,ROAD.east].some(r=>Math.abs(x-r)<ROAD.width/2+.5)||[ROAD.north,ROAD.south].some(r=>Math.abs(z-r)<ROAD.width/2+.5);
+const PIPE_SUPPORT_ENV={
+ obstacles:PIPE_NET.obstacles,
+ anchors:Object.values(PIPE_NET.equipment).filter(e=>!/^bank/.test(e.id)).flatMap(e=>Object.values(e.nozzles)),
+ skipRun:r=>!!r.buried,
+ // tank roofs and sphere tops count as floors: small lines over them sit on roof stands
+ ground:(x,z,y)=>{if(y>14.1&&chemicalTankPositions.some(t=>Math.hypot(x-t.x,z-t.z)<3.2))return 14.1;if(y>22.5&&hortonSpherePositions.some(s=>Math.hypot(x-s.x,z-s.z)<3.5))return 22.5;if(Math.hypot(x-RC,z)<RR)return y>FL?FL:0;if(x>79&&x<135&&z>-16&&z<-4&&y>6)return 6;if(x>130&&x<240&&z>55&&z<165)return 0;return Math.max(0,surfaceHeight(x,z));},
+ ceiling:p=>{
+  if(Math.hypot(p.x,p.z)<34&&p.y<FILL_Y)return{y:FILL_Y-.35,name:'cooling-fill support beams',prefer:true};
+  if(p.x>HX0&&p.x<HX1&&Math.abs(p.z)<HZ)return{y:HW+Math.sqrt(HZ*HZ-p.z*p.z)-.4,name:'turbine hall roof steel',prefer:true,maxHang:24};
+  if(Math.hypot(p.x-RC,p.z)<RR-1&&p.y>FL)return{y:RH,name:'containment ring girder',prefer:true,maxHang:12};
+  if(Math.hypot(p.x-RC,p.z)<RR-1&&p.y<FL-1)return{y:FL-.5,name:Math.hypot(p.x-RC,p.z)>10.5?'operating floor steel':'refuelling pool floor steel',prefer:true};
+  const B=buildingBoxes.find(B=>inBuilding(B,p));return B?{y:B.h-.3,name:B.name,prefer:true}:null;},
+ footing:(x,z)=>!onRoad(x,z)&&Math.abs(x-PATROL.west)>PATROL.width/2+.5};
+const supportMats={steel:mat(0x7d858c,{metalness:.45,roughness:.55}),galv:mat(0xb9c0c6,{metalness:.6,roughness:.35}),concrete:mat(0x7b7d78,{roughness:.95})};
+const pipeSupports=new THREE.Group();pipeSupports.name='Pipe supports';pipeRoot.add(pipeSupports);
+const PIPE_SUPPORT_PLAN=PipeSpawn.plan(PIPE_NET.runs,PIPE_SUPPORT_ENV,{welds:false});window.PIPE_SUPPORT_PLAN=PIPE_SUPPORT_PLAN;
+PipeSpawn.build(THREE,PIPE_SUPPORT_PLAN.parts,supportMats,pipeSupports).forEach(m=>hoverables.push(m));
+for(const s of Object.values(PIPE_NET.services)){ // welds belong to their own fluid, so they hide with its switch
+ const weld=mat(new THREE.Color(s.color).multiplyScalar(.45).getHex(),{metalness:.5,roughness:.5});
+ PipeSpawn.build(THREE,PipeSpawn.plan(PIPE_NET.runs.filter(r=>r.service===s.id),{skipRun:()=>true}).parts,{weld},s.group).forEach(m=>{m.userData.name=s.name+' · '+m.userData.name;hoverables.push(m);});}
+if(PIPE_SUPPORT_PLAN.problems.length)console.warn('Pipe Spawn: supports it could not place',PIPE_SUPPORT_PLAN.problems);
 
 // ----- switches: one per fluid, plus all pipes, glow and pipe labels -----
 const pipeServiceGrid=document.getElementById('pipeServices');
@@ -3242,6 +3239,7 @@ for(const s of Object.values(PIPE_NET.services)){const b=document.createElement(
 let pipesVisible=true,pipesNeon=false;
 document.getElementById('tPipes').onclick=e=>{pipesVisible=!pipesVisible;e.currentTarget.setAttribute('aria-pressed',String(pipesVisible));pipeRoot.visible=pipesVisible;};
 document.getElementById('tPipeNeon').onclick=e=>{pipesNeon=!pipesNeon;e.currentTarget.setAttribute('aria-pressed',String(pipesNeon));for(const s of Object.values(PIPE_NET.services))s.material.emissiveIntensity=pipesNeon?.9:.2;};
+document.getElementById('tPipeSupports').onclick=e=>{pipeSupports.visible=!pipeSupports.visible;e.currentTarget.setAttribute('aria-pressed',String(pipeSupports.visible));};
 document.getElementById('tPipeLabels').onclick=e=>{pipeLabels.visible=!pipeLabels.visible;e.currentTarget.setAttribute('aria-pressed',String(pipeLabels.visible));};
 
 // ----- audits: run the two auditor tools on what this page drew -----
@@ -3253,6 +3251,22 @@ function showAudit(res,title){const box=document.getElementById('auditResult');b
 const runPipeAudit=()=>window.PipeContinuityAuditor?PipeContinuityAuditor.audit(PIPE_NET):null,runRailAudit=()=>window.RailContinuityAuditor?RailContinuityAuditor.audit(WALKWAYS):null;
 document.getElementById('runPipeAudit').onclick=()=>{const r=runPipeAudit();if(r)showAudit(r,'Pipe audit');else document.getElementById('auditResult').textContent='The pipe auditor did not load.';};
 document.getElementById('runRailAudit').onclick=()=>{const r=runRailAudit();if(r)showAudit(r,'Rail audit');else document.getElementById('auditResult').textContent='The rail auditor did not load.';};
+// Support audit: every metre of above-ground pipe within half a span (ASME B31.1) of a support, and nothing Pipe Spawn had to leave out.
+function runSupportAudit(){const chk=PipeSpawn.check(PIPE_NET.runs,PIPE_SUPPORT_PLAN,PIPE_SUPPORT_ENV),st=PIPE_SUPPORT_PLAN.stats,findings=[];
+ for(const p of PIPE_SUPPORT_PLAN.problems)findings.push({severity:'error',message:`${p.name}: ${p.why}`,at:p.at});
+ for(const sp of chk.spans)findings.push({severity:'warn',message:`${sp.name}: ${sp.metres} m more than half a span from a support`,at:sp.at});
+ const t=st.byType,n=k=>t[k]||0;
+ const kinds=[[n('T-post'),'T-posts'],[st.bents,'shared rack bents'],[n('hanger'),'hangers'],[n('saddle'),'concrete saddles'],[n('sleeper')+n('stand'),'sleepers and stands'],[st.bridges,'pipe bridges'],[st.roadCrossings,'road crossings'],[n('guide'),'riser guides']].filter(([v])=>v).map(([v,k])=>v+' '+k).join(', ');
+ findings.unshift({severity:'pass',message:`${kinds}; ${chk.unsupportedMetres} of ${chk.metres} m of above-ground pipe left more than half a span from one`});
+ return{ok:!PIPE_SUPPORT_PLAN.problems.length,errors:PIPE_SUPPORT_PLAN.problems.length,warnings:chk.spans.length,findings};}
+// Scaffold audit: each stair tower and access scaffold against the site rules it was built to.
+function runScaffoldAudit(){const findings=[];let errors=0;
+ for(const t of SCAFFOLDS){const at=t.footprint?t.footprint.max.map((v,i)=>(v+t.footprint.min[i])/2):t.centre;
+  for(const p of t.problems){errors++;findings.push({severity:'error',message:`${t.name}: ${p.message}`,at});}
+  const f=t.flights&&t.flights[0];findings.push({severity:'pass',message:f?`${t.name}: ${t.flights.length} flight${t.flights.length>1?'s':''}, rise ${f.rise} m, going ${f.going} m, ${f.angle.toFixed(0)}°, longest bay ${Math.max(...t.bays.slice(1).map((b,i)=>b-t.bays[i])).toFixed(2)} m · ${t.problems.length?'FAIL':'PASS'}`:`${t.name}: ${t.lift} m lifts, ladder access, tied to the wall · ${t.problems.length?'FAIL':'PASS'}`,at});}
+ return{ok:!errors,errors,warnings:0,findings};}
+document.getElementById('runSupportAudit').onclick=()=>showAudit(runSupportAudit(),'Support audit');
+document.getElementById('runScaffoldAudit').onclick=()=>showAudit(runScaffoldAudit(),'Scaffold audit');
 if(/[?&]audit\b/.test(location.search)){const p=runPipeAudit(),r=runRailAudit();if(p)console.log(PipeContinuityAuditor.report(p,200));if(r)console.log(RailContinuityAuditor.report(r,200));}
 
 

@@ -36,7 +36,10 @@ Light Show Generator.
 1. **What's where:** [`index.html`](index.html) is the website (GitHub Pages), with the photo portfolio and the Mini
    Model; [`mini-model/`](mini-model/) is the Mini Model page; [`portfolio/images/`](portfolio/images/) holds the
    photos, all from Wikimedia Commons; [design and plant research](docs/design-20261024.md) and the
-   [tools plan](docs/infrastructure-and-tools-20261024.md) are in `docs/`.
+   [tools plan](docs/infrastructure-and-tools-20261024.md) are in `docs/`. [`tools/`](tools/) holds the tools the Mini Model is built and
+   checked with: `pipe-spawn` and `scaffold-spawn` (try them on their own in the
+   [Pipe and Scaffold Spawn panel](https://findastra.github.io/the-cooling-tower/tools/pipe-and-scaffold-spawn-panel-20261101.html);
+   [how they work](docs/pipe-and-scaffold-spawn-20261101.md)) and the pipe and rail continuity auditors.
 2. **The Unity project,** when it is made, starts fresh from VRChat Creator Companion's World template (Unity
    2022.3.22f1), with nothing copied from another world. A piece from another world comes in only when Astra names it.
 3. Uploads, releases and `main` change only with Astra's OK.
