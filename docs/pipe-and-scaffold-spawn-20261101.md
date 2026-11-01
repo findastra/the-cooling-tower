@@ -18,6 +18,10 @@ Model: `mini-model/the-cooling-tower-mini-model-20261030.html`. Written by Claud
 | ![Stack stairs before: one straight flight of 0.5 m steps](images/spawn-before-stack-stairs-20261101.jpg) | ![Stack stairs after: a two-lift switchback stair tower up through a well in the deck](images/spawn-after-stack-stairs-20261101.jpg) |
 | ![Pump-house stairs before: a 45° straight run of 0.5 m steps through the Human Raceway](images/spawn-before-pump-house-stairs-20261101.jpg) | ![Pump-house stairs after: a six-lift stair tower against the east wall](images/spawn-after-pump-house-stairs-20261101.jpg) |
 
+| Big lines in concrete saddles | Nitrogen spheres joined crown to crown |
+|---|---|
+| ![The 2.3 m cold cooling-water line resting in concrete saddles](images/spawn-after-cooling-water-saddles-20261101.jpg) | ![Truss pipe bridges carry the nitrogen rows from sphere crown to sphere crown](images/spawn-after-sphere-bridges-20261101.jpg) |
+
 | | Before | After |
 |---|---|---|
 | Supports | 149 posts, yard runs only | 510: 199 T-posts, 18 shared rack bents, 76 hangers, 190 concrete saddles, 4 sleepers, 15 truss pipe bridges, 8 riser guides |
