@@ -1289,6 +1289,7 @@ button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 </script>
 <script src="../tools/pipe-continuity-auditor-20261031.js"></script>
 <script src="../tools/rail-continuity-auditor-20261031.js"></script>
+<script src="../tools/pipe-spawn-20261101.js"></script>
 <script>
 const mobileLayout=window.matchMedia('(max-width:760px), (max-height:560px) and (pointer:coarse)');
 const view = document.getElementById('view');
@@ -3097,9 +3098,6 @@ pumpBody('Lake-water pump A',-83.25,1.8,-24.4,1);pumpBody('Lake-water pump B',-8
 pumpBody('Sulfuric acid transfer pump · drains the acid tanks to the basin dosing point',121.55,2,69,1);
 pumpBody('Caustic transfer pump · drains the caustic tanks to water treatment',128.95,2,153,-1);
 for(const [i,x] of [[1,185],[2,191],[3,197]]){HOVER=`4 · Detector purification filter ${i}`;add(new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,4,20),steel),x,2,125,pipeRoot);add(new THREE.Mesh(new THREE.SphereGeometry(1.1,20,8,0,Math.PI*2,0,Math.PI/2),steel),x,4,125,pipeRoot);}
-HOVER='3 · Cooling-water pipe rack · the cold line rests on shoes';
-for(let x=40;x<=72;x+=8){for(const z of [-26.5,-21])rod(V(x,0,z),V(x,CW_Y-1.15,z),.18,steel,pipeRoot);rod(V(x,CW_Y-1.35,-26.5),V(x,CW_Y-1.35,-21),.2,steel,pipeRoot);}
-HOVER=null;
 
 // ----- loop 3 · cooling water -----
 // Cold: basin → circulating pump → rack → header along the south side of the condensers, stepping down after each branch.
@@ -3173,7 +3171,7 @@ pipeRun('detS','filter 2 to filter 3',[nz('filter2','side'),nz('filter3','side')
 pipeRun('detS','detector supply · filter 3 down the east chase to the tank roof',[nz('filter3','top'),V(197,5.8,125),V(199,5.8,125),V(199,-12,125),V(199,-12,112),nz('detector','supplyIn')],.24,{from:{eq:'filter3',n:'top'},to:{eq:'detector',n:'supplyIn'},goalpost:true,label:'DETECTOR SUPPLY →'});
 
 // ----- nitrogen: six spheres collect into one trunk, which blankets all sixteen chemical tanks -----
-const N2_TOP=25.8,N2_Y=16,tankX=[107.5,116.5,131.5,140.5],tankZ=[80,100,120,140];
+const N2_TOP=25.8,N2_Y=15,tankX=[107.5,116.5,131.5,140.5],tankZ=[80,100,120,140];
 for(const {x,z} of hortonSpherePositions)valve('n2',V(x,24.1,z),V(0,1,0),pipeR('n2',1),'sphere outlet isolation valve');
 header('n2','sphere row 140 and trunk to the tank block',[nz('n2-56-140','out'),V(56,N2_TOP,140),V(100,N2_TOP,140),V(100,N2_TOP,72),V(100,N2_Y,72)],1,[{at:V(82,N2_TOP,140),q:1},{at:V(100,N2_TOP,114),q:2},{at:V(100,N2_TOP,88),q:2}],{join:true,kind:'join',from:{eq:'n2-56-140',n:'out'},label:'NITROGEN →'});
 for(const z of [114,88])header('n2',`sphere row ${z}`,[nz(`n2-56-${z}`,'out'),V(56,N2_TOP,z),V(100,N2_TOP,z)],1,[{at:V(82,N2_TOP,z),q:1}],{join:true,kind:'join',from:{eq:`n2-56-${z}`,n:'out'}});
@@ -3223,16 +3221,33 @@ for(const b of fillCenters)obstacleBox('Cooling-fill bank',b.x-2.2,FILL_Y-.35,b.
 for(const f of racewayFlats)obstacleBox(f[5],f[0],f[4]-.18,f[1],f[2],f[4],f[3]);
 for(const [x,z] of racewayPosts)obstacleCyl('Human Raceway support post',V(x,0,z),V(x,HUMAN_RACEWAY_Y-.18,z),.12);
 
-// ----- support posts under the yard rack runs -----
-function postClear(x,z,top){return !PIPE_NET.obstacles.some(o=>o.type==='box'?x>o.min[0]-.3&&x<o.max[0]+.3&&z>o.min[2]-.3&&z<o.max[2]+.3&&o.min[1]<top&&o.max[1]>0:Math.hypot(x-o.a[0],z-o.a[2])<o.r+.4&&Math.min(o.a[1],o.b[1])<top);}
-function rackPosts(run,step=9){const pts=run.points.map(p=>V(p[0],p[1],p[2])),g=PIPE_NET.services[run.service].group;
- for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if(Math.abs(a.y-b.y)>1e-3||a.y<3.5)continue;const L=a.distanceTo(b),dir=b.clone().sub(a).normalize(),side=V(-dir.z,0,dir.x);
-  for(let d=Math.min(step/2,L/2);d<L-1;d+=step){const p=a.clone().addScaledVector(dir,d),top=p.y-run.radius-.08;
-   if(Math.hypot(p.x,p.z)<44||(p.x>HX0-1&&p.x<HX1+1&&Math.abs(p.z)<HZ+1)||Math.hypot(p.x-RC,p.z)<RR+1)continue;
-   if([ROAD.west,ROAD.east].some(x=>Math.abs(p.x-x)<ROAD.width/2+1)||[ROAD.north,ROAD.south].some(z=>Math.abs(p.z-z)<ROAD.width/2+1)||!postClear(p.x,p.z,top))continue;
-   HOVER='Pipe support post';rod(V(p.x,0,p.z),V(p.x,top,p.z),.13,steel,g);add(new THREE.Mesh(new THREE.BoxGeometry(.25,.18,1.1),steel),p.x,top-.09,p.z,g).quaternion.setFromUnitVectors(V(0,0,1),side);HOVER=null;}}}
-yardRuns.forEach(r=>rackPosts(r));
-PIPE_NET.runs.filter(r=>r.service==='n2'&&r.points.some(p=>p[1]>20)).forEach(r=>rackPosts(r,12));
+// ----- supports and welds: Pipe Spawn (tools/pipe-spawn-20261101.js) -----
+// Spans follow ASME B31.1 Table 121.5 by pipe size, with a support beside every elbow. Lines side by side share rack
+// bents; a lone line gets a T-post; inside buildings and under the fill the pipes hang from the steel overhead; near the
+// floor they rest on concrete sleepers or stub stands. Nothing is pushed through a building, equipment or another pipe.
+const inBuilding=(B,p)=>Math.abs(p.x-B.x)<B.w/2&&Math.abs(p.z-B.z)<B.d/2&&p.y<B.h;
+const onRoad=(x,z)=>[ROAD.west,ROAD.east].some(r=>Math.abs(x-r)<ROAD.width/2+.5)||[ROAD.north,ROAD.south].some(r=>Math.abs(z-r)<ROAD.width/2+.5);
+const PIPE_SUPPORT_ENV={
+ obstacles:PIPE_NET.obstacles,
+ anchors:Object.values(PIPE_NET.equipment).filter(e=>!/^bank/.test(e.id)).flatMap(e=>Object.values(e.nozzles)),
+ skipRun:r=>!!r.overland||!!r.buried,       // the lake mains keep their hillside saddles
+ // tank roofs and sphere tops count as floors: small lines over them sit on roof stands
+ ground:(x,z,y)=>{if(y>14.1&&chemicalTankPositions.some(t=>Math.hypot(x-t.x,z-t.z)<3.2))return 14.1;if(y>22.5&&hortonSpherePositions.some(s=>Math.hypot(x-s.x,z-s.z)<3.5))return 22.5;if(Math.hypot(x-RC,z)<RR)return y>FL?FL:0;if(x>79&&x<135&&z>-16&&z<-4&&y>6)return 6;if(x>130&&x<240&&z>55&&z<165)return 0;return Math.max(0,surfaceHeight(x,z));},
+ ceiling:p=>{
+  if(Math.hypot(p.x,p.z)<34&&p.y<FILL_Y)return{y:FILL_Y-.35,name:'cooling-fill support beams',prefer:true};
+  if(p.x>HX0&&p.x<HX1&&Math.abs(p.z)<HZ)return{y:HW+Math.sqrt(HZ*HZ-p.z*p.z)-.4,name:'turbine hall roof steel',prefer:true,maxHang:24};
+  if(Math.hypot(p.x-RC,p.z)<RR-1&&p.y>FL)return{y:RH,name:'containment ring girder',prefer:true,maxHang:12};
+  if(Math.hypot(p.x-RC,p.z)<RR-1&&Math.hypot(p.x-RC,p.z)>10.5&&p.y<FL-1)return{y:FL-.5,name:'operating floor steel',prefer:true};
+  const B=buildingBoxes.find(B=>inBuilding(B,p));return B?{y:B.h-.3,name:B.name,prefer:true}:null;},
+ footing:(x,z)=>!onRoad(x,z)};
+const supportMats={steel:mat(0x7d858c,{metalness:.45,roughness:.55}),galv:mat(0xb9c0c6,{metalness:.6,roughness:.35}),concrete:mat(0x7b7d78,{roughness:.95})};
+const pipeSupports=new THREE.Group();pipeSupports.name='Pipe supports';pipeRoot.add(pipeSupports);
+const PIPE_SUPPORT_PLAN=PipeSpawn.plan(PIPE_NET.runs,PIPE_SUPPORT_ENV,{welds:false});window.PIPE_SUPPORT_PLAN=PIPE_SUPPORT_PLAN;
+PipeSpawn.build(THREE,PIPE_SUPPORT_PLAN.parts,supportMats,pipeSupports).forEach(m=>hoverables.push(m));
+for(const s of Object.values(PIPE_NET.services)){ // welds belong to their own fluid, so they hide with its switch
+ const weld=mat(new THREE.Color(s.color).multiplyScalar(.45).getHex(),{metalness:.5,roughness:.5});
+ PipeSpawn.build(THREE,PipeSpawn.plan(PIPE_NET.runs.filter(r=>r.service===s.id),{skipRun:()=>true}).parts,{weld},s.group).forEach(m=>{m.userData.name=s.name+' · '+m.userData.name;hoverables.push(m);});}
+if(PIPE_SUPPORT_PLAN.problems.length)console.warn('Pipe Spawn: supports it could not place',PIPE_SUPPORT_PLAN.problems);
 
 // ----- switches: one per fluid, plus all pipes, glow and pipe labels -----
 const pipeServiceGrid=document.getElementById('pipeServices');
