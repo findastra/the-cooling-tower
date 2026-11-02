@@ -6,6 +6,8 @@
  *   - accessScaffold: a working scaffold along a wall (straight or curved), boarded at the lifts you ask for, tied to the wall
  *   - fixedLadder: a permanent caged ladder on a braced mast, staggered flights of at most 6 m with rest landings, and
  *     optionally a truss walkway bridge and a platform at its end (EN ISO 14122-4)
+ *     (mount: 'wall' fixes it straight to a wall or tank shell instead)
+ *   - sphereStair: the stair a Horton sphere has: spirals up round the outside, over the upper half to a crown platform
  *   - every scaffold: standards on base plates and sole boards, bays no longer than 2.6 m, a ledger and transoms at
  *     every lift (2 m), a kicker lift just over the ground, zig-zag face bracing in every bay, couplers at the joints,
  *     boarded decks with 0.15 m toe boards, guardrails at 1.0 m with a mid-rail at 0.5 m on every open edge
@@ -229,10 +231,10 @@
   function fixedLadder(o) {
     const f = frameOf(o), k = kit(f, o.style), base = o.foot[1], H = o.height, yTop = base + H, st = o.stagger === undefined ? 0.8 : o.stagger;
     const n = Math.max(1, Math.ceil(H / LADDER.flightMax - 1e-9)), h = H / n, vOf = i => (i % 2) * st, half = LADDER.width / 2 + 0.03;
-    const mu = [0.2, 0.9], mv = [-0.4, st + 0.4];
-    // the mast the ladder is bolted to
+    // mount 'mast': a braced mast behind the ladder; 'wall': brackets straight to a wall or tank shell `standoff` behind the rungs
+    const wall = o.mount === 'wall', so = o.standoff || 0.25, mu = wall ? [so, so + (o.topDeck || 0.9)] : [0.2, 0.9], mv = [-0.4, st + 0.4];
     const lifts = []; for (let i = 0; i < n; i++) { const m = Math.ceil(h / 2); for (let j = 1; j <= m; j++) lifts.push(base + i * h + h * j / m); }
-    frame(k, mu, mv, base, yTop, lifts, { footing: true });
+    if (!wall) frame(k, mu, mv, base, yTop, lifts, { footing: true });
     const flights = [], landings = [];
     for (let i = 0; i < n; i++) {
       const y0 = base + i * h, y1 = y0 + h, v = vOf(i), top = y1 + LADDER.stileExt;
@@ -293,7 +295,75 @@
         end = ub;
       }
     }
-    return { kind: 'fixed ladder', version: VERSION, parts: k.parts, flights, landings, top: r3(yTop), centre: f.W(end / 2, st / 2, base + H / 2), reach: r3(end) };
+    if (wall) for (const dv of [mv[0] + 0.05, mv[1] - 0.05]) k.tube('tube', 'Top deck bearer', [0, dv, yTop - 0.06], [mu[1], dv, yTop - 0.06]);
+    return { kind: 'fixed ladder', version: VERSION, mount: wall ? 'wall' : 'mast', parts: k.parts, flights, landings, top: r3(yTop), centre: f.W(end / 2, st / 2, base + H / 2), reach: r3(end) };
+  }
+
+  // ---------- stair over a sphere ----------
+  // The stair real Horton spheres have (the "column spiral stairway" and "spherical stairway" of an LPG sphere): from
+  // its foot it spirals up round the outside at one pitch to the equator, keeps that pitch over the upper half by
+  // turning towards the top (the steeper the shell, the more it runs round instead of up), then runs straight up the
+  // shell, flattening, to a round railed platform on the crown. Treads stay level with a 0.25 m going, so the rise is
+  // going × tan(pitch) and gets smaller near the top. Stringers are held off the shell by radial brackets.
+  // o: centre [x,y,z], radius, clearance (path centre to shell, 0.9), width (0.9), pitch (38°), start { angle, y }
+  //    (angle = atan2(dz, dx) of the foot), turn (+1: angle grows as it climbs, -1), top { radius (2.4), hole (0.45) }
+  function sphereStair(o) {
+    const [cx, yc, cz] = o.centre, R = o.radius, Rs = R + (o.clearance || 0.9), W = o.width || 0.9, a = (o.pitch || 38) * Math.PI / 180;
+    const g = RULES.going, turn = o.turn || 1, topR = (o.top && o.top.radius) || 2.4, hole = (o.top && o.top.hole) || 0.45, parts = [];
+    const P = (phi, rho, y) => [cx + rho * Math.cos(phi), y, cz + rho * Math.sin(phi)];
+    const cyl = (m, tag, A, B, r) => parts.push({ k: 'cyl', m, tag, a: A.map(r3), b: B.map(r3), r });
+    const box = (m, tag, c, s, yaw) => parts.push({ k: 'obox', m, tag, c: c.map(r3), s: s.map(r3), yaw: r3(yaw) });
+    // the walking line: nosing points one going apart
+    let phi = o.start.angle, y = o.start.y; const pts = [P(phi, Rs, y)], phase = [0];
+    while (y < yc - 1e-6) { phi += turn * g / Rs; y = Math.min(yc, y + g * Math.tan(a)); pts.push(P(phi, Rs, y)); phase.push(1); }
+    let th = Math.acos(Math.max(-1, Math.min(1, (y - yc) / Rs)));
+    while (Rs * Math.sin(th) > topR + 1e-6) {
+      const s0 = Math.sin(th), kk = Math.min(1, Math.sin(a) / s0), sb = Math.sqrt(1 - kk * kk), ds = g / Math.hypot(kk * Math.cos(th), sb);
+      th = Math.max(Math.asin(topR / Rs), th - kk * ds / Rs); phi += turn * sb * ds / (Rs * s0);
+      pts.push(P(phi, Rs * Math.sin(th), yc + Rs * Math.cos(th))); phase.push(kk < 1 ? 2 : 3);
+    }
+    const yTop = pts[pts.length - 1][1], side = [], rises = [], pitches = []; let minClear = Infinity;
+    const clearOf = q => Math.hypot(q[0] - cx, q[1] - yc, q[2] - cz) - R;
+    for (let i = 1; i < pts.length; i++) {
+      const A = pts[i - 1], B = pts[i], dx = B[0] - A[0], dz = B[2] - A[2], L = Math.hypot(dx, dz) || 1e-6, rise = B[1] - A[1];
+      let nx = -dz / L, nz = dx / L; const mx = (A[0] + B[0]) / 2, mz = (A[2] + B[2]) / 2;
+      if (nx * (cx - mx) + nz * (cz - mz) < 0) { nx = -nx; nz = -nz; } // n points to the inner (shell) side
+      box('tread', 'Stair tread', [mx, B[1] - 0.02, mz], [L - 0.01, 0.04, W - 0.08], -Math.atan2(dz, dx));
+      rises.push(rise); pitches.push(Math.atan2(rise, L) * 180 / Math.PI);
+      for (const sv of [1, -1]) minClear = Math.min(minClear, clearOf([mx + nx * sv * W / 2, B[1] - 0.2, mz + nz * sv * W / 2]));
+      side.push({ A, B, nx, nz });
+    }
+    // stringers, both handrails and posts, following the walking line
+    const off = (q, s, sv, dy) => [q[0] + s.nx * sv * W / 2, q[1] + dy, q[2] + s.nz * sv * W / 2];
+    side.forEach((s, i) => {
+      for (const sv of [1, -1]) {
+        cyl('tube', 'Stair stringer', off(s.A, s, sv, -0.16), off(s.B, s, sv, -0.16), 0.05);
+        cyl('rail', 'Stair rail', off(s.A, s, sv, RULES.stairRail), off(s.B, s, sv, RULES.stairRail), 0.025);
+        cyl('rail', 'Stair mid-rail', off(s.A, s, sv, RULES.stairRail / 2), off(s.B, s, sv, RULES.stairRail / 2), 0.018);
+        if (i % 3 === 0) cyl('rail', 'Stair post', off(s.B, s, sv, -0.16), off(s.B, s, sv, RULES.stairRail), 0.02);
+        // radial brackets from the stringer to the shell
+        if (i % 6 === 3) { const q = off(s.B, s, sv, -0.16), d = Math.hypot(q[0] - cx, q[1] - yc, q[2] - cz), e = [cx + (q[0] - cx) * R / d, yc + (q[1] - yc) * R / d, cz + (q[2] - cz) * R / d];
+          cyl('tube', 'Shell bracket', q, e, 0.04); box('base', 'Shell pad', e, [0.3, 0.03, 0.3], 0); }
+      }
+    });
+    // the crown platform: ring-boarded deck round a hole for the nozzle, toe boards, ring guardrail open to the stair
+    const Rp = topR, segs = 32, arrive = Math.atan2(pts[pts.length - 1][2] - cz, pts[pts.length - 1][0] - cx), gapA = (W / 2 + 0.05) / Rp;
+    for (let r = hole + 0.11; r < Rp; r += 0.22) for (let j = 0; j < 24; j++) { const ps = (j + 0.5) / 24 * Math.PI * 2; box('board', 'Crown platform deck', [cx + r * Math.cos(ps), yTop - 0.025, cz + r * Math.sin(ps)], [2 * Math.PI * r / 24 * 1.04, 0.05, 0.2], -Math.atan2(Math.cos(ps), -Math.sin(ps))); }
+    const angGap = ps => { let d = Math.atan2(Math.sin(ps - arrive), Math.cos(ps - arrive)); return Math.abs(d) < gapA; };
+    for (let j = 0; j < segs; j++) {
+      const p0 = j / segs * Math.PI * 2, p1 = (j + 1) / segs * Math.PI * 2, pm = (p0 + p1) / 2; if (angGap(pm)) continue;
+      const at = (ps, dy) => [cx + Rp * Math.cos(ps), yTop + dy, cz + Rp * Math.sin(ps)];
+      for (const hh of [RULES.guardMid, RULES.guardTop]) cyl('rail', hh === RULES.guardTop ? 'Guardrail' : 'Mid-rail', at(p0, hh), at(p1, hh), 0.025);
+      box('toe', 'Toe board', [cx + (Rp - 0.02) * Math.cos(pm), yTop + RULES.toe / 2, cz + (Rp - 0.02) * Math.sin(pm)], [2 * Math.PI * Rp / segs, RULES.toe, 0.03], -Math.atan2(Math.cos(pm), -Math.sin(pm)));
+      if (j % 4 === 0) cyl('rail', 'Guardrail post', at(p0, 0), at(p0, RULES.guardTop), 0.025);
+    }
+    for (let j = 0; j < 6; j++) { const ps = (j + 0.5) / 6 * Math.PI * 2, r = Rp - 0.3, x = cx + r * Math.cos(ps), z = cz + r * Math.sin(ps), ys = yc + Math.sqrt(Math.max(0, R * R - r * r));
+      cyl('tube', 'Platform leg', [x, ys, z], [x, yTop - 0.05, z], 0.05); box('base', 'Shell pad', [x, ys, z], [0.3, 0.03, 0.3], 0); }
+    const ys = pts.map(q => q[1]), xs = pts.map(q => q[0]), zs = pts.map(q => q[2]);
+    return { kind: 'sphere stair', version: VERSION, parts, path: pts.map(q => q.map(r3)), phase, treads: pts.length - 1, going: g,
+      rise: { min: r3(Math.min(...rises)), max: r3(Math.max(...rises)) }, pitch: { min: r3(Math.min(...pitches)), max: r3(Math.max(...pitches)) },
+      width: W, clearance: r3(minClear), foot: pts[0].map(r3), top: r3(yTop), platform: { centre: [cx, r3(yTop), cz], radius: Rp, hole },
+      wrap: r3(Math.abs(phi - o.start.angle) * 180 / Math.PI), centre: [r3((Math.min(...xs) + Math.max(...xs)) / 2), r3((Math.min(...ys) + Math.max(...ys)) / 2), r3((Math.min(...zs) + Math.max(...zs)) / 2)] };
   }
 
   // ---------- rule check ----------
@@ -321,7 +391,16 @@
         if (fl.straps < LADDER.straps) bad('STRAP', `${at}: ${fl.straps} cage straps`);
         if (fl.stileExt < 1.0) bad('EXIT', `${at}: stiles end ${fl.stileExt} m above the landing`);
       }
-      for (const need of ['Ladder rung', 'Ladder stile', 'Cage hoop', 'Cage strap', 'Guardrail', 'Mid-rail', 'Toe board', 'Self-closing gate', 'Standard', 'Face brace']) if (!tags.has(need)) bad('PART', `no ${need.toLowerCase()} on the ladder`);
+      for (const need of ['Ladder rung', 'Ladder stile', 'Ladder bracket', 'Cage hoop', 'Cage strap', 'Guardrail', 'Mid-rail', 'Toe board', 'Self-closing gate'].concat(t.mount === 'wall' ? [] : ['Standard', 'Face brace'])) if (!tags.has(need)) bad('PART', `no ${need.toLowerCase()} on the ladder`);
+      return out;
+    }
+    if (t.kind === 'sphere stair') {
+      if (t.rise.max > RULES.riseMax + 1e-3) bad('RISE', `a step rises ${t.rise.max} m, over ${RULES.riseMax} m`);
+      if (t.going < 0.24 - 1e-3) bad('GOING', `going ${t.going} m is under 0.24 m`);
+      if (t.pitch.max > 50 + 1e-3) bad('ANGLE', `the stair is ${t.pitch.max}° at its steepest, over 50°`);
+      if (t.width < 0.6) bad('WIDTH', `stair ${t.width} m wide, under 0.6 m`);
+      if (t.clearance < 0.1) bad('SHELL', `a tread is ${t.clearance} m from the shell`);
+      for (const need of ['Stair tread', 'Stair stringer', 'Stair rail', 'Stair mid-rail', 'Shell bracket', 'Crown platform deck', 'Guardrail', 'Mid-rail', 'Toe board']) if (!tags.has(need)) bad('PART', `no ${need.toLowerCase()} on the stair`);
       return out;
     }
     if (t.kind === 'access scaffold' && !tags.has('Ladder rung')) bad('ACCESS', 'no ladder or stair up to the platforms');
@@ -353,7 +432,7 @@
     return meshes;
   }
 
-  const api = { stairTower, accessScaffold, fixedLadder, check, build, RULES, LADDER, version: VERSION };
+  const api = { stairTower, accessScaffold, fixedLadder, sphereStair, check, build, RULES, LADDER, version: VERSION };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.ScaffoldSpawn = api;
 })(typeof window !== 'undefined' ? window : globalThis);

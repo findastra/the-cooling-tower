@@ -2061,29 +2061,43 @@ HOVER=null;
 
 const tankYard=new THREE.Group();detailGroup.add(tankYard);tankYard.position.x=150;
 const hortonSpherePositions=[];
+const sphereShellMat=mat(0xd3d9dc,{metalness:.45,roughness:.35}),sphereFireproofMat=mat(0x8f8a80,{roughness:.95}),sphereFootingMat=mat(0x7b7d78,{roughness:.95});
 for(const x of [-94,-68])for(const z of [88,114,140]){
  hortonSpherePositions.push({x:x+150,z});
  HOVER='Nitrogen Hortonsphere · 22 m diameter · illustrative buffer storage';
- add(new THREE.Mesh(new THREE.SphereGeometry(11,40,24),mat(0xc6d5db,{metalness:.55,roughness:.3})),x,11.5,z,tankYard);
- for(let i=0;i<8;i++){const a=i*Math.PI/4,px=x+Math.cos(a)*8.3,pz=z+Math.sin(a)*8.3,b=a+Math.PI/4,qx=x+Math.cos(b)*8.3,qz=z+Math.sin(b)*8.3;rod(V(px,0,pz),V(px,8.5,pz),.48,steel,tankYard);add(new THREE.Mesh(new THREE.BoxGeometry(1.6,.5,1.6),mat(0x7b7d78,{roughness:.95})),px,.25,pz,tankYard);
-  // crossed tie rods between neighbouring legs
-  rod(V(px,.8,pz),V(qx,6.4,qz),.07,steel,tankYard);rod(V(px,6.4,pz),V(qx,.8,qz),.07,steel,tankYard);}
+ add(new THREE.Mesh(new THREE.SphereGeometry(11,40,24),sphereShellMat),x,11.5,z,tankYard);
+ HOVER='Nitrogen Hortonsphere legs · columns welded on at the equator, concrete fireproofing, crossed tie rods';
+ for(let i=0;i<8;i++){const a=(i+.5)*Math.PI/4,b=a+Math.PI/4,L=10.85,px=x+Math.cos(a)*L,pz=z+Math.sin(a)*L,qx=x+Math.cos(b)*L,qz=z+Math.sin(b)*L;
+  add(new THREE.Mesh(new THREE.BoxGeometry(1.5,.9,1.5),sphereFootingMat),px,.45,pz,tankYard);
+  add(new THREE.Mesh(new THREE.CylinderGeometry(.58,.58,6.3,16),sphereFireproofMat),px,.9+3.15,pz,tankYard);
+  add(new THREE.Mesh(new THREE.CylinderGeometry(.45,.45,10.6,16),sphereShellMat),px,.9+5.3,pz,tankYard);
+  add(new THREE.Mesh(new THREE.CylinderGeometry(.14,.45,1.7,16),sphereShellMat),px,11.5+.85,pz,tankYard);
+  // tie rods from the foot of one leg to just under the equator of the next, both ways
+  rod(V(px,1.6,pz),V(qx,9.6,qz),.05,steel,tankYard);rod(V(px,9.6,pz),V(qx,1.6,qz),.05,steel,tankYard);
+  obstacleCyl('Nitrogen Hortonsphere leg',V(px,0,pz),V(px,11.5,pz),.6);}
+ HOVER='Nitrogen Hortonsphere · 22 m diameter · illustrative buffer storage';
  const belt=add(new THREE.Mesh(new THREE.TorusGeometry(11.05,.08,6,64),steel),x,11.5,z,tankYard);belt.rotation.x=Math.PI/2;
 
  label('N2 · SITE UTILITY GAS',x,25,z,'#94e6ff',false,tankYard);
 }
-// One caged ladder per sphere: up a braced mast in 6 m flights with rest landings, then a truss walkway bridge to a
-// platform round the crown nozzle and its isolation valve. West row: on the west side, away from the nitrogen header.
-// East row: on the south side of each sphere (the caustic transfer line runs along the north edge). Scaffold Spawn fixedLadder.
+// The stair a real Horton sphere has: from the Human Raceway deck between the rows it spirals up round the outside of
+// the sphere, keeps its pitch over the upper half by turning towards the top, then runs straight up the shell to a
+// round railed platform on the crown with the outlet valve, a relief-valve stub and an instrument mast. West row: the
+// foot is on the west edge of the deck, climbing south; east row: on the east edge, climbing north, so the two feet of
+// a pair never pinch the deck. Built by Scaffold Spawn (sphereStair).
 const ladderMats={...scaffoldMats,tube:mat(0x8e969c,{metalness:.55,roughness:.4}),ladder:mat(0x8e969c,{metalness:.55,roughness:.4}),footing:mat(0x7b7d78,{roughness:.95}),board:mat(0x5b646b,{metalness:.5,roughness:.6}),toe:mat(0x5b646b,{metalness:.5,roughness:.6})};
-const SPHERE_LADDER_R=12.35,sphereLadders=[];
+const sphereStairMats={...ladderMats,tread:mat(0x6f7a80,{metalness:.5,roughness:.5}),rail:mat(0xc9cfd3,{metalness:.5,roughness:.35}),base:steel};
+const sphereStairs=[],sphereStairDoors=[]; // the feet stand on the Human Raceway deck, 8.06 m (HUMAN_RACEWAY_Y, set further down)
 for(const {x,z} of hortonSpherePositions){
- const dir=x<70?[1,0]:[0,1],foot=[x-dir[0]*SPHERE_LADDER_R,0,z-dir[1]*SPHERE_LADDER_R];
- const t=scaffold(`Nitrogen sphere ladder ${x}, ${z}`,ScaffoldSpawn.fixedLadder({foot,dir,height:22.75,bridge:{length:9.85},platform:{size:3.2,hole:.8,drop:.45}}),detailGroup,ladderMats);
- sphereLadders.push({x,z,dir,foot});
- // keep pipe supports out of the mast, cage and bridge (local u along dir, v across)
- const box=(name,u0,u1,v0,v1,y0,y1)=>{const pts=[];for(const u of [u0,u1])for(const v of [v0,v1])pts.push([foot[0]+dir[0]*u-dir[1]*v,foot[2]+dir[1]*u+dir[0]*v]);const xs=pts.map(q=>q[0]),zs=pts.map(q=>q[1]);obstacleBox(name,Math.min(...xs),y0,Math.min(...zs),Math.max(...xs),y1,Math.max(...zs));};
- box(t.name+' · mast and cage',-.9,.95,-.45,1.25,0,23.9);box(t.name+' · walkway bridge',.9,10.75,-.5,.5,22.6,23.9);
+ const west=x<70,start=(west?-8:172)*Math.PI/180,turn=west?-1:-1;
+ const t=scaffold(`Nitrogen sphere stair ${x}, ${z}`,ScaffoldSpawn.sphereStair({centre:[x,11.5,z],radius:11,clearance:.9,width:.9,pitch:38,start:{angle:start,y:8.06},turn,top:{radius:2.4,hole:.45}}),detailGroup,sphereStairMats);
+ sphereStairs.push({x,z,top:t.top,radius:t.platform.radius});
+ // where the stair leaves the deck the raceway handrail opens
+ const fz=t.foot[2],dz=west?-1:1;for(const k of [-.2,2.6])sphereStairDoors.push([west?67.8:70.2,+(fz+dz*k).toFixed(2),`Sphere stair ${x}, ${z}`]);
+ // keep pipe supports out of the stair: one box per 12 nosings
+ for(let i=0;i<t.path.length-1;i+=12){const q=t.path.slice(i,i+13),xs=q.map(v=>v[0]),ys=q.map(v=>v[1]),zs=q.map(v=>v[2]);obstacleBox(t.name,Math.min(...xs)-.7,Math.min(...ys)-.4,Math.min(...zs)-.7,Math.max(...xs)+.7,Math.max(...ys)+1,Math.max(...zs)+.7);}
+ HOVER='Sphere crown · relief valve and vent stub';rod(V(x+1.1,t.top,z+.9),V(x+1.1,t.top+1.3,z+.9),.14,steel,detailGroup);
+ HOVER='Sphere crown · instrument and lightning mast';rod(V(x-1.3,t.top,z-1.1),V(x-1.3,t.top+4.5,z-1.1),.04,steel,detailGroup);HOVER=null;
 }
 // Sixteen tanks in a compact 4-by-4 block entirely on the paved service apron.
 // Coordinates here are world coordinates, independent of the nitrogen-yard offset.
@@ -2470,29 +2484,43 @@ HOVER=null;
 // A six-lift stair tower against the east wall, south of the Human Raceway bridge; the top landing opens west onto the roof.
 HOVER=null;
 const pumpRoofStair=scaffold('Pump-house east roof-to-yard stairs',ScaffoldSpawn.stairTower({foot:[-73.9,0,-20.7],dir:[0,1],across:[1,0],height:12.4,laneWidth:1.2,exit:'side',exitSide:0}),detailGroup);
-// Every free-standing tank stands on legs: the dished bottom and its valved outlet sit clear of the ground. The outlet
-// leaves between two legs in the drain direction; lift = 1.4 m + 0.18 r leaves at least 0.5 m of drop for the valve.
+// Every free-standing tank stands on legs as a real legged tank does: pipe legs welded to the shell over doubler
+// plates, on concrete piers, with crossed bracing in every bay but the one the outlet leaves through. Under the dished
+// bottom there is room for the outlet piping: lift = 2.2 m + 0.18 r leaves about 2 m for a flanged drop, a valve with
+// its handwheel at hand height, an elbow and a run out between two legs onto a pipe sleeper. Tanks taller than 7 m get
+// a caged ladder on the shell (Scaffold Spawn fixedLadder, wall mount) opposite the outlet, up to a railed roof landing.
 const tankPadMat=mat(0x7b7d78,{roughness:.95}),tankValveMat=mat(0x2d6f8f,{metalness:.45,roughness:.4});
-function tankLift(r){return +(1.4+.18*r).toFixed(1);}
-function legTank({x,z,r,h,shell,group,drain=[0,1],drainLength}){
- const lift=tankLift(r),n=r<2.6?4:r<4.6?6:8,lr=Math.max(.13,r*.04),da=Math.atan2(drain[1],drain[0]),legs=[];
+function tankLift(r){return +(2.2+.18*r).toFixed(1);}
+function legTank({x,z,r,h,shell,group,drain=[0,1],drainLength,name='Tank'}){
+ const lift=tankLift(r),n=r<2.6?4:r<4.6?6:8,lr=Math.max(.14,r*.04),da=Math.atan2(drain[1],drain[0]),legs=[],T=lift+h,weld=Math.min(1.6,h*.2);
  add(new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,28),shell),x,lift+h/2,z,group);
  add(new THREE.Mesh(new THREE.SphereGeometry(r,28,8,0,Math.PI*2,Math.PI/2,Math.PI/2),shell),x,lift,z,group).scale.y=.18;
- for(let i=0;i<n;i++){const a=da+(i+.5)*Math.PI*2/n,px=x+Math.cos(a)*(r+lr*.6),pz=z+Math.sin(a)*(r+lr*.6);legs.push([px,pz]);
-  rod(V(px,.3,pz),V(px,lift+Math.min(1.4,h*.18),pz),lr,steel,group);add(new THREE.Mesh(new THREE.BoxGeometry(lr*6,.3,lr*6),tankPadMat),px,.15,pz,group);}
- legs.forEach(([px,pz],i)=>{if(i===n-1)return;const [qx,qz]=legs[i+1];rod(V(px,.5,pz),V(qx,lift-.2,qz),.045,steel,group);rod(V(px,lift-.2,pz),V(qx,.5,qz),.045,steel,group);});
- const yb=lift-r*.18,yo=.8,L=drainLength||r+1.2,[dx,dz]=drain,end=V(x+dx*L,yo,z+dz*L);
- rod(V(x,yb,z),V(x,yo,z),.16,steel,group);rod(V(x,yo,z),end,.16,steel,group);
- const vx=x+dx*(r*.55),vz=z+dz*(r*.55);add(new THREE.Mesh(new THREE.BoxGeometry(.42,.42,.42),tankValveMat),vx,yo,vz,group);
- rod(V(vx,yo,vz),V(vx,yo+.45,vz),.03,steel,group);const wheel=add(new THREE.Mesh(new THREE.TorusGeometry(.22,.03,6,16),tankValveMat),vx,yo+.47,vz,group);wheel.rotation.x=Math.PI/2;
+ for(let i=0;i<n;i++){const a=da+(i+.5)*Math.PI*2/n,px=x+Math.cos(a)*(r+lr*.7),pz=z+Math.sin(a)*(r+lr*.7);legs.push([px,pz]);
+  add(new THREE.Mesh(new THREE.BoxGeometry(.7,.45,.7),tankPadMat),px,.225,pz,group);
+  add(new THREE.Mesh(new THREE.BoxGeometry(lr*4,.04,lr*4),steel),px,.47,pz,group);
+  rod(V(px,.45,pz),V(px,lift+weld,pz),lr,steel,group);
+  const pad=add(new THREE.Mesh(new THREE.BoxGeometry(.05,weld+.5,lr*3.4),steel),x+Math.cos(a)*(r+.02),lift+weld/2-.1,z+Math.sin(a)*(r+.02),group);pad.rotation.y=-a;}
+ legs.forEach(([px,pz],i)=>{if(i===n-1)return;const [qx,qz]=legs[i+1];rod(V(px,.75,pz),V(qx,lift-.25,qz),.05,steel,group);rod(V(px,lift-.25,pz),V(qx,.75,qz),.05,steel,group);});
+ // outlet: flanged drop from the bottom, valve at hand height, elbow, run out between two legs onto a sleeper
+ const yb=lift-r*.18,yo=.75,L=drainLength||r+1.6,[dx,dz]=drain,end=V(x+dx*L,yo,z+dz*L),yv=Math.min(1.5,(yb+yo)/2+.2);
+ rod(V(x,yb,z),V(x,yo,z),.16,steel,group);flange(V(x,yb-.15,z),V(0,1,0),.16,group);rod(V(x,yo,z),end,.16,steel,group);
+ add(new THREE.Mesh(new THREE.BoxGeometry(.4,.48,.4),tankValveMat),x,yv,z,group);rod(V(x,yv,z),V(x+dx*.55,yv,z+dz*.55),.03,steel,group);
+ const wheel=add(new THREE.Mesh(new THREE.TorusGeometry(.24,.03,6,16),tankValveMat),x+dx*.57,yv,z+dz*.57,group);wheel.rotation.y=Math.atan2(dx,dz);
+ add(new THREE.Mesh(new THREE.BoxGeometry(dz?1.2:.5,.5,dz?.5:1.2),tankPadMat),x+dx*(r+.8),.25,z+dz*(r+.8),group);
  blindCap(end,V(dx,0,dz),.16,steel,group);
- return lift+h;
+ if(T>7){const lx=-dx,lz=-dz,R0=r+.3;
+  scaffold(`${name} ladder`,ScaffoldSpawn.fixedLadder({foot:[x+lx*R0,0,z+lz*R0],dir:[dx,dz],height:T+.3,mount:'wall',standoff:.3,stagger:.8}),group,ladderMats);
+  // roof handrail round the landing: a quarter of the roof edge either side of the ladder
+  const la=Math.atan2(lz,lx),seg=10;for(let j=0;j<seg;j++){const a0=la-.55+1.1*j/seg,a1=la-.55+1.1*(j+1)/seg,P=(aa,yy)=>V(x+Math.cos(aa)*(r-.15),yy,z+Math.sin(aa)*(r-.15));
+   for(const hh of [.55,1.1])rod(P(a0,T+hh),P(a1,T+hh),.025,scaffoldMats.rail,group);if(j%2===0)rod(P(a0,T),P(a0,T+1.1),.025,scaffoldMats.rail,group);}
+  rod(V(x+Math.cos(la+.55)*(r-.15),T,z+Math.sin(la+.55)*(r-.15)),V(x+Math.cos(la+.55)*(r-.15),T+1.1,z+Math.sin(la+.55)*(r-.15)),.025,scaffoldMats.rail,group);}
+ return T;
 }
 // Standalone service vessels retain bottom drains and have individual top connection stubs.
 HOVER='Detector water-service vessels · independent purified-water circuit';
-for(const [x,z,name] of [[-28,46,'DETECTOR · PURE WATER BUFFER'],[-14,46,'DETECTOR · RECOVERY WATER']]){const T=legTank({x,z,r:5,h:9,shell:mat(0xa8c4d0,{metalness:.6,roughness:.3}),group:detailGroup,drainLength:10});label(name,x,T+2,z,'#8ce6ff',false,detailGroup);rod(V(x,T,z),V(x,T+1.5,z),.2,steel,detailGroup);flange(V(x,T+1.5,z),V(0,1,0),.2,detailGroup,true);blindCap(V(x,T+1.5,z),V(0,1,0),.2,steel,detailGroup); }
+for(const [x,z,name] of [[-28,46,'DETECTOR · PURE WATER BUFFER'],[-14,46,'DETECTOR · RECOVERY WATER']]){const T=legTank({x,z,r:5,h:9,shell:mat(0xa8c4d0,{metalness:.6,roughness:.3}),group:detailGroup,drainLength:10,name});label(name,x,T+2,z,'#8ce6ff',false,detailGroup);rod(V(x,T,z),V(x,T+1.5,z),.2,steel,detailGroup);flange(V(x,T+1.5,z),V(0,1,0),.2,detailGroup,true);blindCap(V(x,T+1.5,z),V(0,1,0),.2,steel,detailGroup); }
 HOVER='Optional SK-Gd preparation · gadolinium sulfate dissolution tank';
-{const T=legTank({x:154,z:149,r:2,h:4,shell:steel,group:detailGroup,drain:[0,-1]});label('OPTIONAL Gd SULFATE MIXING',154,T+2,149,'#8ce6ff',false,detailGroup);}
+{const T=legTank({x:154,z:149,r:2,h:4,shell:steel,group:detailGroup,drain:[0,-1],name:'Gd mixing tank'});label('OPTIONAL Gd SULFATE MIXING',154,T+2,149,'#8ce6ff',false,detailGroup);}
 for(const x of [151,153,155])add(new THREE.Mesh(new THREE.BoxGeometry(1.4,1.8,1.4),mat(0xd1d4ca)),x,1,153,detailGroup);
 label('Gd SALT · SEALED DRY STOCK',153,4,153,'#b7cbd6',false,detailGroup);
 HOVER=null;
@@ -2582,7 +2610,7 @@ for(const z of [82,100,128,140]){add(new THREE.Mesh(new THREE.BoxGeometry(1.4,.1
 deckRibbon([V(-6,.24,116.5),V(38,.24,116.5)],3,mat(0xa4a49b));
 // Additional process tanks on the utility side of the stack, away from parking.
 for(const [x,z,name,r,h,color] of [[43,-58,'CONDENSATE STORAGE',4,11,0x8ca6ad],[57,-58,'DEMINERALIZED WATER',4.5,13,0x79aeb7],[72,-58,'FIREWATER RESERVE',5.5,12,0xb95748],[91,-58,'LUBE OIL DAY TANK',2.5,7,0x9a8054],[43,-79,'BLOWDOWN / HOLDUP TANK',4,10,0x777e85],[60,-79,'MAKEUP WATER BUFFER',4,10,0x6b9daa],[75,-79,'SERVICE WATER BUFFER',4,10,0x7296a5],[91,-79,'PROCESS WATER BUFFER',4,10,0x7b9aab]]){
- HOVER=name+' · illustrative utility storage · on legs, valved bottom outlet';const T=legTank({x,z,r,h,shell:mat(color,{metalness:.35,roughness:.4}),group:detailGroup});rod(V(x,T+.25,z),V(x,T+1.65,z),.2,steel,detailGroup);flange(V(x,T+1.65,z),V(0,1,0),.2,detailGroup,true);blindCap(V(x,T+1.65,z),V(0,1,0),.2,steel,detailGroup);add(new THREE.Mesh(new THREE.TorusGeometry(r,.12,6,28),steel),x,T,z,detailGroup).rotation.x=Math.PI/2;add(new THREE.Mesh(new THREE.ConeGeometry(r,.55,28),mat(color)),x,T+.27,z,detailGroup);rod(V(x-r-.6,0,z),V(x-r-.6,T+.05,z),.11,steel,detailGroup);label(name,x,T+1.65,z,'#dce6e8',false,detailGroup);obstacleCyl(name+' tank',V(x,0,z),V(x,T+1.7,z),r+.3);
+ HOVER=name+' · illustrative utility storage · on legs, valved bottom outlet';const T=legTank({x,z,r,h,shell:mat(color,{metalness:.35,roughness:.4}),group:detailGroup,drain:z>-70?[0,-1]:[0,1],name});rod(V(x,T+.25,z),V(x,T+1.65,z),.2,steel,detailGroup);flange(V(x,T+1.65,z),V(0,1,0),.2,detailGroup,true);blindCap(V(x,T+1.65,z),V(0,1,0),.2,steel,detailGroup);add(new THREE.Mesh(new THREE.TorusGeometry(r,.12,6,28),steel),x,T,z,detailGroup).rotation.x=Math.PI/2;add(new THREE.Mesh(new THREE.ConeGeometry(r,.55,28),mat(color)),x,T+.27,z,detailGroup);label(name,x,T+1.65,z,'#dce6e8',false,detailGroup);obstacleCyl(name+' tank',V(x,0,z),V(x,T+1.7,z),r+1.2);
 }
 for(const z of [-58,-79]){for(const x of [38,100])rod(V(x,0,z-7),V(x,9,z-7),.16,steel,detailGroup);rod(V(38,8,z-7),V(100,8,z-7),.14,steel,detailGroup);}
 label('UTILITY TANK FARM · CONCEPT EXAMPLES',69,18,-92,'#e8c987',false,detailGroup);
@@ -2794,7 +2822,7 @@ HOVER=null;
 // Every walking surface is a rectangle. On each level their joined outline gets a top rail at 1.1 m, a mid-rail at 0.55 m
 // and posts no more than 1.8 m apart (OSHA 1910.29). An edge stays open only where it runs into another walking surface,
 // a stair or ramp, a building wall or a door. The Rail Continuity Auditor (tools/rail-continuity-auditor-20261031.js) re-checks it.
-const RAIL_TOP=1.1,RAIL_MID=.55,racewayDoors=[[166,26,'Reactor hall door'],[204,9,'Fuel building door']];
+const RAIL_TOP=1.1,RAIL_MID=.55,racewayDoors=[[166,26,'Reactor hall door'],[204,9,'Fuel building door'],...sphereStairDoors];
 const slopeY=(s,x,z)=>{const t=s.axis==='z'?(z-s.z0)/(s.z1-s.z0):(x-s.x0)/(s.x1-s.x0);return s.yLo+(s.yHi-s.yLo)*Math.max(0,Math.min(1,t));};
 const walkableAt=(x,z,y)=>racewayFlats.some(f=>x>=f[0]-1e-3&&x<=f[2]+1e-3&&z>=f[1]-1e-3&&z<=f[3]+1e-3&&Math.abs(f[4]-y)<.45)||racewaySlopes.some(s=>x>=s.x0-1e-3&&x<=s.x1+1e-3&&z>=s.z0-1e-3&&z<=s.z1+1e-3&&Math.abs(slopeY(s,x,z)-y)<.45);
 const wallAt=(x,z,y)=>buildingBoxes.some(B=>Math.abs(x-B.x)<=B.w/2+.1&&Math.abs(z-B.z)<=B.d/2+.1&&y+.5<=B.h);
@@ -3207,7 +3235,7 @@ for(const k of ['N','S'])obstacleCyl(`Moisture separator reheater ${k}`,V(92,9,k
 obstacleCyl('Upper internals parked in the pool',V(RC,FL-5,5),V(RC,FL-1,5),2.6);
 // every scaffold stair tower is solid space for pipes
 for(const t of scaffoldRecords)if(t.kind==='stair tower')obstacleBox(t.name,...t.footprint.min,...t.footprint.max);
-for(const x of [-28,-14])obstacleCyl('Detector water-service vessel',V(x,0,46),V(x,tankLift(5)+9,46),5.3);
+for(const x of [-28,-14])obstacleCyl('Detector water-service vessel',V(x,0,46),V(x,tankLift(5)+9,46),6.2);
 obstacleBox('Lake trailhead and crew meetup',-747,0,-79,-733,140,-69);
 obstacleCyl('Pressurizer',V(RC+4,FL,19.5),V(RC+4,FL+16.7,19.5),1.7,'pzr');obstacleCyl('Reactor vessel',V(RC,-5,0),V(RC,5,0),3.2,'vessel');
 for(const {x,z} of hortonSpherePositions)obstacleCyl('Nitrogen Hortonsphere',V(x,0,z),V(x,22.5,z),10,`n2-${x}-${z}`);
@@ -3231,7 +3259,7 @@ const PIPE_SUPPORT_ENV={
  anchors:Object.values(PIPE_NET.equipment).filter(e=>!/^bank/.test(e.id)).flatMap(e=>Object.values(e.nozzles)),
  skipRun:r=>!!r.buried,
  // tank roofs and sphere tops count as floors: small lines over them sit on roof stands
- ground:(x,z,y)=>{if(y>14.1&&chemicalTankPositions.some(t=>Math.hypot(x-t.x,z-t.z)<3.2))return 14.1;if(y>22.75&&hortonSpherePositions.some(s=>Math.abs(x-s.x)<1.6&&Math.abs(z-s.z)<1.6))return 22.75;if(y>22.5&&hortonSpherePositions.some(s=>Math.hypot(x-s.x,z-s.z)<3.5))return 22.5;if(Math.hypot(x-RC,z)<RR)return y>FL?FL:0;if(x>79&&x<135&&z>-16&&z<-4&&y>6)return 6;if(x>130&&x<240&&z>55&&z<165)return 0;return Math.max(0,surfaceHeight(x,z));},
+ ground:(x,z,y)=>{if(y>14.1&&chemicalTankPositions.some(t=>Math.hypot(x-t.x,z-t.z)<3.2))return 14.1;{const st=sphereStairs.find(s=>Math.hypot(x-s.x,z-s.z)<s.radius);if(st&&y>st.top)return st.top;}if(y>22.5&&hortonSpherePositions.some(s=>Math.hypot(x-s.x,z-s.z)<3.5))return 22.5;if(Math.hypot(x-RC,z)<RR)return y>FL?FL:0;if(x>79&&x<135&&z>-16&&z<-4&&y>6)return 6;if(x>130&&x<240&&z>55&&z<165)return 0;return Math.max(0,surfaceHeight(x,z));},
  ceiling:p=>{
   if(Math.hypot(p.x,p.z)<34&&p.y<FILL_Y)return{y:FILL_Y-.35,name:'cooling-fill support beams',prefer:true};
   if(p.x>HX0&&p.x<HX1&&Math.abs(p.z)<HZ)return{y:HW+Math.sqrt(HZ*HZ-p.z*p.z)-.4,name:'turbine hall roof steel',prefer:true,maxHang:24};
@@ -3280,7 +3308,7 @@ function runSupportAudit(){const chk=PipeSpawn.check(PIPE_NET.runs,PIPE_SUPPORT_
 function runScaffoldAudit(){const findings=[];let errors=0;
  for(const t of SCAFFOLDS){const at=t.footprint?t.footprint.max.map((v,i)=>(v+t.footprint.min[i])/2):t.centre;
   for(const p of t.problems){errors++;findings.push({severity:'error',message:`${t.name}: ${p.message}`,at});}
-  const f=t.flights&&t.flights[0];if(t.kind==='fixed ladder'){findings.push({severity:'pass',message:`${t.name}: ${t.flights.length} caged flights of ${(f.to-f.from).toFixed(2)} m, rungs ${f.pitch} m apart, cage from ${f.cageFrom} m, rest landings at ${t.landings.slice(0,-1).map(y=>y.toFixed(1)).join(', ')} m, top ${t.top} m · ${t.problems.length?'FAIL':'PASS'}`,at});continue;}findings.push({severity:'pass',message:f?`${t.name}: ${t.flights.length} flight${t.flights.length>1?'s':''}, rise ${f.rise} m, going ${f.going} m, ${f.angle.toFixed(0)}°, longest bay ${Math.max(...t.bays.slice(1).map((b,i)=>b-t.bays[i])).toFixed(2)} m · ${t.problems.length?'FAIL':'PASS'}`:`${t.name}: ${t.lift} m lifts, ladder access, tied to the wall · ${t.problems.length?'FAIL':'PASS'}`,at});}
+  const f=t.flights&&t.flights[0];if(t.kind==='sphere stair'){findings.push({severity:'pass',message:`${t.name}: ${t.treads} treads, going ${t.going} m, rise ${t.rise.min}–${t.rise.max} m, ${t.pitch.max.toFixed(0)}° easing to ${t.pitch.min.toFixed(0)}° over the top, ${t.clearance.toFixed(2)} m clear of the shell, crown platform at ${t.top} m · ${t.problems.length?'FAIL':'PASS'}`,at});continue;}if(t.kind==='fixed ladder'){findings.push({severity:'pass',message:`${t.name}: ${t.flights.length} caged flights of ${(f.to-f.from).toFixed(2)} m, rungs ${f.pitch} m apart, cage from ${f.cageFrom} m, rest landings at ${t.landings.slice(0,-1).map(y=>y.toFixed(1)).join(', ')} m, top ${t.top} m · ${t.problems.length?'FAIL':'PASS'}`,at});continue;}findings.push({severity:'pass',message:f?`${t.name}: ${t.flights.length} flight${t.flights.length>1?'s':''}, rise ${f.rise} m, going ${f.going} m, ${f.angle.toFixed(0)}°, longest bay ${Math.max(...t.bays.slice(1).map((b,i)=>b-t.bays[i])).toFixed(2)} m · ${t.problems.length?'FAIL':'PASS'}`:`${t.name}: ${t.lift} m lifts, ladder access, tied to the wall · ${t.problems.length?'FAIL':'PASS'}`,at});}
  return{ok:!errors,errors,warnings:0,findings};}
 document.getElementById('runSupportAudit').onclick=()=>showAudit(runSupportAudit(),'Support audit');
 document.getElementById('runScaffoldAudit').onclick=()=>showAudit(runScaffoldAudit(),'Scaffold audit');

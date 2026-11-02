@@ -74,6 +74,8 @@ Reads the same pipe record as the Pipe Continuity Auditor (`window.PIPE_NETWORK`
   1.5 m apart and five straps, stiles 1.1 m above every landing and a self-closing gate at the top. Options: a truss
   walkway bridge straight on from the top, and a platform at its end with a hole for a nozzle. (OSHA 1910.28(b)(9)
   asks for a ladder safety system instead of a cage on new ladders over 24 ft; the cage is the EN arrangement.)
+- **Sphere stairs** (`sphereStair`): the stair of a Horton sphere, as described below; checked for rise, going,
+  pitch, width, clearance to the shell and its parts.
 - `ScaffoldSpawn.check` re-measures what was built against those rules.
 
 ## Where they are used in the Mini Model
@@ -91,15 +93,28 @@ them and a ladder is for reaching the top; all the other tanks need legs):
 
 - The sphere crown stairs, crown walkway and crown platforms are gone. The Human Raceway runs only between the two
   sphere rows (x = 69).
-- Each sphere has one caged ladder (`fixedLadder`): four 5.7 m flights with rest landings up a braced mast, then a
-  9.9 m truss walkway bridge to a 3.2 m platform round the crown nozzle and its isolation valve. The west row climbs
-  on the west side, away from the nitrogen header; the east row on the south side of each sphere, because the caustic
-  transfer line runs along the north edge. The sphere legs now have concrete pads and crossed tie rods.
-- Every other free-standing tank stands on legs: the eight utility tanks, the two detector water-service vessels,
-  the Gd mixing tank and the three detector filters. Each has a dished bottom, legs on concrete pads with crossed
-  bracing, and a valved bottom outlet that leaves between two legs. The lift is 1.4 m + 0.18 × radius, so the valve
-  has at least 0.5 m of drop under the bottom. (Big atmospheric tanks usually sit on a ring wall rather than legs; legs
-  here are by request.)
+- Each sphere now has the stair real Horton spheres have (Astra asked for it to look exactly like a photo of one:
+  [Horton Sphere, Jackville, Alberta](https://commons.wikimedia.org/wiki/File:Horton_Sphere_-_52201347661.jpg),
+  Jason Woodhead, CC BY 2.0). Scaffold Spawn `sphereStair` builds it. It starts on the Human Raceway deck between
+  the rows, spirals up round the outside at 38° to the equator, then keeps that pitch over the upper half by turning
+  towards the top. Last, it runs straight up the shell, easing to 12°, to a round railed platform on the crown that
+  holds the outlet valve, a relief-valve stub and an instrument mast. The treads stay level on a 0.25 m going, with
+  rises of 0.05–0.195 m. Stringers sit on radial brackets to the shell, with handrails and mid-rails on both sides.
+  West-row stairs leave the west edge of the deck and climb south. East-row stairs leave the east edge and climb
+  north, so the feet of a pair never pinch the deck. The deck handrail opens where each stair leaves it. Like the
+  photo, the stair has no intermediate landing.
+- The sphere legs now match the photo: eight columns at the shell, welded on at the equator with tapered tops, with
+  concrete fireproofing on the lower part, concrete pedestals, and tie rods crossing from the foot of one leg to just
+  under the equator of the next.
+- Every other free-standing tank stands on legs the way a legged tank does: the eight utility tanks, the two
+  detector water-service vessels, the Gd mixing tank and the three detector filters.
+  - Pipe legs are welded to the shell over doubler plates and stand on concrete piers.
+  - Crossed bracing fills every bay except the one the outlet leaves through.
+  - The bottom outlet drops through a flanged valve at hand height to an elbow, then runs out between two legs onto a
+    pipe sleeper. The lift of 2.2 m + 0.18 × radius leaves about 2 m under the dished bottom for that piping.
+  - Tanks over 7 m tall get a caged ladder fixed to the shell (`fixedLadder` with `mount: 'wall'`), opposite the
+    outlet, up to a roof landing with a handrail round that part of the roof edge.
+  - (Big atmospheric tanks usually sit on a ring wall rather than legs; legs here are by request.)
 
 Pipe changes made for the supports: the nitrogen trunk now drops to tank-roof height (15 m) at the sphere rows instead of
 running 68 m at 26 m on tall posts, and the blanketing headers sit on the tank roofs at 15 m (was 16 m).
