@@ -2084,16 +2084,20 @@ for(const x of [-94,-68])for(const z of [88,114,140]){
 // the sphere, keeps its pitch over the upper half by turning towards the top, then runs straight up the shell to a
 // round railed platform on the crown with the outlet valve, a relief-valve stub and an instrument mast. West row: the
 // foot is on the west edge of the deck, climbing south; east row: on the east edge, climbing north, so the two feet of
-// a pair never pinch the deck. Built by Scaffold Spawn (sphereStair).
+// a pair never pinch the deck. The foot stands just off the deck edge on a landing the width of the stair, joined to
+// the deck: the deck handrail runs round the landing and opens only across the stair. Scaffold Spawn (sphereStair).
 const ladderMats={...scaffoldMats,tube:mat(0x8e969c,{metalness:.55,roughness:.4}),ladder:mat(0x8e969c,{metalness:.55,roughness:.4}),footing:mat(0x7b7d78,{roughness:.95}),board:mat(0x5b646b,{metalness:.5,roughness:.6}),toe:mat(0x5b646b,{metalness:.5,roughness:.6})};
-const sphereStairMats={...ladderMats,tread:mat(0x6f7a80,{metalness:.5,roughness:.5}),rail:mat(0xc9cfd3,{metalness:.5,roughness:.35}),base:steel};
-const sphereStairs=[],sphereStairDoors=[]; // the feet stand on the Human Raceway deck, 8.06 m (HUMAN_RACEWAY_Y, set further down)
+const sphereStairMats={...ladderMats,tread:mat(0x6f7a80,{metalness:.5,roughness:.5}),rail:mat(0xffd43b,{emissive:0x463100,emissiveIntensity:.35}),base:steel}; // rails in the Human Raceway yellow
+const sphereStairs=[],sphereStairLandings=[],sphereStairMouths=[]; // the feet stand on the Human Raceway deck, 8.06 m (HUMAN_RACEWAY_Y, set further down)
 for(const {x,z} of hortonSpherePositions){
- const west=x<70,start=(west?-8:172)*Math.PI/180,turn=west?-1:-1;
+ // foot centre 0.5 m outside the deck edge (west row x = 67.3, east row x = 70.7) on the 11.9 m walking-line circle
+ const west=x<70,off=Math.acos(11.3/11.9),start=west?-off:Math.PI-off,turn=-1;
  const t=scaffold(`Nitrogen sphere stair ${x}, ${z}`,ScaffoldSpawn.sphereStair({centre:[x,11.5,z],radius:11,clearance:.9,width:.9,pitch:38,start:{angle:start,y:8.06},turn,top:{radius:2.4,hole:.45}}),detailGroup,sphereStairMats);
  sphereStairs.push({x,z,top:t.top,radius:t.platform.radius});
- // where the stair leaves the deck the raceway handrail opens
- const fz=t.foot[2],dz=west?-1:1;for(const k of [-.2,2.6])sphereStairDoors.push([west?67.8:70.2,+(fz+dz*k).toFixed(2),`Sphere stair ${x}, ${z}`]);
+ // landing between the deck edge and the stair foot; the stair leaves it across its far edge (the mouth)
+ const [fx,,fz]=t.foot,dz=west?-1:1,edge=west?67.8:70.2,x0=Math.min(edge,fx-.47),x1=Math.max(edge,fx+.47);
+ sphereStairLandings.push([+x0.toFixed(3),+Math.min(fz,fz-dz*1.2).toFixed(3),+x1.toFixed(3),+Math.max(fz,fz-dz*1.2).toFixed(3),`Sphere stair landing ${x}, ${z}`]);
+ sphereStairMouths.push({name:`Sphere stair ${x}, ${z}`,x0:west?fx-.47:Math.max(fx-.47,edge+.15),x1:west?Math.min(fx+.47,edge-.15):fx+.47,z0:Math.min(fz,fz+dz*.5),z1:Math.max(fz,fz+dz*.5)});
  // keep pipe supports out of the stair: one box per 12 nosings
  for(let i=0;i<t.path.length-1;i+=12){const q=t.path.slice(i,i+13),xs=q.map(v=>v[0]),ys=q.map(v=>v[1]),zs=q.map(v=>v[2]);obstacleBox(t.name,Math.min(...xs)-.7,Math.min(...ys)-.4,Math.min(...zs)-.7,Math.max(...xs)+.7,Math.max(...ys)+1,Math.max(...zs)+.7);}
  HOVER='Sphere crown · relief valve and vent stub';rod(V(x+1.1,t.top,z+.9),V(x+1.1,t.top+1.3,z+.9),.14,steel,detailGroup);
@@ -2806,6 +2810,8 @@ for(const [x,z,angle]of [[-25,66,0],[104,66,0],[-6,114,-Math.PI/2],[112,91,-Math
  const paint=surfaceArt('HUMAN RACEWAY',x,HUMAN_RACEWAY_Y+.025,z,17,1.9,'#ffdc35',0,true);humanRaceway.add(paint);paint.rotation.set(-Math.PI/2,0,angle);paint.userData.name='Painted yellow HUMAN RACEWAY lettering';
 }
 
+for(const [x0,z0,x1,z1,name] of sphereStairLandings){const d=add(new THREE.Mesh(new THREE.BoxGeometry(x1-x0,.18,z1-z0),racewayDeckMat),(x0+x1)/2,HUMAN_RACEWAY_Y-.09,(z0+z1)/2,humanRaceway);d.userData.name=name;racewayFlats.push([x0,z0,x1,z1,HUMAN_RACEWAY_Y,name]);
+ for(const z of [z0+.2,z1-.2])rod(V(x0+.1,HUMAN_RACEWAY_Y-.2,z),V(x1-.1,HUMAN_RACEWAY_Y-.2,z),.06,steel,humanRaceway);}
 const turbineGallery={floor:HUMAN_RACEWAY_Y,width:2.4,entry:[77,20],paths:[[[77,20],[77,17],[138,17],[138,-17],[128,-17]],[[85,17],[85,1],[120,1]]]};
 HOVER='Turbine gallery · Human Raceway to the viewing deck and around the generator end';
 const turbineGalleryPaint=surfaceArt('TURBINE GALLERY',109,HUMAN_RACEWAY_Y+.025,17,16,1.7,'#ffdc35',0,true);humanRaceway.add(turbineGalleryPaint);turbineGalleryPaint.rotation.x=-Math.PI/2;
@@ -2822,11 +2828,11 @@ HOVER=null;
 // Every walking surface is a rectangle. On each level their joined outline gets a top rail at 1.1 m, a mid-rail at 0.55 m
 // and posts no more than 1.8 m apart (OSHA 1910.29). An edge stays open only where it runs into another walking surface,
 // a stair or ramp, a building wall or a door. The Rail Continuity Auditor (tools/rail-continuity-auditor-20261031.js) re-checks it.
-const RAIL_TOP=1.1,RAIL_MID=.55,racewayDoors=[[166,26,'Reactor hall door'],[204,9,'Fuel building door'],...sphereStairDoors];
+const RAIL_TOP=1.1,RAIL_MID=.55,racewayDoors=[[166,26,'Reactor hall door'],[204,9,'Fuel building door']];
 const slopeY=(s,x,z)=>{const t=s.axis==='z'?(z-s.z0)/(s.z1-s.z0):(x-s.x0)/(s.x1-s.x0);return s.yLo+(s.yHi-s.yLo)*Math.max(0,Math.min(1,t));};
 const walkableAt=(x,z,y)=>racewayFlats.some(f=>x>=f[0]-1e-3&&x<=f[2]+1e-3&&z>=f[1]-1e-3&&z<=f[3]+1e-3&&Math.abs(f[4]-y)<.45)||racewaySlopes.some(s=>x>=s.x0-1e-3&&x<=s.x1+1e-3&&z>=s.z0-1e-3&&z<=s.z1+1e-3&&Math.abs(slopeY(s,x,z)-y)<.45);
 const wallAt=(x,z,y)=>buildingBoxes.some(B=>Math.abs(x-B.x)<=B.w/2+.1&&Math.abs(z-B.z)<=B.d/2+.1&&y+.5<=B.h);
-const doorAt=(x,z)=>racewayDoors.some(([dx,dz])=>Math.abs(x-dx)<1.5&&Math.abs(z-dz)<1.5);
+const doorAt=(x,z)=>racewayDoors.some(([dx,dz])=>Math.abs(x-dx)<1.5&&Math.abs(z-dz)<1.5)||sphereStairMouths.some(m=>x>m.x0&&x<m.x1&&z>m.z0&&z<m.z1);
 function railPiece(a,b,yA,yB){ // top rail, mid-rail and posts along one straight edge; yA/yB are the walking heights at each end
  for(const h of [RAIL_TOP,RAIL_MID]){const p=V(a.x,yA+h,a.z),q=V(b.x,yB+h,b.z);rod(p,q,.045,racewayYellow,humanRaceway);WALKWAYS.rails.push({a:p.toArray(),b:q.toArray(),role:h===RAIL_TOP?'top':'mid'});}
  const L=Math.hypot(b.x-a.x,b.z-a.z),n=Math.max(1,Math.ceil(L/1.8));
@@ -2851,6 +2857,7 @@ HOVER=null;
 for(const f of racewayFlats)WALKWAYS.surfaces.push({name:f[5],kind:'flat',cx:(f[0]+f[2])/2,cz:(f[1]+f[3])/2,hx:(f[2]-f[0])/2,hz:(f[3]-f[1])/2,angle:0,y:f[4]});
 for(const s of racewaySlopes)WALKWAYS.surfaces.push({name:s.name,kind:'slope',cx:(s.x0+s.x1)/2,cz:(s.z0+s.z1)/2,hx:(s.z1-s.z0)/2,hz:(s.x1-s.x0)/2,angle:Math.PI/2,yA:s.yLo,yB:s.yHi});
 for(const B of buildingBoxes)WALKWAYS.walls.push({name:B.name,cx:B.x,cz:B.z,hx:B.w/2,hz:B.d/2,angle:0,y0:0,y1:B.h});
+for(const m of sphereStairMouths)WALKWAYS.openings.push({name:m.name,cx:(m.x0+m.x1)/2,cz:(m.z0+m.z1)/2,hx:(m.x1-m.x0)/2,hz:(m.z1-m.z0)/2,y0:HUMAN_RACEWAY_Y-.5,y1:HUMAN_RACEWAY_Y+.5});
 for(const [x,z,name] of racewayDoors)WALKWAYS.openings.push({name,cx:x,cz:z,hx:1.5,hz:1.5,y0:HUMAN_RACEWAY_Y-.5,y1:HUMAN_RACEWAY_Y+.5});
 
 // Static phone handrails share one draw call; instance transforms retain every rail and gap.

@@ -101,7 +101,9 @@ them and a ladder is for reaching the top; all the other tanks need legs):
   holds the outlet valve, a relief-valve stub and an instrument mast. The treads stay level on a 0.25 m going, with
   rises of 0.05–0.195 m. Stringers sit on radial brackets to the shell, with handrails and mid-rails on both sides.
   West-row stairs leave the west edge of the deck and climb south. East-row stairs leave the east edge and climb
-  north, so the feet of a pair never pinch the deck. The deck handrail opens where each stair leaves it. Like the
+  north, so the feet of a pair never pinch the deck. Each stair starts from its own landing, joined to the deck and
+  as wide as the stair. The Human Raceway handrail wraps round the landing and opens only across the stair. The
+  stair's handrails are Human Raceway yellow. Like the
   photo, the stair has no intermediate landing.
 - The sphere legs now match the photo: eight columns at the shell, welded on at the equator with tapered tops, with
   concrete fireproofing on the lower part, concrete pedestals, and tie rods crossing from the foot of one leg to just
