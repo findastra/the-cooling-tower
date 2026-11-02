@@ -139,6 +139,11 @@ osha.gov on 2026-11-01). The Scaffold audit names the paragraph behind every che
 | Ladder rungs and clearances | rungs 10–14 in apart (1910.23(b)(2)); ≥ 16 in clear width (1910.23(b)(4)); ≥ 7 in behind the rungs (1910.23(d)(2)) | 0.28 m, 0.5 m, 0.3 m |
 | Ladder exits | side rails 42 in over the landing (1910.23(d)(4)); a through ladder's extension flared to 24–30 in with no rungs (1910.23(d)(5)); a side-step ladder's rails and rungs continue (1910.23(d)(6)); gate at the opening (1910.29(b)(13)) | 1.1 m; the top exit flares to 0.69 m; the rest-landing flights carry their rungs up; self-closing gate at the top |
 
+Continuity: every rail, the handrail and the stringers each run as one unbroken line per side. They follow the
+nosing line, offset at mitred corners so the pieces meet at every bend, with the same rail set on flights, landings and
+the walkway into the platform ring. Each tread is as long as its outer edge, so the treads close up round the curve.
+At the foot, corner posts tie the Human Raceway rails (1.1 / 0.55 m) into the stair rails (1.07 / 0.71 / 0.36 m).
+
 More detail on the stairs: bar-grating treads with a safety-yellow nosing, and channel stringers tied together under the
 treads and held off the shell by radial brackets on pads. Rail posts stand about every 1.5 m. Rails are in Human Raceway yellow.
 
