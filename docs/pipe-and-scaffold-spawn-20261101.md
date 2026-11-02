@@ -118,6 +118,30 @@ them and a ladder is for reaching the top; all the other tanks need legs):
     outlet, up to a roof landing with a handrail round that part of the roof edge.
   - (Big atmospheric tanks usually sit on a ring wall rather than legs; legs here are by request.)
 
+### OSHA pass (Astra: "more detail please, reference OSHA")
+
+The sphere stairs and the tank ladders are laid out and checked against OSHA 29 CFR 1910 Subpart D (read from
+osha.gov on 2026-11-01). The Scaffold audit names the paragraph behind every check.
+
+| Part | Rule | What the model has |
+|---|---|---|
+| Stair angle | 30–50° (1910.25(c)(1)) | 38°; the last flight 37° |
+| Riser / tread | rise ≤ 9.5 in (0.24 m), tread ≥ 9.5 in (1910.25(c)(2)–(3)) | 0.195 m on a 0.25 m going |
+| Uniform steps | equal risers and treads between landings (1910.25(b)(3)) | every riser in a flight is the same. The stair no longer flattens over the top: where the shell gets too flat to keep the pitch, it takes a landing, one straight flight towards the crown and a level walkway onto the platform |
+| Width | ≥ 22 in (0.56 m) (1910.25(c)(4)) | 0.9 m |
+| Landings | as wide as the stair, ≥ 30 in (0.76 m) deep (1910.25(b)(4)) | 1.0 m after every flight; flights rise at most 3.66 m (12 ft). That limit is from IBC 1011.8, because 1910 sets no maximum rise between landings |
+| Headroom | 6 ft 8 in (2.03 m) over every nosing (1910.25(b)(2)) | checked against the stair itself and against every pipe in the model |
+| Rails on an open-sided stair under 44 in wide | a stair rail system on each open side (1910.28(b)(11), Table D-2) | both sides |
+| Stair rail | top rail ≥ 42 in (1.07 m) (1910.29(f)(1)(ii)(B)); no opening over 19 in (0.48 m) (1910.29(f)(4)) | 1.07 m top rail, intermediate rails at 0.71 and 0.36 m |
+| Handrail | 30–38 in (0.76–0.97 m) (1910.29(f)(1)(i)); 2.25 in (57 mm) finger clearance (1910.29(f)(2)); ends without a projection hazard (1910.29(f)(6)) | 42 mm rail at 0.91 m on brackets inside the posts, 57 mm clear, returned to the post at both ends |
+| Landings, walkway, crown platform | guardrail 42 in ± 3 in (1910.29(b)(1)), mid-rail half way (1910.29(b)(2)(i)), toe board ≥ 3.5 in (1910.29(k)(1)(ii)) | 1.07 m guardrail, 0.535 m mid-rail, 0.1 m toe boards, and a kick ring round the nozzle hole |
+| Fixed ladders over 24 ft | ladder safety system or fall arrest on ladders installed from 2018-11-19 (1910.28(b)(9)(i)(B)); a cage may stay if it does not interfere (1910.28(b)(9)(iv)) | every tank ladder has a rigid ladder safety rail up the middle of the rungs, and keeps its cage |
+| Ladder rungs and clearances | rungs 10–14 in apart (1910.23(b)(2)); ≥ 16 in clear width (1910.23(b)(4)); ≥ 7 in behind the rungs (1910.23(d)(2)) | 0.28 m, 0.5 m, 0.3 m |
+| Ladder exits | side rails 42 in over the landing (1910.23(d)(4)); a through ladder's extension flared to 24–30 in with no rungs (1910.23(d)(5)); a side-step ladder's rails and rungs continue (1910.23(d)(6)); gate at the opening (1910.29(b)(13)) | 1.1 m; the top exit flares to 0.69 m; the rest-landing flights carry their rungs up; self-closing gate at the top |
+
+More detail on the stairs: bar-grating treads with a safety-yellow nosing, and channel stringers tied together under the
+treads and held off the shell by radial brackets on pads. Rail posts stand about every 1.5 m. Rails are in Human Raceway yellow.
+
 Pipe changes made for the supports: the nitrogen trunk now drops to tank-roof height (15 m) at the sphere rows instead of
 running 68 m at 26 m on tall posts, and the blanketing headers sit on the tank roofs at 15 m (was 16 m).
 
