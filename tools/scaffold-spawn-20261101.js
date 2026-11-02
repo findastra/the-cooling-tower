@@ -4,6 +4,8 @@
  *     0.2 m and going 0.25 m (EN 12811-1 access stairs; OSHA 1910.25 allows 0.15–0.19 m rise, 0.24 m going minimum),
  *     a stair rail 0.9 m over the nosings on both sides of every flight (OSHA 1926.451(e)(4): 0.71–0.94 m)
  *   - accessScaffold: a working scaffold along a wall (straight or curved), boarded at the lifts you ask for, tied to the wall
+ *   - fixedLadder: a permanent caged ladder on a braced mast, staggered flights of at most 6 m with rest landings, and
+ *     optionally a truss walkway bridge and a platform at its end (EN ISO 14122-4)
  *   - every scaffold: standards on base plates and sole boards, bays no longer than 2.6 m, a ledger and transoms at
  *     every lift (2 m), a kicker lift just over the ground, zig-zag face bracing in every bay, couplers at the joints,
  *     boarded decks with 0.15 m toe boards, guardrails at 1.0 m with a mid-rail at 0.5 m on every open edge
@@ -12,7 +14,7 @@
  *   const t = ScaffoldSpawn.stairTower({ foot: [x, y, z], dir: [1, 0], across: [0, 1], height: 5.5, laneWidth: 1.0 })
  *   ScaffoldSpawn.build(THREE, t.parts, materials, group)      // instanced meshes
  *   ScaffoldSpawn.check(t)                                       // rule findings ([] when it passes)
- * Materials used by the parts: tube, coupler, base, sole, board, toe, tread, rail (falls back to tube), and
+ * Materials used by the parts: tube, coupler, base, sole, footing, ladder, board, toe, tread, rail (falls back to tube), and
  * board1..board3 / tread1.. variants when given (mixed salvaged planks).
  */
 (function (root) {
@@ -56,7 +58,8 @@
       k.slab('base', 'Base plate', u, v, base + 0.01, 0.15, 0.15, 0.02);
       k.tube('tube', 'Standard', [u, v, base + 0.02], [u, v, top], RULES.tube + 0.004);
     }
-    for (const v of vs) k.slab('sole', 'Sole board', (us[0] + us[us.length - 1]) / 2, v, base - 0.02, us[us.length - 1] - us[0] + 0.5, 0.22, 0.04);
+    if (o.footing) for (const u of us) for (const v of vs) k.slab('footing', 'Concrete footing', u, v, base - 0.2, 0.5, 0.5, 0.4);
+    else for (const v of vs) k.slab('sole', 'Sole board', (us[0] + us[us.length - 1]) / 2, v, base - 0.02, us[us.length - 1] - us[0] + 0.5, 0.22, 0.04);
     const levels = [base + 0.15, ...lifts.filter(y => y > base + 0.4)];
     for (const y of levels) {
       for (const v of vs) { k.tube('tube', y === base + 0.15 ? 'Kicker ledger' : 'Ledger', [us[0], v, y], [us[us.length - 1], v, y]); for (const u of us) coupler(u, v, y); }
@@ -212,6 +215,87 @@
     return { kind: 'access scaffold', version: VERSION, parts, width, lift, base, top, centre: [mid[0], r3((base + top) / 2), mid[1]] };
   }
 
+  // ---------- fixed caged ladder ----------
+  // A permanent steel ladder on a braced mast (EN ISO 14122-4): rungs 0.25–0.30 m apart, 0.4–0.6 m between the stiles,
+  // a safety cage from 2.2–3.0 m above each standing level with hoops no more than 1.5 m apart and at least five
+  // straps, flights of at most 6 m staggered sideways with a rest landing between them, stiles 1.1 m above every
+  // landing and a self-closing gate at the top. (OSHA 1910.28(b)(9) asks a ladder safety system instead of a cage on
+  // new ladders over 24 ft; the cage here is the EN arrangement.)
+  // o: foot [x,y,z] (first flight, centre of the rungs), dir [dx,dz] (from the climber towards the ladder and the
+  //    thing it serves), height (to the top deck), stagger (0.8, sideways step between flights),
+  //    bridge: { length, width } (a truss walkway straight on from the top deck along dir),
+  //    platform: { size, hole, drop } (a square platform at the end of the bridge, a hole for a nozzle, legs `drop` long)
+  const LADDER = { rung: 0.28, rungMin: 0.25, rungMax: 0.3, width: 0.5, flightMax: 6, cageFrom: 2.5, cageMin: 2.2, cageMax: 3.0, hoopMax: 1.5, straps: 5, cageR: 0.36, cageBack: 0.38, stileExt: 1.1 };
+  function fixedLadder(o) {
+    const f = frameOf(o), k = kit(f, o.style), base = o.foot[1], H = o.height, yTop = base + H, st = o.stagger === undefined ? 0.8 : o.stagger;
+    const n = Math.max(1, Math.ceil(H / LADDER.flightMax - 1e-9)), h = H / n, vOf = i => (i % 2) * st, half = LADDER.width / 2 + 0.03;
+    const mu = [0.2, 0.9], mv = [-0.4, st + 0.4];
+    // the mast the ladder is bolted to
+    const lifts = []; for (let i = 0; i < n; i++) { const m = Math.ceil(h / 2); for (let j = 1; j <= m; j++) lifts.push(base + i * h + h * j / m); }
+    frame(k, mu, mv, base, yTop, lifts, { footing: true });
+    const flights = [], landings = [];
+    for (let i = 0; i < n; i++) {
+      const y0 = base + i * h, y1 = y0 + h, v = vOf(i), top = y1 + LADDER.stileExt;
+      for (const dv of [-half, half]) k.tube('ladder', 'Ladder stile', [0, v + dv, y0], [0, v + dv, top], 0.03);
+      const m = Math.round(h / LADDER.rung), pitch = h / m;
+      for (let j = 1; j <= m; j++) k.tube('ladder', 'Ladder rung', [0, v - half, y0 + j * pitch], [0, v + half, y0 + j * pitch], 0.016);
+      for (let y = y0 + 1; y < top; y += 2) for (const dv of [-half, half]) k.tube('tube', 'Ladder bracket', [0, v + dv, y], [mu[0], v + dv, y], 0.025);
+      // cage: a U of hoops open to the ladder, with vertical straps
+      const c0 = y0 + LADDER.cageFrom, nh = Math.max(1, Math.ceil((top - c0) / (LADDER.hoopMax - 0.1))), gap = (top - c0) / nh, R = LADDER.cageR, B = LADDER.cageBack;
+      const pt = a => [-B - R * Math.cos(a), v + R * Math.sin(a)], arc = []; for (let a = -90; a <= 90; a += 30) arc.push(pt(a * Math.PI / 180));
+      const loop = [[0, v - R], ...arc, [0, v + R]];
+      for (let j = 0; j <= nh; j++) { const y = c0 + j * gap; for (let q = 1; q < loop.length; q++) k.tube('rail', 'Cage hoop', [loop[q - 1][0], loop[q - 1][1], y], [loop[q][0], loop[q][1], y], 0.022); }
+      const straps = [-90, -45, 0, 45, 90].map(a => pt(a * Math.PI / 180));
+      for (const [u, vv] of straps) k.tube('rail', 'Cage strap', [u, vv, c0], [u, vv, top], 0.016);
+      flights.push({ from: r3(y0), to: r3(y1), rungs: m, pitch: r3(pitch), width: LADDER.width, cageFrom: r3(c0 - y0), hoopGap: r3(gap), straps: straps.length, stileExt: LADDER.stileExt });
+      if (i < n - 1) {
+        // rest landing beside the top of this flight, where the next flight starts
+        const vn = vOf(i + 1), a = vn - 0.4, b = vn + 0.4, outer = vn > v ? 'v1' : 'v0', ov = vn > v ? b : a;
+        deck(k, -0.85, 0, a, b, y1, ['u0', outer], 'Rest landing');
+        guard(k, [-0.85, a], [-0.85, b], y1); guard(k, [-0.85, ov], [0, ov], y1);
+        for (const e of [a, b]) k.tube('tube', 'Landing bearer', [-0.85, e, y1 - 0.06], [mu[0], e, y1 - 0.06]);
+        landings.push(r3(y1));
+      }
+    }
+    // top deck over the mast, walk-through exit with a self-closing gate
+    const vL = vOf(n - 1);
+    deck(k, 0, mu[1], mv[0], mv[1], yTop, ['v0', 'v1'], 'Ladder top deck');
+    guard(k, [0, mv[0]], [mu[1], mv[0]], yTop); guard(k, [0, mv[1]], [mu[1], mv[1]], yTop);
+    if (vL - half > mv[0] + 0.05) guard(k, [0, mv[0]], [0, vL - half], yTop);
+    if (vL + half < mv[1] - 0.05) guard(k, [0, vL + half], [0, mv[1]], yTop);
+    for (const hh of [0.5, 1.0]) k.tube('rail', 'Self-closing gate', [0.06, vL - half + 0.04, yTop + hh], [0.06, vL + half - 0.04, yTop + hh], 0.02);
+    landings.push(r3(yTop));
+    let end = mu[1];
+    if (o.bridge) {
+      const L = o.bridge.length, w = o.bridge.width || 0.9, u0 = mu[1], u1 = u0 + L, nb = Math.max(2, Math.ceil(L / 1.6));
+      deck(k, u0, u1, -w / 2, w / 2, yTop, ['v0', 'v1'], 'Walkway bridge deck');
+      if (mv[1] > w / 2 + 0.05) guard(k, [mu[1], w / 2], [mu[1], mv[1]], yTop);
+      if (mv[0] < -w / 2 - 0.05) guard(k, [mu[1], mv[0]], [mu[1], -w / 2], yTop);
+      for (const side of [-w / 2, w / 2]) {
+        guard(k, [u0, side], [u1, side], yTop);
+        k.tube('tube', 'Bridge bottom chord', [u0, side, yTop - 0.08], [u1, side, yTop - 0.08], 0.035);
+        for (let j = 0; j <= nb; j++) {
+          const u = u0 + L * j / nb; k.tube('tube', 'Bridge post', [u, side, yTop - 0.08], [u, side, yTop + 1.0], 0.03);
+          if (j < nb) { const ub = u0 + L * (j + 1) / nb, rising = j < nb / 2; k.tube('tube', 'Bridge diagonal', [u, side, rising ? yTop + 1.0 : yTop - 0.08], [ub, side, rising ? yTop - 0.08 : yTop + 1.0], 0.022); }
+        }
+      }
+      for (let j = 0; j <= nb; j++) { const u = u0 + L * j / nb; k.tube('tube', 'Bridge cross beam', [u, -w / 2, yTop - 0.08], [u, w / 2, yTop - 0.08], 0.03); }
+      end = u1;
+      if (o.platform) {
+        const S = o.platform.size || 3.2, Hh = o.platform.hole || 0.8, ua = u1, ub = u1 + S, a = (S - Hh) / 2, drop = o.platform.drop || 0.4;
+        deck(k, ua, ub, -S / 2, -Hh / 2, yTop, [], 'Crown platform deck'); deck(k, ua, ub, Hh / 2, S / 2, yTop, [], 'Crown platform deck');
+        deck(k, ua, ua + a, -Hh / 2, Hh / 2, yTop, [], 'Crown platform deck'); deck(k, ub - a, ub, -Hh / 2, Hh / 2, yTop, [], 'Crown platform deck');
+        const toe = (cu, cv, lu, lv) => k.slab('toe', 'Toe board', cu, cv, yTop + RULES.toe / 2, lu, lv, RULES.toe);
+        toe(ub - 0.02, 0, 0.03, S); toe((ua + ub) / 2, -S / 2 + 0.02, S, 0.03); toe((ua + ub) / 2, S / 2 - 0.02, S, 0.03);
+        guard(k, [ub, -S / 2], [ub, S / 2], yTop); guard(k, [ua, -S / 2], [ub, -S / 2], yTop); guard(k, [ua, S / 2], [ub, S / 2], yTop);
+        guard(k, [ua, -S / 2], [ua, -w / 2], yTop); guard(k, [ua, w / 2], [ua, S / 2], yTop);
+        for (const pu of [ua + 0.2, ub - 0.2]) for (const pv of [-S / 2 + 0.2, S / 2 - 0.2]) { k.tube('tube', 'Platform leg', [pu, pv, yTop - drop], [pu, pv, yTop], 0.05); k.slab('base', 'Base plate', pu, pv, yTop - drop, 0.25, 0.25, 0.03); }
+        end = ub;
+      }
+    }
+    return { kind: 'fixed ladder', version: VERSION, parts: k.parts, flights, landings, top: r3(yTop), centre: f.W(end / 2, st / 2, base + H / 2), reach: r3(end) };
+  }
+
   // ---------- rule check ----------
   function check(t) {
     const out = [], bad = (code, msg) => out.push({ severity: 'error', code, message: msg });
@@ -226,6 +310,20 @@
       if (t.laneWidth < 0.6) bad('WIDTH', `stair lane ${t.laneWidth} m is under 0.6 m`);
     }
     const tags = new Set(t.parts.map(p => p.tag));
+    if (t.kind === 'fixed ladder') {
+      for (const fl of t.flights) {
+        const at = `flight ${fl.from}→${fl.to} m`;
+        if (fl.pitch < LADDER.rungMin - 1e-3 || fl.pitch > LADDER.rungMax + 1e-3) bad('RUNG', `${at}: rungs ${fl.pitch} m apart, not ${LADDER.rungMin}–${LADDER.rungMax} m`);
+        if (fl.width < 0.4 || fl.width > 0.6) bad('WIDTH', `${at}: ${fl.width} m between the stiles, not 0.4–0.6 m`);
+        if (fl.to - fl.from > LADDER.flightMax + 1e-3) bad('FLIGHT', `${at}: climbs more than ${LADDER.flightMax} m without a rest landing`);
+        if (fl.cageFrom < LADDER.cageMin - 1e-3 || fl.cageFrom > LADDER.cageMax + 1e-3) bad('CAGE', `${at}: cage starts ${fl.cageFrom} m up, not ${LADDER.cageMin}–${LADDER.cageMax} m`);
+        if (fl.hoopGap > LADDER.hoopMax + 1e-3) bad('HOOP', `${at}: cage hoops ${fl.hoopGap} m apart`);
+        if (fl.straps < LADDER.straps) bad('STRAP', `${at}: ${fl.straps} cage straps`);
+        if (fl.stileExt < 1.0) bad('EXIT', `${at}: stiles end ${fl.stileExt} m above the landing`);
+      }
+      for (const need of ['Ladder rung', 'Ladder stile', 'Cage hoop', 'Cage strap', 'Guardrail', 'Mid-rail', 'Toe board', 'Self-closing gate', 'Standard', 'Face brace']) if (!tags.has(need)) bad('PART', `no ${need.toLowerCase()} on the ladder`);
+      return out;
+    }
     if (t.kind === 'access scaffold' && !tags.has('Ladder rung')) bad('ACCESS', 'no ladder or stair up to the platforms');
     for (const need of ['Standard', 'Base plate', 'Ledger', 'Transom', 'Face brace', 'Guardrail', 'Mid-rail', 'Toe board']) if (!tags.has(need)) bad('PART', `no ${need.toLowerCase()} in the scaffold`);
     return out;
@@ -255,7 +353,7 @@
     return meshes;
   }
 
-  const api = { stairTower, accessScaffold, check, build, RULES, version: VERSION };
+  const api = { stairTower, accessScaffold, fixedLadder, check, build, RULES, LADDER, version: VERSION };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.ScaffoldSpawn = api;
 })(typeof window !== 'undefined' ? window : globalThis);

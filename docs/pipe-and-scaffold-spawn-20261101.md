@@ -68,6 +68,12 @@ Reads the same pipe record as the Pipe Continuity Auditor (`window.PIPE_NETWORK`
 - **Both:** standards on base plates and sole boards, bays no longer than 2.6 m, ledgers and transoms at every lift
   and a kicker lift just over the ground, zig-zag face bracing in every bay, couplers at the joints, boarded decks with
   0.15 m toe boards, guardrails at 1.0 m with a mid-rail at 0.5 m on every open edge (EN 12811-1; OSHA 1926.451(g)(4)).
+- **Fixed ladders** (`fixedLadder`): a permanent caged ladder bolted to a braced mast, for places people climb now and
+  then (EN ISO 14122-4). Rungs 0.25–0.30 m apart, 0.4–0.6 m between the stiles, flights of at most 6 m staggered
+  sideways with a rest landing between them, a cage from 2.2–3.0 m above each standing level with hoops no more than
+  1.5 m apart and five straps, stiles 1.1 m above every landing and a self-closing gate at the top. Options: a truss
+  walkway bridge straight on from the top, and a platform at its end with a hole for a nozzle. (OSHA 1910.28(b)(9)
+  asks for a ladder safety system instead of a cage on new ladders over 24 ft; the cage is the EN arrangement.)
 - `ScaffoldSpawn.check` re-measures what was built against those rules.
 
 ## Where they are used in the Mini Model
@@ -79,6 +85,21 @@ Reads the same pipe record as the Pipe Continuity Auditor (`window.PIPE_NETWORK`
 | Pump-house east roof-to-yard stairs | a six-lift tower against the east wall, clear of the Human Raceway bridge; the roof guardrail opens only where the top landing meets it |
 | Makeshift crew scaffold | still salvaged (rusty clamps, mixed planks, grey tube rails) but put up properly: an entry deck resting on the two lake mains at 10 m, one flight, an exit deck onto the clubhouse roof |
 | Maintenance scaffold on the inner shell | a 12 m access scaffold on the deck, boarded every 2 m, tied back to the leaning shell, ladder through traps |
+
+Later the same day (Astra: the Horton spheres had "weird" walkways round them; the Human Raceway should only go between
+them and a ladder is for reaching the top; all the other tanks need legs):
+
+- The sphere crown stairs, crown walkway and crown platforms are gone. The Human Raceway runs only between the two
+  sphere rows (x = 69).
+- Each sphere has one caged ladder (`fixedLadder`): four 5.7 m flights with rest landings up a braced mast, then a
+  9.9 m truss walkway bridge to a 3.2 m platform round the crown nozzle and its isolation valve. The west row climbs
+  on the west side, away from the nitrogen header; the east row on the south side of each sphere, because the caustic
+  transfer line runs along the north edge. The sphere legs now have concrete pads and crossed tie rods.
+- Every other free-standing tank stands on legs: the eight utility tanks, the two detector water-service vessels,
+  the Gd mixing tank and the three detector filters. Each has a dished bottom, legs on concrete pads with crossed
+  bracing, and a valved bottom outlet that leaves between two legs. The lift is 1.4 m + 0.18 × radius, so the valve
+  has at least 0.5 m of drop under the bottom. (Big atmospheric tanks usually sit on a ring wall rather than legs; legs
+  here are by request.)
 
 Pipe changes made for the supports: the nitrogen trunk now drops to tank-roof height (15 m) at the sphere rows instead of
 running 68 m at 26 m on tall posts, and the blanketing headers sit on the tank roofs at 15 m (was 16 m).
