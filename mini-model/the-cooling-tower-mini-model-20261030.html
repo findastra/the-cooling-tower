@@ -1610,7 +1610,7 @@ HOVER='Outer staff gate · aligned with inner checkpoint';fenceRun(V(-62,0,157),
 HOVER = 'Floodlight';
 for (const a of [2.4, 3.9, 0.8, 5.5]) { const x = Math.cos(a) * (FR + 4), z = Math.sin(a) * (FR + 4); rod(V(x, 0, z), V(x, 14, z), 0.25, mat(0x6c6f75)); add(new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), glow(0xfff2c0)), x, 14.3, z); }
 HOVER = 'Security camera (looking the other way)';
-rod(V(-121, 0, -12), V(-121, 7, -12), 0.15, mat(0x6c6f75)); add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.6), mat(0xe8e8e4)), -120.6, 7.2, -11.4);
+rod(V(-121, 0, -12), V(-121, 7, -12), 0.15, mat(0x6c6f75)); add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.6), mat(0xe8e8e4)), -120.6, 7.2, -12);
 HOVER = 'DANGER · Authorized personnel only';
 { const sz = 14, sx = SITE.west - .2; add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 2.6), glow(0xd03030)), sx, 2.2, sz).rotation.y = -Math.atan2(sz, sx); } // on the fence beside the gate, clear of the pipes
 // Hard hats and crew staging are placed at the mountain-lake meetup after terrain generation.
@@ -1637,7 +1637,7 @@ for (let i = 0; i < 36; i++) {
   concreteBrace(V(Math.cos(a0)*R,CURB,Math.sin(a0)*R),V(Math.cos(a2)*R,LEG,Math.sin(a2)*R));
   concreteBrace(V(Math.cos(a2)*R,CURB,Math.sin(a2)*R),V(Math.cos(a0)*R,LEG,Math.sin(a0)*R));
   for(const y of [CURB,LEG])add(new THREE.Mesh(new THREE.SphereGeometry(.51,24,16),xBraceMaterial),Math.cos(a0)*R,y,Math.sin(a0)*R);
-  if (i % 3 === 0) kinds.beacons.push(add(new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), glow(0xffa43d)), Math.cos(a) * 38.9, LEG + 1, Math.sin(a) * 38.9, venueLights[0]));
+  if (i % 3 === 0) kinds.beacons.push(add(new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), glow(0xffa43d)), Math.cos(a) * 38.9, LEG + 1, Math.sin(a) * 38.9, venueLights[0])), rod(V(Math.cos(a) * 37.05, LEG + 1, Math.sin(a) * 37.05), V(Math.cos(a) * 38.9, LEG + 1, Math.sin(a) * 38.9), 0.07, mat(0x6c6f75));
 }
 HOVER = null;
 HOVER = 'Basin wall: the raised concrete ring the X-legs stand on (they are solid concrete; you climb between them)';
@@ -1911,23 +1911,25 @@ for (const z of [-17.6, -2.6]) { const m = add(new THREE.Mesh(new THREE.Cylinder
 HOVER = 'Open DJ and VJ production deck';
 add(new THREE.Mesh(new THREE.BoxGeometry(24, 0.45, 7), mat(0x323b42,{metalness:.35,roughness:.55})), 108, 0.25, 3.8, detailGroup);
 for(const x of [97,119])for(const z of [1,6.6])rod(V(x,0,z),V(x,3,z),.12,steel,detailGroup);
-for(const x of [96,120])for(const z of [1,6.6])add(new THREE.Mesh(new THREE.BoxGeometry(1.2,.12,1.2),glow(0x4fc3ff,.65)),x,3,z,detailGroup);
+for(const x of [97,119])for(const z of [1,6.6])add(new THREE.Mesh(new THREE.BoxGeometry(1.2,.12,1.2),glow(0x4fc3ff,.65)),x,3,z,detailGroup);
 // The annunciator bank is an exposed instrument rack: no room walls, glass box or roof.
 HOVER = 'Turbine hall instrument board and live process graphics';
 add(new THREE.Mesh(new THREE.BoxGeometry(21,0.35,0.55),mat(0x68757c)),108,4.3,0.1,detailGroup);
-for(const x of [97.8,118.2])rod(V(x,2.3,-.2),V(x,5.6,-.2),.1,steel,detailGroup);
+for(const x of [97.8,118.2])rod(V(x,0,-.2),V(x,5.6,-.2),.1,steel,detailGroup);
+add(new THREE.Mesh(new THREE.BoxGeometry(22.3,1.25,.05),mat(0x2a3136)),108,4.62,-.13,detailGroup); // backing plate the status lamps are fixed to
 const annunciators = [];
 for (let r = 0; r < 3; r++) for (let c = 0; c < 24; c++) { // compact status lamps across the open rack
   const w = add(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.25, 0.08), glow([0xffd23f, 0xff5a5a, 0x8dff5a, 0xffffff][(r + c) % 4], 0.9)), 97.2 + c * 0.94, 4.95 - r * 0.38, -0.08, detailGroup);
   annunciators.push(w); }
 for (let c = 0; c < 10; c++) { const g = add(new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 16), mat(0xf4f1e6)), 98 + c * 0.82, 1.25, 1.1, detailGroup); g.rotation.x = Math.PI / 2; }
-add(new THREE.Mesh(new THREE.BoxGeometry(9, 0.7, 1.2), mat(0x596970)), 102.5, 1.15, 3, detailGroup);
+add(new THREE.Mesh(new THREE.BoxGeometry(8.2,1.1,.08),mat(0x596970)),101.7,1.02,1.02,detailGroup); // gauge panel standing on the deck
+add(new THREE.Mesh(new THREE.BoxGeometry(9, 1.03, 1.2), mat(0x596970)), 102.5, 0.985, 3, detailGroup);
 const panel2 = add(new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.16, 1.1), glow(0xffa43d)), 102.5, 1.6, 3, detailGroup); panel2.rotation.x = -0.22;
-add(new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.7, 1.1), mat(0x3a3c42)), 112.5, 1.15, 3, detailGroup);
+add(new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.03, 1.1), mat(0x3a3c42)), 112.5, 0.985, 3, detailGroup);
 add(new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.15, 1.05), glow(0x4fc3ff)), 112.5, 1.57, 3, detailGroup);
 HOVER='DJ button deck and glowing faders';
 for(let r=0;r<3;r++)for(let c=0;c<8;c++)add(new THREE.Mesh(new THREE.BoxGeometry(.26,.08,.24),glow([0x54d8ff,0xff5ad8,0xffd23f,0x8dff5a][(r+c)%4],.95)),98.8+c*.48,1.62,2.55+r*.27,detailGroup);
-for(const x of [108,109,110,111,112,113,114,115])add(new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.22,12),mat(0xd5e0e0,{metalness:.5})),x,1.68,3.72,detailGroup);
+for(let i=0;i<8;i++)add(new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.22,12),mat(0xd5e0e0,{metalness:.5})),111.1+i*.4,1.68,3.3,detailGroup);
 HOVER = null;
 djFigure(107, 1, 2.1, 0);
 addVjStation(116.5,0.5,2.3,0,0.9);
@@ -2165,7 +2167,7 @@ function keepCameraAboveGround() {
 { const g = new THREE.PlaneGeometry(3200, 3200, 160, 160); g.rotateX(-Math.PI / 2);
   const pos = g.attributes.position, cols = [];
   const cFloor = new THREE.Color(0x2b2d2a), cForest = new THREE.Color(0x163020), cRidge = new THREE.Color(0x34445a); // the valley floor matches the plant pad; starlight catches the ridges
-  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + 60, z = pos.getZ(i), h = hillH(x, z);
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + 60, z = pos.getZ(i), ld = Math.hypot(x + 780, z + 80), lt = Math.min(1, Math.max(0, (ld - 66) / 64)), ls = 1 - lt * lt * (3 - 2 * lt), h = hillH(x, z) * (1 - ls) + hillH(-780, -80) * ls; // a level shelf carries the mountain lake, so its shore meets the ground all round
     pos.setY(i, x>=130&&x<=240&&z>=55&&z<=165 ? -65 : Math.hypot(x - RC, z) < 50 ? -12 : h - 0.3); // dips under the pad round the reactor pit so the pit stays open
     const c = cFloor.clone().lerp(cForest, Math.min(1, h / 12)); if (h > 80) c.lerp(cRidge, Math.min(1, (h - 80) / 70)); cols.push(c.r, c.g, c.b); }
   g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
@@ -2198,6 +2200,8 @@ for(const y of [lakeY+.5,lakeY+2,lakeY+4])rod(V(lakeX+12,y,lakeZ-7),V(lakeX+12,y
 HOVER='Lake trailhead · crew meetup and hard-hat check-in';
 add(new THREE.Mesh(new THREE.BoxGeometry(8,4,6),mat(0x354248)),lakeX+43,lakeY+2,lakeZ+5);
 add(new THREE.Mesh(new THREE.BoxGeometry(8.5,.35,6.5),mat(0x243038)),lakeX+43,lakeY+4.1,lakeZ+5);
+// the hut stands out over the slope below the shore: timber stilts carry it down to the ground
+for(const sx of [-3.6,3.6])for(const sz of [-2.6,2.6]){const px=lakeX+43+sx,pz=lakeZ+5+sz;rod(V(px,lakeY+.1,pz),V(px,terrainHeight(px,pz)-.5,pz),.2,mat(0x4a3a26));}
 add(new THREE.Mesh(new THREE.BoxGeometry(3.8,1.5,.15),glow(0x4fc3ff,.8)),lakeX+43,lakeY+2.6,lakeZ+8.1);
 add(new THREE.Mesh(new THREE.BoxGeometry(3,1.6,2.5),mat(0x7a5a32)),lakeX+35,lakeY+.8,lakeZ+9);
 for(let i=0;i<8;i++)add(new THREE.Mesh(new THREE.SphereGeometry(.42,10,6,0,Math.PI*2,0,Math.PI/2),hatMat),lakeX+33+(i%4)*.65,lakeY+1.6,lakeZ+8.1+Math.floor(i/4)*.8);
@@ -2304,8 +2308,8 @@ function lockedBuilding(name, x, z, w, h, d, doorSide = 'z+') {buildingBoxes.pus
   add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, 0.4, d + 0.4), mat(0x3a3c42)), x, h + 0.2, z);
   const dz = doorSide === 'z+' ? d / 2 + 0.06 : doorSide === 'z-' ? -d / 2 - 0.06 : 0, dx = doorSide === 'x+' ? w / 2 + 0.06 : doorSide === 'x-' ? -w / 2 - 0.06 : 0;
   const door = add(new THREE.Mesh(new THREE.BoxGeometry(dx ? 0.12 : 2.4, 3.2, dx ? 2.4 : 0.12), mat(0x2b2d31)), x + dx, 1.6, z + dz);
-  add(new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), glow(0xff3b3b)), x + dx * 1.02, 3.6, z + dz * 1.02); // red "locked" light
-  add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), mat(0xd9b030)), x + dx * 1.04 + (dx ? 0 : 0.8), 1.4, z + dz * 1.04 + (dx ? 0.8 : 0)); // padlock
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), glow(0xff3b3b)), x + dx + Math.sign(dx) * 0.2, 3.6, z + dz + Math.sign(dz) * 0.2); // red "locked" light
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), mat(0xd9b030)), x + dx + Math.sign(dx) * 0.18 + (dx ? 0 : 0.8), 1.4, z + dz + Math.sign(dz) * 0.18 + (dx ? 0.8 : 0)); // padlock
   for(const y of [4,8]){add(new THREE.Mesh(new THREE.BoxGeometry(w+.08,.09,d+.08),mat(0x839398)),x,y,z);}
   HOVER = null;
 }
@@ -2354,13 +2358,13 @@ for(const [id,name,x,z,w,h,d] of BUILDINGS){
  for(let k=0;k<5;k++)add(new THREE.Mesh(new THREE.BoxGeometry(3.7,.07,.1),steel),ux,h+.8+k*.24,uz+1.43,detailGroup);
  add(new THREE.Mesh(new THREE.BoxGeometry(1.1,.8,3),steel),ux,h+.6,uz-2.3,detailGroup);
  HOVER='Roof exhaust cap';rod(V(x-w*.3,h,z),V(x-w*.3,h+2.5,z),.28,steel,detailGroup);add(new THREE.Mesh(new THREE.ConeGeometry(.65,.35,16),steel),x-w*.3,h+2.65,z,detailGroup);
- HOVER='Rainwater downpipe';rod(V(x+w/2-.3,h,z+d/2+.2),V(x+w/2-.3,.3,z+d/2+.2),.09,steel,detailGroup);
+ HOVER='Rainwater downpipe';rod(V(x+w/2-.3,h,z+d/2+.16),V(x+w/2-.3,0,z+d/2+.16),.09,steel,detailGroup);
  HOVER='Staff entrance canopy, steps and wall lamp';
  const entry=new THREE.Group();detailGroup.add(entry);entry.position.set(id==='security'?x+w/2+.2:x,0,id==='security'?z:z+d/2+.2);entry.rotation.y=id==='security'?Math.PI/2:0;
  add(new THREE.Mesh(new THREE.BoxGeometry(2.2,3,.15),mat(0x35434b)),0,1.7,0,entry);
  add(new THREE.Mesh(new THREE.BoxGeometry(3.5,.18,2),steel),0,3.6,.8,entry);
  for(let k=0;k<3;k++)add(new THREE.Mesh(new THREE.BoxGeometry(3.2,.16,1.8-k*.4),mat(0x919593)),0,.08+k*.16,.6,entry);
- add(new THREE.Mesh(new THREE.BoxGeometry(.45,.25,.25),glow(0xffe0a2)),1.6,3,.15,entry);
+ add(new THREE.Mesh(new THREE.BoxGeometry(.45,.25,.25),glow(0xffe0a2)),1.6,3,.02,entry);
 }
 HOVER='Graffiti sign · BREAK IN → points to the west-side grate entrance';
 add(new THREE.Mesh(new THREE.BoxGeometry(.12,2.6,5.4),mat(0x262b2e)),-41.8,3.2,-9.5,detailGroup);
@@ -2525,7 +2529,7 @@ HOVER='Detector water-service vessels · independent purified-water circuit';
 for(const [x,z,name] of [[-28,46,'DETECTOR · PURE WATER BUFFER'],[-14,46,'DETECTOR · RECOVERY WATER']]){const T=legTank({x,z,r:5,h:9,shell:mat(0xa8c4d0,{metalness:.6,roughness:.3}),group:detailGroup,drainLength:10,name});label(name,x,T+2,z,'#8ce6ff',false,detailGroup);rod(V(x,T,z),V(x,T+1.5,z),.2,steel,detailGroup);flange(V(x,T+1.5,z),V(0,1,0),.2,detailGroup,true);blindCap(V(x,T+1.5,z),V(0,1,0),.2,steel,detailGroup); }
 HOVER='Optional SK-Gd preparation · gadolinium sulfate dissolution tank';
 {const T=legTank({x:154,z:149,r:2,h:4,shell:steel,group:detailGroup,drain:[0,-1],name:'Gd mixing tank'});label('OPTIONAL Gd SULFATE MIXING',154,T+2,149,'#8ce6ff',false,detailGroup);}
-for(const x of [151,153,155])add(new THREE.Mesh(new THREE.BoxGeometry(1.4,1.8,1.4),mat(0xd1d4ca)),x,1,153,detailGroup);
+for(const x of [151,153,155])add(new THREE.Mesh(new THREE.BoxGeometry(1.4,1.8,1.4),mat(0xd1d4ca)),x,x>152?.9:1,153,detailGroup);
 label('Gd SALT · SEALED DRY STOCK',153,4,153,'#b7cbd6',false,detailGroup);
 HOVER=null;
 // switchyard: transformers behind a fence, power lines marching off over the mountains
@@ -2626,15 +2630,15 @@ HOVER='STOP sign · yard traffic';rod(V(-4,0,111),V(-4,3,111),.12,steel,detailGr
 const galleryBlue=mat(0x34728c),redRail=mat(0xb65743);
 HOVER='Cable trays and small-bore service lines';
 for(const y of [14,15.2]){add(new THREE.Mesh(new THREE.BoxGeometry(60,.18,.9),galleryBlue),107,y,-19.1,detailGroup);for(let x=78;x<138;x+=2)rod(V(x,y,-19.55),V(x,y,-18.65),.045,steel,detailGroup);}
-for(const z of [-19.25,-18.95,-18.65])rod(V(77,15.45,z),V(137,15.45,z),.09,mat(0xb89869),detailGroup);
+for(const z of [-19.25,-18.95,-18.65])rod(V(77,15.38,z),V(137,15.38,z),.09,mat(0xb89869),detailGroup);
 HOVER='Turbine oil-service skid and gauge bank';
 add(new THREE.Mesh(new THREE.BoxGeometry(5,1.4,2),galleryBlue),83,6.9,-2.4,detailGroup);
-for(let i=0;i<6;i++){const gauge=add(new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.13,14),mat(0xf2e9cb)),81+i*.78,8,-1.35,detailGroup);gauge.rotation.x=Math.PI/2;rod(V(81+i*.78,8,-1.26),V(81+i*.78+.12,8.1,-1.26),.025,mat(0x26343c),detailGroup);}
-for(const x of [81.5,83.5]){rod(V(x,6.2,-2.5),V(x,4.6,-2.5),.12,steel,detailGroup);add(new THREE.Mesh(new THREE.TorusGeometry(.3,.06,5,14),redRail),x,6.8,-1.2,detailGroup);}
+for(let i=0;i<6;i++){const gauge=add(new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.13,14),mat(0xf2e9cb)),81+i*.78,7.2,-1.35,detailGroup);gauge.rotation.x=Math.PI/2;rod(V(81+i*.78,7.2,-1.26),V(81+i*.78+.12,7.3,-1.26),.025,mat(0x26343c),detailGroup);}
+for(const x of [81.5,83.5]){rod(V(x,6.2,-2.5),V(x,0,-2.5),.12,steel,detailGroup);rod(V(x,6.8,-1.4),V(x,6.8,-1.2),.05,steel,detailGroup);add(new THREE.Mesh(new THREE.TorusGeometry(.3,.06,5,14),redRail),x,6.8,-1.2,detailGroup);}
 HOVER='Concrete floor panels and maintenance markers';
 const floorLines=[];for(let x=77;x<138;x+=4)floorLines.push(x,.105,4,x,.105,17.3);for(let z=4;z<18;z+=4)floorLines.push(77,.105,z,138,.105,z);
 detailGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(floorLines,3)),new THREE.LineBasicMaterial({color:0x697b83,transparent:true,opacity:.45})));
-for(let x=80;x<138;x+=8)add(new THREE.Mesh(new THREE.BoxGeometry(.7,.025,.7),redRail),x,.12,16.5,detailGroup);
+for(let x=80;x<138;x+=8)add(new THREE.Mesh(new THREE.BoxGeometry(.7,.025,.7),redRail),x,.02,16.5,detailGroup);
 // One transparent LP casing reveals its bladed rotor, still on the same turbine shaft.
 HOVER='Exposed low-pressure rotor: blade rows visible through the service cutaway';
 const rotorGroup=new THREE.Group();rotorGroup.position.set(108,8.4,-10);detailGroup.add(rotorGroup);
@@ -2644,7 +2648,7 @@ for(let row=0;row<bladeRows;row++){const x=-3.6+row*.6,r=1.35+Math.abs(x)/3.6*.6
  const disc=add(new THREE.Mesh(new THREE.CylinderGeometry(r-.24,r-.24,.15,32),bladeMat),x,0,0,rotorGroup);disc.rotation.z=Math.PI/2;
  for(let i=0;i<bladeCount;i++){const a=i*Math.PI*2/bladeCount;bladeQuaternion.setFromEuler(new THREE.Euler(a,.18,0));bladeMatrix.compose(V(x,Math.cos(a)*r,Math.sin(a)*r),bladeQuaternion,V(1,1,1));rotorBlades.setMatrixAt(row*bladeCount+i,bladeMatrix);}
 }rotorGroup.add(rotorBlades);tagIt(rotorBlades);
-HOVER='Turbine maintenance lamps';for(const x of [102,127]){add(new THREE.Mesh(new THREE.BoxGeometry(2,.2,.7),glow(0xe0edf2)),x,15,-4.5,detailGroup);add(new THREE.PointLight(0xbfdce8,.9,38),x,14.7,-4.5,detailGroup);}
+HOVER='Turbine maintenance lamps';for(const x of [102,127]){add(new THREE.Mesh(new THREE.BoxGeometry(2,.2,.7),glow(0xe0edf2)),x,15,-4.5,detailGroup);add(new THREE.PointLight(0xbfdce8,.9,38),x,14.7,-4.5,detailGroup);for(const k of [-.8,.8])rod(V(x+k,15.05,-4.5),V(x+k,37.5,-4.5),.03,steel,detailGroup);}
 HOVER=null;
 
 // ---------- the night sky: a dark blue-black dome of white star pixels that turns slowly round the pole ----------
